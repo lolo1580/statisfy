@@ -1,5 +1,7 @@
 # 🎧 Statisfy
 
+[![CI](https://github.com/lolo1580/statisfy/actions/workflows/ci.yml/badge.svg)](https://github.com/lolo1580/statisfy/actions/workflows/ci.yml)
+
 Tableau de bord **auto-hébergé** pour explorer vos statistiques d'écoute Spotify.
 Réécriture libre et moderne, inspirée de l'idée de *Your Spotify*, mais pensée
 pour être **simple à déployer**, **rapide** et **agréable à explorer**.
