@@ -27,6 +27,10 @@ export default async function DashboardPage({
 }: PageProps<"/dashboard">) {
   const user = await getCurrentUser();
   const { locale, t } = await getI18n();
+  const dayTitle = (iso: string) =>
+    new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(
+      new Date(`${iso}T00:00:00Z`),
+    );
   const params = await searchParams;
   const parsed = parseRange(
     typeof params.range === "string" ? params.range : undefined,
@@ -145,6 +149,7 @@ export default async function DashboardPage({
               points={daily.map((d) => ({
                 label: dayLabel(d.day),
                 value: d.msPlayed,
+                title: dayTitle(d.day),
               }))}
             />
           </Card>

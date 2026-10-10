@@ -5,6 +5,15 @@ Toutes les évolutions notables de **Statisfy** sont documentées dans ce fichie
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [0.9.2] — 2026-10-10
+
+### Modifié
+
+- **Graphique « Évolution de l'écoute »** repensé : grille horizontale et axe
+  vertical des durées (échelle arrondie), plusieurs libellés de dates sur l'axe
+  X, et **infobulle au survol** (réticule, point, date complète + durée). Les
+  graphiques des pages Artiste, Titre et Récapitulatif en bénéficient aussi.
+
 ## [0.9.1] — 2026-10-10
 
 ### Modifié

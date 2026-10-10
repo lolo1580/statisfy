@@ -108,12 +108,10 @@ export default async function WrappedPage({
     ? extras.daily.map((bucket) => ({
         label: `${bucket.key.slice(8, 10)}/${bucket.key.slice(5, 7)}`,
         value: bucket.msPlayed,
-        title: formatDuration(bucket.msPlayed),
       }))
     : extras.monthly.map((bucket) => ({
         label: monthsShort[Number(bucket.key.slice(5, 7)) - 1],
         value: bucket.msPlayed,
-        title: formatDuration(bucket.msPlayed),
       }));
 
   return (
