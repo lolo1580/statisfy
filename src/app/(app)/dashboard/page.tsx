@@ -199,13 +199,6 @@ export default async function DashboardPage({
                 }),
               }))}
             />
-            <div className="mt-1 flex justify-between text-[10px] text-muted">
-              <span>00h</span>
-              <span>06h</span>
-              <span>12h</span>
-              <span>18h</span>
-              <span>23h</span>
-            </div>
           </Card>
 
           {trends.hasPrevious &&

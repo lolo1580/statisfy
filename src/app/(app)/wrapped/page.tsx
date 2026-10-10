@@ -222,14 +222,7 @@ export default async function WrappedPage({
             {period.isMonth ? (
               <AreaChart points={chartPoints} />
             ) : (
-              <>
-                <BarsChart bars={chartPoints} />
-                <div className="mt-1 flex justify-between text-[10px] text-muted">
-                  {monthsShort.map((month) => (
-                    <span key={month}>{month.slice(0, 3)}</span>
-                  ))}
-                </div>
-              </>
+              <BarsChart bars={chartPoints} />
             )}
           </Card>
 

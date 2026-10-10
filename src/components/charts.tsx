@@ -194,27 +194,124 @@ export function AreaChart({
   );
 }
 
-/** Barres verticales (répartition horaire, etc.). */
+/** Échelle « ronde » pour un axe de comptage (entiers). */
+function countTicks(value: number): { max: number; ticks: number[] } {
+  const steps = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000, 10000];
+  for (const step of steps) {
+    if (step * 4 >= value) {
+      return { max: step * 4, ticks: [0, step, step * 2, step * 3, step * 4] };
+    }
+  }
+  const step = Math.ceil(value / 4 / 10000) * 10000;
+  return { max: step * 4, ticks: [0, step, step * 2, step * 3, step * 4] };
+}
+
+/** Indices des libellés à afficher sous les barres. */
+function pickLabels(n: number): Set<number> {
+  const set = new Set<number>();
+  if (n <= 12) {
+    for (let i = 0; i < n; i += 1) set.add(i);
+    return set;
+  }
+  const step = Math.ceil(n / 4);
+  for (let i = 0; i < n; i += step) set.add(i);
+  set.add(n - 1);
+  return set;
+}
+
+/** Barres verticales (répartition horaire, cumuls mensuels…). */
 export function BarsChart({
   bars,
+  height = 160,
 }: {
   bars: { label: string; value: number; title?: string }[];
+  height?: number;
 }) {
-  const max = Math.max(...bars.map((b) => b.value), 1);
+  const { t } = useI18n();
+  const [hover, setHover] = useState<number | null>(null);
+
+  if (bars.length === 0) {
+    return <div className="text-sm text-muted">{t("chart.noData")}</div>;
+  }
+
+  const GUTTER = 36;
+  const n = bars.length;
+  const { max, ticks } = countTicks(Math.max(...bars.map((bar) => bar.value), 1));
+  const labels = pickLabels(n);
+  const hovered = hover != null ? bars[hover] : null;
+  const hoverLeft = hover != null ? ((hover + 0.5) / n) * 100 : 0;
+
   return (
-    <div className="flex h-40 items-end gap-1">
-      {bars.map((bar) => (
+    <div className="select-none">
+      <div className="flex" style={{ gap: 8 }}>
         <div
-          key={bar.label}
-          className="group relative flex h-full flex-1 flex-col justify-end"
-          title={bar.title ?? `${bar.label} — ${bar.value}`}
+          className="flex flex-col justify-between text-right text-[10px] leading-none text-muted"
+          style={{ height, width: GUTTER }}
         >
-          <div
-            className="rounded-t bg-gradient-to-t from-accent/30 to-accent transition-all group-hover:from-accent/50"
-            style={{ height: `${Math.max((bar.value / max) * 100, 1)}%` }}
-          />
+          {ticks
+            .slice()
+            .reverse()
+            .map((tick) => (
+              <span key={tick}>{tick}</span>
+            ))}
         </div>
-      ))}
+        <div className="relative flex-1" style={{ height }}>
+          {ticks.map((tick) => (
+            <div
+              key={tick}
+              className="absolute inset-x-0 border-t border-border"
+              style={{ top: `${(1 - tick / max) * 100}%`, opacity: tick === 0 ? 0.9 : 0.45 }}
+            />
+          ))}
+          <div
+            className="absolute inset-0 grid items-end gap-1"
+            style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}
+          >
+            {bars.map((bar, index) => (
+              <div
+                key={bar.label}
+                className="flex h-full items-end"
+                onMouseEnter={() => setHover(index)}
+                onMouseLeave={() => setHover(null)}
+              >
+                <div
+                  className="w-full rounded-t bg-gradient-to-t from-accent/30 to-accent transition-opacity"
+                  style={{
+                    height: `${Math.max((bar.value / max) * 100, 1)}%`,
+                    opacity: hover == null || hover === index ? 1 : 0.4,
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+          {hover != null && hovered ? (
+            <div
+              className="pointer-events-none absolute z-10 -translate-x-1/2 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-center shadow-lg"
+              style={{ left: `${Math.min(94, Math.max(6, hoverLeft))}%`, top: 0 }}
+            >
+              <div className="whitespace-nowrap text-[11px] font-medium">
+                {hovered.label}
+              </div>
+              <div className="whitespace-nowrap text-[11px] text-accent">
+                {hovered.title ?? hovered.value}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+      <div
+        className="mt-2 grid gap-1 text-center text-[10px] text-muted"
+        style={{
+          marginLeft: GUTTER + 8,
+          gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))`,
+        }}
+      >
+        {bars.map((bar, index) => (
+          <span key={bar.label} className="truncate">
+            {labels.has(index) ? bar.label : ""}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

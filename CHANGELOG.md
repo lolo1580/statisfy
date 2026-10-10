@@ -5,6 +5,15 @@ Toutes les évolutions notables de **Statisfy** sont documentées dans ce fichie
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [0.9.7] — 2026-10-10
+
+### Modifié
+
+- **Graphique « Quand écoutez-vous ? »** repensé comme les courbes : axe vertical
+  (comptage) et grille, libellés d'heures/mois intégrés et alignés sur les barres,
+  et **infobulle au survol** (heure + valeur) avec mise en évidence de la barre.
+  S'applique au Tableau de bord, à l'Historique et au Récapitulatif.
+
 ## [0.9.6] — 2026-10-10
 
 ### Ajouté
