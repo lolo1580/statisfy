@@ -1,0 +1,42 @@
+services:
+  statisfy:
+    build: .
+    container_name: statisfy
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      # Base SQLite persistée (le dossier ./prisma de l'hôte est monté sur /data).
+      DATABASE_URL: "file:/data/dev.db"
+      SESSION_SECRET: "${SESSION_SECRET:?Renseignez SESSION_SECRET dans .env}"
+      CREDENTIALS_KEY: "${CREDENTIALS_KEY:?Renseignez CREDENTIALS_KEY dans .env}"
+      NEXT_PUBLIC_APP_NAME: "${NEXT_PUBLIC_APP_NAME:-Statisfy}"
+      ALLOW_REGISTRATION: "${ALLOW_REGISTRATION:-true}"
+      SPOTIFY_CLIENT_ID: "${SPOTIFY_CLIENT_ID:-}"
+      SPOTIFY_CLIENT_SECRET: "${SPOTIFY_CLIENT_SECRET:-}"
+      SPOTIFY_REDIRECT_URI: "${SPOTIFY_REDIRECT_URI:-}"
+      APP_URL: "${APP_URL:-}"
+      COOKIE_DOMAIN: "${COOKIE_DOMAIN:-}"
+      SYNC_TOKEN: "${SYNC_TOKEN:-}"
+      SYNC_MIN_INTERVAL_MS: "${SYNC_MIN_INTERVAL_MS:-120000}"
+      BACKUP_DIR: "/backups"
+      BACKUP_KEEP: "${BACKUP_KEEP:-7}"
+    volumes:
+      - ./prisma:/data
+      - ./backups:/backups
+
+  # Synchronisation périodique (toutes les 2 min) + sauvegarde (toutes les 6 h).
+  # Nécessite SYNC_TOKEN dans .env.
+  cron:
+    image: curlimages/curl:latest
+    container_name: statisfy-cron
+    restart: unless-stopped
+    depends_on:
+      - statisfy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - 'i=0; while true; do curl -sf -X POST -H "Authorization: Bearer $$SYNC_TOKEN" http://statisfy:3000/api/sync > /dev/null || true; if [ $$((i % 180)) -eq 0 ]; then curl -sf -X POST -H "Authorization: Bearer $$SYNC_TOKEN" http://statisfy:3000/api/backup > /dev/null || true; fi; i=$$((i+1)); sleep 120; done'
+    environment:
+      SYNC_TOKEN: "${SYNC_TOKEN:-}"

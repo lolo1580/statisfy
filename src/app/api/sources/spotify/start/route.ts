@@ -1,0 +1,43 @@
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { getCurrentUser } from "@/lib/auth/dal";
+import { buildSpotifyAuthUrl } from "@/lib/sources/spotify";
+import {
+  normalizeOrigin,
+  requestOrigin,
+  signOAuthState,
+} from "@/lib/sources/spotify-state";
+import { appUrl, cookieDomain, spotify } from "@/lib/env";
+
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  // Redirige vers /login si la session est absente.
+  const user = await getCurrentUser();
+
+  // Origine de l'interface (localhost en dev, domaine public en prod).
+  const origin =
+    normalizeOrigin(await requestOrigin()) ??
+    normalizeOrigin(appUrl) ??
+    "http://localhost:3000";
+
+  if (!spotify.configured) {
+    return NextResponse.redirect(`${origin}/settings?error=spotify_config`);
+  }
+
+  // État signé : contient l'utilisateur et l'URL de retour. Il est vérifiable
+  // par le callback même sur un autre hôte que celui qui a lancé l'OAuth.
+  const state = await signOAuthState({ uid: user.id, ret: origin });
+
+  const jar = await cookies();
+  jar.set("spotify_oauth_state", state, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 600,
+    ...(cookieDomain ? { domain: cookieDomain } : {}),
+  });
+
+  return NextResponse.redirect(buildSpotifyAuthUrl(state));
+}

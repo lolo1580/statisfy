@@ -1,0 +1,21 @@
+# dependances / build
+node_modules
+.next
+out
+build
+
+# donnees locales
+*.db
+*.db-journal
+backups
+
+# secrets
+.env
+.env.*
+!.env.example
+
+# divers
+.git
+.github
+.DS_Store
+*.log

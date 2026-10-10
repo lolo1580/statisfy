@@ -1,0 +1,288 @@
+import type { Dictionary } from "./en";
+
+/** Traductions françaises. Les clés doivent correspondre à `en.ts`. */
+export const fr: Dictionary = {
+  // Navigation & shell
+  "nav.overview": "Vue d'ensemble",
+  "nav.rankings": "Classements",
+  "nav.recap": "Récapitulatif",
+  "nav.history": "Historique",
+  "nav.status": "Statut",
+  "nav.settings": "Réglages",
+  "nav.logout": "Déconnexion",
+  "shell.searchPlaceholder": "Rechercher…",
+
+  // Authentication
+  "auth.tagline": "Vos statistiques d'écoute, chez vous.",
+  "auth.email": "Adresse e-mail",
+  "auth.emailPlaceholder": "vous@exemple.com",
+  "auth.password": "Mot de passe",
+  "auth.signIn": "Se connecter",
+  "auth.signingIn": "Connexion…",
+  "auth.noAccount": "Pas encore de compte ?",
+  "auth.createAccount": "Créer un compte",
+  "auth.signUpTitle": "Créer un compte",
+  "auth.firstUser":
+    "Première installation : ce compte sera administrateur.",
+  "auth.join": "Rejoignez votre instance Statisfy.",
+  "auth.name": "Nom",
+  "auth.namePlaceholder": "Votre nom",
+  "auth.passwordHint": "8 caractères, 1 chiffre",
+  "auth.createAccountCta": "Créer le compte",
+  "auth.creating": "Création…",
+  "auth.alreadyAccount": "Déjà inscrit ?",
+
+  // Validation & auth errors
+  "validation.nameMin": "Au moins 2 caractères.",
+  "validation.email": "Adresse e-mail invalide.",
+  "validation.passwordMin": "Au moins 8 caractères.",
+  "validation.passwordLetter": "Doit contenir une lettre.",
+  "validation.passwordDigit": "Doit contenir un chiffre.",
+  "autherr.disabled": "Les inscriptions sont désactivées.",
+  "autherr.taken": "Un compte existe déjà avec cette adresse.",
+  "autherr.credentials": "Identifiants incorrects.",
+  "autherr.required": "Adresse e-mail et mot de passe requis.",
+
+  // Range & source filters
+  "range.7": "7 j",
+  "range.30": "30 j",
+  "range.90": "90 j",
+  "range.365": "1 an",
+  "range.all": "Tout",
+  "source.all": "Toutes",
+  "source.spotify": "Spotify",
+  "source.import": "Import",
+
+  // Dashboard
+  "dash.title": "Vue d'ensemble",
+  "dash.lastPlay": "Dernière écoute : {date}",
+  "dash.noPlays": "Aucune écoute enregistrée",
+  "dash.listeningTime": "Temps d'écoute",
+  "dash.playsCount": "{count} écoutes",
+  "dash.artists": "Artistes",
+  "dash.tracks": "Titres",
+  "dash.albums": "Albums",
+  "dash.overTime": "Écoute dans le temps",
+  "dash.dailyTime": "Temps d'écoute quotidien",
+  "dash.topTracks": "Top titres",
+  "dash.topArtists": "Top artistes",
+  "dash.genres": "Genres",
+  "dash.genresWeighted": "Pondéré par écoutes",
+  "dash.noTracks": "Pas encore de titres.",
+  "dash.noArtists": "Pas encore d'artistes.",
+  "dash.genresUnavailable":
+    "Genres indisponibles. Synchronisez Spotify pour les enrichir.",
+  "dash.whenListen": "Quand écoutez-vous ?",
+  "dash.byHour": "Répartition par heure locale",
+  "dash.empty":
+    "Aucune donnée pour l'instant. Rendez-vous dans Réglages pour connecter une source ou importer votre historique Spotify.",
+  "dash.sourceChip": "{label} · {plays} écoutes ({duration})",
+
+  // Rankings
+  "top.title": "Classements",
+  "top.topTracks": "Titres les plus écoutés",
+  "top.topArtists": "Artistes les plus écoutés",
+  "top.topAlbums": "Albums les plus écoutés",
+
+  // History
+  "history.title": "Historique",
+  "history.daily": "Écoute quotidienne",
+  "history.hourly": "Répartition horaire",
+  "history.hourlySubtitle": "Heure locale, sur la période sélectionnée",
+  "history.recent": "50 dernières écoutes",
+  "history.noPlays": "Aucune écoute enregistrée.",
+
+  // Recap (Wrapped)
+  "recap.title": "Récapitulatif",
+  "recap.periodMonth": "mois",
+  "recap.periodYear": "année",
+  "recap.yearLabel": "Année {year}",
+  "recap.view": "Voir",
+  "recap.wholeYear": "Toute l'année",
+  "recap.download": "Télécharger l'image",
+  "recap.heroKicker": "Votre {period} en musique",
+  "recap.listening": "d'écoute",
+  "recap.plays": "écoutes",
+  "recap.artists": "artistes",
+  "recap.tracks": "titres",
+  "recap.delta": "{value}% vs période précédente",
+  "recap.monthlyProgress": "Progression mensuelle",
+  "recap.daily": "Écoute quotidienne",
+  "recap.busiestDay": "Jour le plus actif",
+  "recap.favoriteHour": "Heure préférée",
+  "recap.activeDays": "Jours actifs",
+  "recap.discovered": "Artistes découverts",
+  "recap.yourArtists": "Vos artistes",
+  "recap.top5Period": "Top 5 de la période",
+  "recap.yourGenres": "Vos genres",
+  "recap.genresWeighted": "Pondéré par écoutes",
+  "recap.yourTracks": "Vos titres",
+  "recap.top10": "Top 10",
+  "recap.yourAlbums": "Vos albums",
+  "recap.top5": "Top 5",
+  "recap.noData":
+    "Aucune écoute sur cette période. Choisissez une autre année ou importez votre historique depuis Réglages.",
+
+  // Status
+  "status.title": "Statut",
+  "status.today": "Aujourd'hui",
+  "status.week": "Cette semaine",
+  "status.total": "Total",
+  "status.lastSync": "Dernière synchro",
+  "status.connections": "Connexions",
+  "status.connectionsSubtitle": "Sources d'écoute et état de synchronisation",
+  "status.noSources": "Aucune source connectée.",
+  "status.never": "jamais",
+  "status.nextSync": "prochain sync ≈ {time} (toutes les {minutes} min)",
+  "status.system": "Système",
+  "status.app": "Application",
+  "status.env": "Environnement",
+  "status.node": "Node.js",
+  "status.uptime": "Démarré depuis",
+  "status.dbSize": "Taille de la base",
+  "status.autoSync": "Sync auto",
+  "status.autoSyncOn": "activée (toutes les {minutes} min)",
+  "status.autoSyncOff": "désactivée (pas de SYNC_TOKEN)",
+  "status.activity": "Activité récente",
+  "status.noActivity": "Aucune synchronisation enregistrée.",
+  "status.import": "Import",
+  "status.sync": "Sync",
+  "status.importedHistory": "Historique importé",
+
+  // Settings
+  "settings.title": "Réglages",
+  "settings.account": "Compte",
+  "settings.timezone": "Fuseau horaire (utilisé pour les statistiques)",
+  "settings.save": "Enregistrer",
+  "settings.connectSpotify": "Connecter Spotify",
+  "settings.connectSpotifySubtitle":
+    "Synchronisation des écoutes récentes, des genres et des pochettes",
+  "settings.connectSpotifyCta": "Connecter mon compte Spotify",
+  "settings.spotifyNotConfigured":
+    "Renseignez SPOTIFY_CLIENT_ID et SPOTIFY_CLIENT_SECRET (application créée sur le tableau de bord Spotify) puis redémarrez le serveur.",
+  "settings.redirectUri": "URL de redirection à autoriser :",
+  "settings.import": "Importer un historique Spotify",
+  "settings.importSubtitle": "Depuis vos données de confidentialité Spotify",
+  "settings.importHint":
+    "Fichiers Streaming_History_Audio_*.json (Extended) ou StreamingHistory*.json. Plusieurs fichiers acceptés.",
+  "settings.importCta": "Importer",
+  "settings.importing": "Import en cours…",
+  "settings.visuals": "Visuels",
+  "settings.visualsSubtitle": "Pochettes d'albums et photos d'artistes",
+  "settings.enrich": "Enrichir les visuels",
+  "settings.enriching": "Enrichissement…",
+  "settings.enrichHint":
+    "Complète les pochettes d'albums et les photos d'artistes manquantes (notamment après un import) via l'API publique Deezer.",
+  "settings.sources": "Sources connectées",
+  "settings.noSources": "Aucune source pour le moment.",
+  "settings.lastSync": "Dernière synchro : {date}",
+  "settings.sync": "Synchroniser",
+  "settings.syncing": "Synchronisation…",
+  "settings.delete": "Supprimer",
+  "settings.activity": "Activité récente",
+  "settings.noActivity": "Aucune synchronisation ou import.",
+  "settings.admin": "Administration",
+  "settings.instance": "Instance {name}",
+  "settings.registration": "Création de comptes : {state}",
+  "settings.allowed": "autorisée",
+  "settings.disabled": "désactivée",
+  "settings.disableReg": "Désactiver les inscriptions",
+  "settings.enableReg": "Autoriser les inscriptions",
+
+  // Settings / connection action messages
+  "msg.syncDone": "Synchronisation terminée : {count} nouvelle(s) écoute(s).",
+  "msg.importDone":
+    "Import terminé : {inserted} écoute(s) importée(s) sur {total} lue(s).",
+  "msg.importDoneVisuals": " {count} visuel(s) ajouté(s).",
+  "msg.enrichDone":
+    "Visuels enrichis : {albums}/{albumsChecked} album(s) et {artists}/{artistsChecked} artiste(s).",
+  "err.selectFile": "Sélectionnez au moins un fichier JSON.",
+  "err.noJson": "Aucun fichier .json reconnu.",
+  "err.importFailed": "Échec de l'import.",
+  "err.syncFailed": "Échec de la synchronisation.",
+  "err.connectionNotFound": "Connexion introuvable.",
+  "err.enrichFailed": "Échec de l'enrichissement des visuels.",
+  "settings.yourspotify": "Importer depuis Your Spotify",
+  "settings.yourspotifySubtitle": "Dump MongoDB (BSON ou JSON)",
+  "settings.yourspotifyHint":
+    "Sélectionnez les fichiers du dump (infos, tracks, albums, artists) en .bson ou .json — ou un .zip.",
+  "msg.yourspotifyDone":
+    "Import Your Spotify : {inserted} écoute(s) sur {total}.",
+  "ys.err.noInfos":
+    "Aucune écoute trouvée. Incluez la collection infos (BSON ou JSON).",
+
+  // OAuth notices
+  "notice.spotify": "Compte Spotify connecté avec succès.",
+  "notice.spotify_config":
+    "Spotify n'est pas configuré sur le serveur (SPOTIFY_CLIENT_ID / SECRET).",
+  "notice.spotify_denied": "Connexion Spotify annulée.",
+  "notice.spotify_state": "Session OAuth invalide ou expirée, réessayez.",
+  "notice.spotify_exchange": "Échec de l'échange de jeton auprès de Spotify.",
+
+  // Search
+  "search.title": "Recherche",
+  "search.placeholder": "Rechercher un artiste ou un titre…",
+  "search.submit": "Chercher",
+  "search.hint": "Saisissez un mot-clé pour explorer votre bibliothèque.",
+  "search.noResults": "Aucun résultat pour « {query} ».",
+  "search.artists": "Artistes",
+  "search.tracks": "Titres",
+  "search.resultsCount": "{count} résultat(s)",
+  "search.noArtist": "Aucun artiste.",
+  "search.noTrack": "Aucun titre.",
+
+  // Artist detail
+  "artist.kicker": "Artiste",
+  "artist.distinctTracks": "Titres distincts",
+  "artist.distinctAlbums": "Albums distincts",
+  "artist.firstPlay": "Première écoute",
+  "artist.lastPlayHint": "Dernière : {date}",
+  "artist.noPlays": "Aucune écoute de cet artiste sur la période sélectionnée.",
+  "artist.albums": "Albums",
+  "artist.recent": "Écoutes récentes",
+  "artist.noRecent": "Aucune écoute.",
+
+  // Track detail
+  "track.kicker": "Titre",
+  "track.plays": "Écoutes",
+  "track.lastPlay": "Dernière écoute",
+  "track.sources": "Sources",
+  "track.duration": "Durée",
+  "track.noPlays": "Aucune écoute de ce titre sur la période sélectionnée.",
+
+  // Charts
+  "chart.evolution": "Évolution de l'écoute",
+  "chart.noData": "Aucune donnée.",
+
+  // Generic
+  "generic.noData": "Aucune donnée.",
+
+  // Insights, tendances & sauvegardes
+  "nav.insights": "Découvertes",
+  "dash.trends": "Tendances",
+  "dash.trendsSubtitle": "vs {days} jours précédents",
+  "dash.rising": "En hausse",
+  "dash.falling": "En baisse",
+  "history.heatmap": "Activité annuelle",
+  "history.heatmapSubtitle": "Écoutes par jour sur 12 mois",
+  "insights.title": "Découvertes",
+  "insights.obsessions": "Obsessions",
+  "insights.obsessionsSubtitle": "Plus fortes hausses sur 30 jours",
+  "insights.rediscoveries": "Redécouvertes",
+  "insights.rediscoveriesSubtitle":
+    "Aimés auparavant, plus écoutés depuis 90 jours",
+  "insights.noObsessions": "Aucun artiste en hausse pour l'instant.",
+  "insights.noRediscoveries": "Rien à redécouvrir.",
+  "insights.lastPlayed": "Dernière écoute {date}",
+  "status.backups": "Sauvegardes",
+  "status.backupsValue": "{count} fichier(s)",
+  "msg.backupDone": "Sauvegarde créée : {file} ({kept} conservées).",
+  "err.backupFailed": "Échec de la sauvegarde.",
+
+  "bytes.b": "o",
+  "bytes.kb": "Ko",
+  "bytes.mb": "Mo",
+  "uptime.days": "{d} j {h} h",
+  "uptime.hours": "{h} h {m} min",
+  "uptime.minutes": "{m} min",
+};

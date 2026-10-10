@@ -1,0 +1,187 @@
+// Statisfy — schéma de données
+// Prisma 7 (provider "prisma-client", SQLite + driver adapter)
+//
+// Choix de conception :
+// - Les "Play" dénormalisent artistId/albumId/trackId pour rendre les
+//   agrégations de stats rapides (pas de jointures lourdes).
+// - `dedupKey` + contrainte unique (userId, dedupKey) rendent les imports
+//   et les synchronisations idempotents.
+// - `ExternalRef` mappe les identifiants propres à chaque fournisseur
+//   (Spotify, ...) vers nos entités internes.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  timezone     String   @default("UTC")
+  isAdmin      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions    Session[]
+  connections SourceConnection[]
+  plays       Play[]
+  jobs        Job[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model SourceConnection {
+  id          String   @id @default(cuid())
+  userId      String
+  // spotify | import
+  type        String
+  displayName String
+  // active | error | revoked
+  status      String   @default("active")
+  // JSON chiffré (AES-256-GCM) : tokens OAuth, clé API, etc.
+  credentials String
+  // JSON non sensible : options, région...
+  config      String?
+  lastSyncedAt DateTime?
+  lastError   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobs Job[]
+
+  @@unique([userId, type, displayName])
+  @@index([userId])
+}
+
+model Artist {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  imageUrl String?
+  genres   String? // JSON array de genres
+
+  albums Album[]
+  tracks Track[]
+  plays  Play[]
+
+  @@index([name])
+}
+
+model Album {
+  id          String  @id @default(cuid())
+  name        String
+  artistId    String
+  imageUrl    String?
+  releaseDate String?
+
+  artist Artist  @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  tracks Track[]
+  plays  Play[]
+
+  @@unique([artistId, name])
+  @@index([artistId])
+}
+
+model Track {
+  id         String  @id @default(cuid())
+  name       String
+  artistId   String
+  albumId    String?
+  durationMs Int?
+  imageUrl   String?
+  isrc       String?
+
+  artist Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  album  Album? @relation(fields: [albumId], references: [id], onDelete: SetNull)
+  plays  Play[]
+
+  @@index([artistId])
+  @@index([albumId])
+  @@index([name])
+}
+
+// Événement d'écoute normalisé, commune à toutes les sources.
+model Play {
+  id       String   @id @default(cuid())
+  userId   String
+  trackId  String
+  artistId String
+  albumId  String?
+  playedAt DateTime
+  msPlayed Int      @default(0)
+  source   String
+  context  String? // playlist, album, radio...
+  dedupKey String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track  Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  artist Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  album  Album? @relation(fields: [albumId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, dedupKey])
+  @@index([userId, playedAt])
+  @@index([userId, trackId])
+  @@index([userId, artistId])
+  @@index([userId, albumId])
+  @@index([playedAt])
+}
+
+// Table de correspondance identifiants fournisseurs -> entités internes.
+model ExternalRef {
+  id         String  @id @default(cuid())
+  provider   String
+  externalId String
+  artistId   String?
+  albumId    String?
+  trackId    String?
+
+  @@unique([provider, externalId])
+  @@index([artistId])
+  @@index([albumId])
+  @@index([trackId])
+}
+
+model Job {
+  id           String    @id @default(cuid())
+  userId       String
+  connectionId String?
+  // sync | import
+  type         String
+  // pending | running | done | error
+  status       String    @default("pending")
+  total        Int       @default(0)
+  processed    Int       @default(0)
+  inserted     Int       @default(0)
+  error        String?
+  createdAt    DateTime  @default(now())
+  startedAt    DateTime?
+  finishedAt   DateTime?
+
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection SourceConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+}
+
+// Préférences globales (clé/valeur JSON).
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

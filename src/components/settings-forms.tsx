@@ -1,0 +1,134 @@
+"use client";
+
+import { useActionState } from "react";
+import {
+  enrichImages,
+  importHistory,
+  importYourSpotify,
+  syncConnection,
+  type SettingsState,
+} from "@/lib/actions/connections";
+import { useI18n } from "@/components/i18n-provider";
+
+function Feedback({ state }: { state: SettingsState }) {
+  if (!state) return null;
+  if (state.error) return <p className="text-sm text-red-400">{state.error}</p>;
+  if (state.message)
+    return <p className="text-sm text-accent">{state.message}</p>;
+  return null;
+}
+
+export function SyncButton({ connectionId }: { connectionId: string }) {
+  const { t } = useI18n();
+  const [state, action, pending] = useActionState<SettingsState, FormData>(
+    syncConnection,
+    undefined,
+  );
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <form action={action}>
+        <input type="hidden" name="connectionId" value={connectionId} />
+        <button
+          type="submit"
+          disabled={pending}
+          className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-50"
+        >
+          {pending ? t("settings.syncing") : t("settings.sync")}
+        </button>
+      </form>
+      {state?.error ? (
+        <span className="max-w-[220px] text-right text-xs text-red-400">
+          {state.error}
+        </span>
+      ) : null}
+      {state?.message ? (
+        <span className="max-w-[220px] text-right text-xs text-accent">
+          {state.message}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+export function ImportForm() {
+  const { t } = useI18n();
+  const [state, action, pending] = useActionState<SettingsState, FormData>(
+    importHistory,
+    undefined,
+  );
+
+  return (
+    <form action={action} className="space-y-3">
+      <input
+        type="file"
+        name="files"
+        accept=".json,application/json"
+        multiple
+        className="block w-full cursor-pointer rounded-lg border border-dashed border-border bg-surface-2 px-3 py-6 text-sm text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent-soft file:px-3 file:py-1.5 file:text-accent"
+      />
+      <p className="text-xs text-muted">{t("settings.importHint")}</p>
+      <Feedback state={state} />
+      <button
+        type="submit"
+        disabled={pending}
+        className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[#04140d] transition-opacity hover:opacity-90 disabled:opacity-50"
+      >
+        {pending ? t("settings.importing") : t("settings.importCta")}
+      </button>
+    </form>
+  );
+}
+
+export function YourSpotifyImportForm() {
+  const { t } = useI18n();
+  const [state, action, pending] = useActionState<SettingsState, FormData>(
+    importYourSpotify,
+    undefined,
+  );
+
+  return (
+    <form action={action} className="space-y-3">
+      <input
+        type="file"
+        name="files"
+        accept=".bson,.json,.zip"
+        multiple
+        className="block w-full cursor-pointer rounded-lg border border-dashed border-border bg-surface-2 px-3 py-6 text-sm text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent-soft file:px-3 file:py-1.5 file:text-accent"
+      />
+      <p className="text-xs text-muted">{t("settings.yourspotifyHint")}</p>
+      <Feedback state={state} />
+      <button
+        type="submit"
+        disabled={pending}
+        className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[#04140d] transition-opacity hover:opacity-90 disabled:opacity-50"
+      >
+        {pending ? t("settings.importing") : t("settings.importCta")}
+      </button>
+    </form>
+  );
+}
+
+export function EnrichButton() {
+  const { t } = useI18n();
+  const [state, action, pending] = useActionState<SettingsState, FormData>(
+    enrichImages,
+    undefined,
+  );
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted">{t("settings.enrichHint")}</p>
+      <form action={action}>
+        <button
+          type="submit"
+          disabled={pending}
+          className="rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-50"
+        >
+          {pending ? t("settings.enriching") : t("settings.enrich")}
+        </button>
+      </form>
+      <Feedback state={state} />
+    </div>
+  );
+}
