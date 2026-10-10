@@ -18,7 +18,7 @@ import { getI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
 
-const dayLabel = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+const dayLabel = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(2, 4)}`;
 
 export default async function TrackPage({
   params,
