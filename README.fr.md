@@ -117,16 +117,16 @@ docker compose up -d --build       # reconstruire après une modification du cod
 docker compose up -d               # recréer après une modification du .env
 ```
 
-### Récupérer l'image publiée (GHCR)
+### Optionnel : image préconstruite (GHCR)
 
-Chaque push sur `main` et chaque tag `v*` publie une image multi-arch
-(`linux/amd64`, `linux/arm64`) sur le GitHub Container Registry :
+Par défaut, `docker compose` **construit depuis les sources** — aucun accès à
+GitHub nécessaire. L'image Docker est publiée sur le GitHub Container Registry
+**manuellement** (Actions → *Docker* → *Run workflow*) ; rien n'est poussé lors
+des commits courants.
 
-```bash
-docker pull ghcr.io/lolo1580/statisfy:latest
-```
-
-Pour la déployer sans construire en local :
+Pour déployer l'image publiée au lieu du build local, décommentez la ligne
+`image:` du `docker-compose.yml` (et éventuellement `STATISFY_IMAGE` dans `.env`
+pour épingler un tag), puis :
 
 ```bash
 docker compose pull

@@ -1,12 +1,8 @@
 name: Docker
 
+# Publication MANUELLE uniquement : aucun push d'image tant que le workflow
+# n'est pas lancé à la main (onglet Actions → Docker → Run workflow).
 on:
-  push:
-    branches: [main]
-    tags: ["v*"]
-    paths-ignore:
-      - "**.md"
-      - "LICENSE"
   workflow_dispatch:
 
 concurrency:

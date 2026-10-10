@@ -115,25 +115,24 @@ docker compose up -d --build       # rebuild after a code change
 docker compose up -d               # recreate after a .env change
 ```
 
-### Pull the prebuilt image (GHCR)
+### Optional: prebuilt image (GHCR)
 
-Every push to `main` and every `v*` tag publishes a multi-arch image
-(`linux/amd64`, `linux/arm64`) to the GitHub Container Registry:
+By default, `docker compose` **builds from source** — no GitHub needed. The
+Docker image is published to the GitHub Container Registry **manually**
+(Actions → *Docker* → *Run workflow*); nothing is pushed on regular commits.
 
-```bash
-docker pull ghcr.io/lolo1580/statisfy:latest
-```
-
-To deploy it without building locally:
+To deploy the published image instead of building locally, uncomment the
+`image:` line in `docker-compose.yml` (optionally set `STATISFY_IMAGE` in `.env`
+to pin a tag), then:
 
 ```bash
 docker compose pull
 docker compose up -d
 ```
 
-> With a **public repository** (as here) the image is public: `docker pull`
-> works without authentication. For a private repository/package,
-> authenticate once with a token that has the `read:packages` scope:
+> With a **public repository** (as here) the image is public and `docker pull`
+> works without authentication. For a private repository/package, authenticate
+> once with a token that has the `read:packages` scope:
 > ```bash
 > echo "$CR_PAT" | docker login ghcr.io -u <user> --password-stdin
 > ```

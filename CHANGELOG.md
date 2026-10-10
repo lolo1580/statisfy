@@ -5,6 +5,17 @@ Toutes les évolutions notables de **Statisfy** sont documentées dans ce fichie
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [Unreleased]
+
+### Modifié
+
+- **Publication de l'image Docker désormais manuelle** : le workflow « Docker »
+  ne se déclenche plus automatiquement (ni sur `main`, ni sur les tags de
+  pré-version). Lancez-le à la main (Actions → *Docker* → *Run workflow*).
+- **Build local par défaut** : `docker-compose.yml` construit l'image depuis les
+  sources ; la ligne `image:` (GHCR) est commentée et optionnelle, et
+  `STATISFY_IMAGE` est commentée dans `.env`/`.env.example`.
+
 ## [0.11.0-preview.1] — 2026-10-10
 
 > Version **preview** (pré-version) : image Docker
