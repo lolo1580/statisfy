@@ -11,10 +11,11 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 - **Import *Your Spotify* par HTTP** : nouvelle route
   `POST /api/import/your-spotify` acceptant l'archive `.zip` du dump
-  (`Authorization: Bearer $SYNC_TOKEN`, ou session admin). Permet d'importer
-  depuis un serveur joignable uniquement en SSH — sans upload navigateur ni
-  transfert de fichier. Cible le premier administrateur (ou `?email=`) ;
-  import idempotent.
+  (`Authorization: Bearer $SYNC_TOKEN`, **HTTP Basic** `-u email:motdepasse`,
+  ou session admin). Permet d'importer depuis un serveur joignable uniquement en
+  SSH — sans upload navigateur ni transfert de fichier. Avec un compte standard
+  le dump lui est attribué ; avec le jeton, il va au premier administrateur (ou
+  `?email=`). Import idempotent.
 
 ## [0.5.0] — 2026-10-10
 
