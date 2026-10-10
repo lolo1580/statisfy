@@ -30,11 +30,17 @@ export default async function DashboardPage({
   const params = await searchParams;
   const parsed = parseRange(
     typeof params.range === "string" ? params.range : undefined,
+    user.timezone,
   );
   const source = parseSource(
     typeof params.source === "string" ? params.source : undefined,
   );
-  const filters: StatsRange = { days: parsed.days, source };
+  const filters: StatsRange = {
+    days: parsed.days,
+    from: parsed.from,
+    to: parsed.to,
+    source,
+  };
 
   const [overview, daily, hourly, topTracks, topArtists, topGenres, sources, trends] =
     await Promise.all([

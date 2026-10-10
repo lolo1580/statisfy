@@ -30,11 +30,17 @@ export default async function TrackPage({
   const sp = await searchParams;
   const parsed = parseRange(
     typeof sp.range === "string" ? sp.range : undefined,
+    user.timezone,
   );
   const source = parseSource(
     typeof sp.source === "string" ? sp.source : undefined,
   );
-  const filters: StatsRange = { days: parsed.days, source };
+  const filters: StatsRange = {
+    days: parsed.days,
+    from: parsed.from,
+    to: parsed.to,
+    source,
+  };
 
   const detail = await getTrackDetail(user.id, id, filters, user.timezone);
   if (!detail) notFound();

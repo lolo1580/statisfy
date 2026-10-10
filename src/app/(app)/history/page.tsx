@@ -31,11 +31,17 @@ export default async function HistoryPage({
   const params = await searchParams;
   const parsed = parseRange(
     typeof params.range === "string" ? params.range : undefined,
+    user.timezone,
   );
   const source = parseSource(
     typeof params.source === "string" ? params.source : undefined,
   );
-  const filters: StatsRange = { days: parsed.days, source };
+  const filters: StatsRange = {
+    days: parsed.days,
+    from: parsed.from,
+    to: parsed.to,
+    source,
+  };
 
   const [daily, hourly, recent, sources, heatmap] = await Promise.all([
     getDailyStats(user.id, user.timezone, filters),

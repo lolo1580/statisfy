@@ -47,6 +47,7 @@ export const en: Dictionary = {
   "autherr.required": "Email and password are required.",
 
   // Range & source filters
+  "range.today": "Today",
   "range.7": "7d",
   "range.30": "30d",
   "range.90": "90d",

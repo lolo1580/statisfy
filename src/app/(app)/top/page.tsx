@@ -28,11 +28,17 @@ export default async function TopPage({ searchParams }: PageProps<"/top">) {
   const params = await searchParams;
   const parsed = parseRange(
     typeof params.range === "string" ? params.range : undefined,
+    user.timezone,
   );
   const source = parseSource(
     typeof params.source === "string" ? params.source : undefined,
   );
-  const filters: StatsRange = { days: parsed.days, source };
+  const filters: StatsRange = {
+    days: parsed.days,
+    from: parsed.from,
+    to: parsed.to,
+    source,
+  };
 
   const [tracks, artists, albums] = await Promise.all([
     getTopTracks(user.id, filters, 25),

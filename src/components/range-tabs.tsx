@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useI18n } from "@/components/i18n-provider";
 
 export const RANGES = [
+  { value: "today", key: "range.today" },
   { value: "7", key: "range.7" },
   { value: "30", key: "range.30" },
   { value: "90", key: "range.90" },
