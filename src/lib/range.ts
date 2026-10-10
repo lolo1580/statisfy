@@ -4,6 +4,7 @@ import {
   startOfLocalDay,
   startOfLocalMonth,
   startOfLocalWeek,
+  startOfLocalYear,
 } from "./format";
 
 export type ParsedRange = {
@@ -40,6 +41,10 @@ export function parseRange(
     if (value === "month") {
       const from = startOfLocalMonth(timeZone, now);
       return { days: elapsedDays(from, timeZone, now), key: "month", from };
+    }
+    if (value === "year") {
+      const from = startOfLocalYear(timeZone, now);
+      return { days: elapsedDays(from, timeZone, now), key: "year", from };
     }
   }
 

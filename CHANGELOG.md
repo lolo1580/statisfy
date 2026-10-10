@@ -5,6 +5,16 @@ Toutes les évolutions notables de **Statisfy** sont documentées dans ce fichie
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [0.9.1] — 2026-10-10
+
+### Modifié
+
+- **Sélecteur de période simplifié (tout calendaire)** :
+  `Aujourd'hui · Semaine · Mois · Année · Tout`, dans le fuseau du compte. Les
+  fenêtres glissantes `7 j / 30 j / 90 j / 1 an` faisaient doublon avec
+  Semaine/Mois et sont retirées. Les anciennes URL (`?range=7`, etc.) restent
+  fonctionnelles.
+
 ## [0.9.0] — 2026-10-10
 
 ### Ajouté

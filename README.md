@@ -27,7 +27,8 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
   l'historique.
 - **Statut** : page de santé de l'instance (dernière synchro, écoutes du jour,
   statut des sources, taille de la base, activité récente).
-- **Filtres** : par période (7 j → tout) et par source (Spotify, import).
+- **Filtres** : par période (aujourd'hui, semaine, mois, année, tout — calendaire,
+  dans le fuseau du compte) et par source (Spotify, import).
 - **Multilingue** : anglais (par défaut) et français, avec sélecteur de langue
   dans l'interface (dates et nombres localisés).
 - **Tendances & heatmap** : heatmap annuelle façon GitHub et comparaison entre

@@ -95,6 +95,16 @@ export function startOfLocalMonth(timeZone: string, now: Date = new Date()): Dat
   return new Date(local.getTime() - offset)
 }
 
+/** Début de l'année locale (1er janvier à minuit). */
+export function startOfLocalYear(timeZone: string, now: Date = new Date()): Date {
+  const offset = getTimezoneOffsetMs(timeZone, now)
+  const local = new Date(now.getTime() + offset)
+  local.setUTCMonth(0)
+  local.setUTCDate(1)
+  local.setUTCHours(0, 0, 0, 0)
+  return new Date(local.getTime() - offset)
+}
+
 export function formatDateTime(
   date: Date,
   timeZone: string,

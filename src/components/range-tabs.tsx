@@ -7,10 +7,7 @@ export const RANGES = [
   { value: "today", key: "range.today" },
   { value: "week", key: "range.week" },
   { value: "month", key: "range.month" },
-  { value: "7", key: "range.7" },
-  { value: "30", key: "range.30" },
-  { value: "90", key: "range.90" },
-  { value: "365", key: "range.365" },
+  { value: "year", key: "range.year" },
   { value: "all", key: "range.all" },
 ];
 
