@@ -73,40 +73,60 @@ export function hourOf(date: Date, timeZone: string, offsetMs?: number): number 
   return new Date(date.getTime() + offset).getUTCHours()
 }
 
+/** Instant (UTC) correspondant à minuit local pour une date locale donnée. */
+function localMidnight(
+  timeZone: string,
+  year: number,
+  month: number,
+  day: number,
+): Date {
+  const utcGuess = Date.UTC(year, month, day, 0, 0, 0)
+  // Le décalage peut différer à la date cible (changement d'heure) : on affine.
+  let offset = getTimezoneOffsetMs(timeZone, new Date(utcGuess))
+  let instant = utcGuess - offset
+  offset = getTimezoneOffsetMs(timeZone, new Date(instant))
+  instant = utcGuess - offset
+  return new Date(instant)
+}
+
+/** Composantes locales d'un instant (année, mois 0-based, jour, jour de semaine). */
+function localParts(
+  timeZone: string,
+  at: Date,
+): { year: number; month: number; day: number; dow: number } {
+  const offset = getTimezoneOffsetMs(timeZone, at)
+  const local = new Date(at.getTime() + offset)
+  return {
+    year: local.getUTCFullYear(),
+    month: local.getUTCMonth(),
+    day: local.getUTCDate(),
+    dow: local.getUTCDay(),
+  }
+}
+
 /** Début du jour local (minuit dans le fuseau donné). */
 export function startOfLocalDay(timeZone: string, now: Date = new Date()): Date {
-  const offset = getTimezoneOffsetMs(timeZone, now)
-  const local = new Date(now.getTime() + offset)
-  local.setUTCHours(0, 0, 0, 0)
-  return new Date(local.getTime() - offset)
+  const { year, month, day } = localParts(timeZone, now)
+  return localMidnight(timeZone, year, month, day)
 }
 
 /** Début de la semaine locale (lundi). */
 export function startOfLocalWeek(timeZone: string, now: Date = new Date()): Date {
-  const day = startOfLocalDay(timeZone, now)
-  const offset = getTimezoneOffsetMs(timeZone, day)
-  const dow = new Date(day.getTime() + offset).getUTCDay() // 0 = dimanche
+  const { year, month, day, dow } = localParts(timeZone, now)
   const daysSinceMonday = (dow + 6) % 7
-  return new Date(day.getTime() - daysSinceMonday * 24 * 60 * 60 * 1000)
+  return localMidnight(timeZone, year, month, day - daysSinceMonday)
 }
 
 /** Début du mois local (le 1er à minuit). */
 export function startOfLocalMonth(timeZone: string, now: Date = new Date()): Date {
-  const offset = getTimezoneOffsetMs(timeZone, now)
-  const local = new Date(now.getTime() + offset)
-  local.setUTCDate(1)
-  local.setUTCHours(0, 0, 0, 0)
-  return new Date(local.getTime() - offset)
+  const { year, month } = localParts(timeZone, now)
+  return localMidnight(timeZone, year, month, 1)
 }
 
 /** Début de l'année locale (1er janvier à minuit). */
 export function startOfLocalYear(timeZone: string, now: Date = new Date()): Date {
-  const offset = getTimezoneOffsetMs(timeZone, now)
-  const local = new Date(now.getTime() + offset)
-  local.setUTCMonth(0)
-  local.setUTCDate(1)
-  local.setUTCHours(0, 0, 0, 0)
-  return new Date(local.getTime() - offset)
+  const { year } = localParts(timeZone, now)
+  return localMidnight(timeZone, year, 0, 1)
 }
 
 export function formatDateTime(

@@ -81,6 +81,15 @@ export async function getOverview(
   }
 }
 
+/** Indique si l'utilisateur possède au moins une écoute (toutes périodes). */
+export async function hasAnyPlays(userId: string): Promise<boolean> {
+  const play = await prisma.play.findFirst({
+    where: { userId },
+    select: { id: true },
+  })
+  return play !== null
+}
+
 export type WindowStat = { plays: number; msPlayed: number }
 
 /** Compte et durée des écoutes sur une fenêtre [from, to). */

@@ -6,7 +6,7 @@ import {
   getRediscoveries,
 } from "@/lib/stats";
 import { Badge, Card, Cover, EmptyState, SectionTitle } from "@/components/ui";
-import { formatDate, formatDuration, formatNumber } from "@/lib/format";
+import { formatDate, formatDuration, formatNumber, startOfLocalMonth } from "@/lib/format";
 import { getI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -15,10 +15,7 @@ export default async function InsightsPage() {
   const user = await getCurrentUser();
   const { locale, t } = await getI18n();
 
-  const now = new Date();
-  const monthStart = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
-  );
+  const monthStart = startOfLocalMonth(user.timezone);
 
   const [trends, rediscoveries, discoveredThisMonth] = await Promise.all([
     getArtistTrends(user.id, { days: 30 }, 8),

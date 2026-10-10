@@ -5,6 +5,18 @@ Toutes les évolutions notables de **Statisfy** sont documentées dans ce fichie
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [0.9.8] — 2026-10-10
+
+### Corrigé
+
+- **Tableau de bord** : si la période ou la source sélectionnée ne contient
+  aucune écoute alors que le compte en possède, un simple « Aucune donnée » est
+  affiché au lieu de l'invitation à configurer une source.
+- **Fuseaux horaires** : les débuts de jour / semaine / mois / année respectent
+  désormais les changements d'heure (plus de décalage d'une heure).
+- **Découvertes** : « ce mois-ci » se base sur le mois calendaire local (et non
+  sur UTC).
+
 ## [0.9.7] — 2026-10-10
 
 ### Modifié

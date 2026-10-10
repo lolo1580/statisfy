@@ -9,6 +9,7 @@ import {
   getTopArtists,
   getTopGenres,
   getTopTracks,
+  hasAnyPlays,
   type StatsRange,
 } from "@/lib/stats";
 import { RangeTabs, SourceFilter } from "@/components/range-tabs";
@@ -48,7 +49,7 @@ export default async function DashboardPage({
   };
   const query = `range=${parsed.key}${source ? `&source=${source}` : ""}`;
 
-  const [overview, daily, hourly, topTracks, topArtists, topGenres, sources, trends] =
+  const [overview, daily, hourly, topTracks, topArtists, topGenres, sources, trends, anyPlays] =
     await Promise.all([
       getOverview(user.id, filters),
       getDailyStats(user.id, user.timezone, filters),
@@ -58,6 +59,7 @@ export default async function DashboardPage({
       getTopGenres(user.id, filters, 8),
       getSourceBreakdown(user.id, filters),
       getArtistTrends(user.id, filters, 4),
+      hasAnyPlays(user.id),
     ]);
 
   const isEmpty = overview.totalPlays === 0;
@@ -137,12 +139,16 @@ export default async function DashboardPage({
       ) : null}
 
       {isEmpty ? (
-        <EmptyState>
-          {t("dash.empty")}{" "}
-          <Link href="/settings" className="text-accent hover:underline">
-            {t("nav.settings")}
-          </Link>
-        </EmptyState>
+        anyPlays ? (
+          <EmptyState>{t("generic.noData")}</EmptyState>
+        ) : (
+          <EmptyState>
+            {t("dash.empty")}{" "}
+            <Link href="/settings" className="text-accent hover:underline">
+              {t("nav.settings")}
+            </Link>
+          </EmptyState>
+        )
       ) : (
         <>
           <Card>
