@@ -68,6 +68,8 @@ export const en: Dictionary = {
   "dash.overTime": "Listening over time",
   "dash.dailyTime": "Daily listening time",
   "dash.topTracks": "Top tracks",
+  "dash.metricPlays": "Plays",
+  "dash.metricTime": "Time",
   "dash.topArtists": "Top artists",
   "dash.genres": "Genres",
   "dash.genresWeighted": "Weighted by plays",

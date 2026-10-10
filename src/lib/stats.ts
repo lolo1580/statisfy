@@ -249,7 +249,7 @@ export async function getTopAlbums(
   })
 }
 
-export type GenreStat = { genre: string; plays: number }
+export type GenreStat = { genre: string; plays: number; msPlayed: number }
 
 export async function getTopGenres(
   userId: string,
@@ -261,6 +261,7 @@ export async function getTopGenres(
     by: ['artistId'],
     where,
     _count: { artistId: true },
+    _sum: { msPlayed: true },
     orderBy: { _count: { artistId: 'desc' } },
     take: 100,
   })
@@ -271,18 +272,23 @@ export async function getTopGenres(
     select: { id: true, genres: true },
   })
   const countById = new Map(grouped.map((g) => [g.artistId, g._count.artistId]))
+  const msById = new Map(grouped.map((g) => [g.artistId, g._sum.msPlayed ?? 0]))
 
-  const totals = new Map<string, number>()
+  const totals = new Map<string, { plays: number; msPlayed: number }>()
   for (const artist of artists) {
     if (!artist.genres) continue
     const plays = countById.get(artist.id) ?? 0
+    const msPlayed = msById.get(artist.id) ?? 0
     for (const genre of JSON.parse(artist.genres) as string[]) {
-      totals.set(genre, (totals.get(genre) ?? 0) + plays)
+      const current = totals.get(genre) ?? { plays: 0, msPlayed: 0 }
+      current.plays += plays
+      current.msPlayed += msPlayed
+      totals.set(genre, current)
     }
   }
 
   return [...totals.entries()]
-    .map(([genre, plays]) => ({ genre, plays }))
+    .map(([genre, value]) => ({ genre, plays: value.plays, msPlayed: value.msPlayed }))
     .sort((a, b) => b.plays - a.plays)
     .slice(0, limit)
 }

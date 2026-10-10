@@ -13,8 +13,9 @@ import {
 } from "@/lib/stats";
 import { RangeTabs, SourceFilter } from "@/components/range-tabs";
 import { parseRange, parseSource } from "@/lib/range";
-import { AreaChart, BarsChart, RankBars } from "@/components/charts";
+import { AreaChart, BarsChart } from "@/components/charts";
 import { Badge, Card, Cover, EmptyState, SectionTitle, StatCard } from "@/components/ui";
+import { TopArtistsPanel, TopGenresPanel, TopTracksPanel } from "@/components/ranking-panels";
 import { formatDuration, formatNumber } from "@/lib/format";
 import { getI18n } from "@/i18n/server";
 
@@ -45,6 +46,7 @@ export default async function DashboardPage({
     to: parsed.to,
     source,
   };
+  const query = `range=${parsed.key}${source ? `&source=${source}` : ""}`;
 
   const [overview, daily, hourly, topTracks, topArtists, topGenres, sources, trends] =
     await Promise.all([
@@ -156,99 +158,27 @@ export default async function DashboardPage({
 
           <div className="grid gap-6 lg:grid-cols-3">
             <Card>
-              <SectionTitle title={t("dash.topTracks")} />
-              {topTracks.length === 0 ? (
-                <EmptyState>{t("dash.noTracks")}</EmptyState>
-              ) : (
-                <ol className="space-y-3">
-                  {topTracks.map((track, index) => (
-                    <li key={track.id}>
-                      <Link
-                        href={`/track/${track.id}?range=${parsed.key}${
-                          source ? `&source=${source}` : ""
-                        }`}
-                        className="flex items-center gap-3 rounded-lg p-1 transition-colors hover:bg-surface-2"
-                      >
-                        <span className="w-4 text-sm text-muted">
-                          {index + 1}
-                        </span>
-                        <Cover src={track.imageUrl} alt={track.name} size={40} />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">
-                            {track.name}
-                          </p>
-                          <p className="truncate text-xs text-muted">
-                            {track.artistName}
-                          </p>
-                        </div>
-                        <span className="text-xs text-muted">
-                          {formatDuration(track.msPlayed)}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ol>
-              )}
+              <TopTracksPanel
+                title={t("dash.topTracks")}
+                items={topTracks}
+                query={query}
+              />
             </Card>
 
             <Card>
-              <SectionTitle title={t("dash.topArtists")} />
-              {topArtists.length === 0 ? (
-                <EmptyState>{t("dash.noArtists")}</EmptyState>
-              ) : (
-                <ol className="space-y-3">
-                  {topArtists.map((artist, index) => (
-                    <li key={artist.id}>
-                      <Link
-                        href={`/artist/${artist.id}?range=${parsed.key}${
-                          source ? `&source=${source}` : ""
-                        }`}
-                        className="flex items-center gap-3 rounded-lg p-1 transition-colors hover:bg-surface-2"
-                      >
-                        <span className="w-4 text-sm text-muted">
-                          {index + 1}
-                        </span>
-                        <Cover
-                          src={artist.imageUrl}
-                          alt={artist.name}
-                          size={40}
-                          rounded="rounded-full"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">
-                            {artist.name}
-                          </p>
-                          {artist.genres.length > 0 ? (
-                            <p className="truncate text-xs text-muted">
-                              {artist.genres.slice(0, 2).join(", ")}
-                            </p>
-                          ) : null}
-                        </div>
-                        <span className="text-xs text-muted">
-                          {formatDuration(artist.msPlayed)}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ol>
-              )}
+              <TopArtistsPanel
+                title={t("dash.topArtists")}
+                items={topArtists}
+                query={query}
+              />
             </Card>
 
             <Card>
-              <SectionTitle
+              <TopGenresPanel
                 title={t("dash.genres")}
                 subtitle={t("dash.genresWeighted")}
+                items={topGenres}
               />
-              {topGenres.length === 0 ? (
-                <EmptyState>{t("dash.genresUnavailable")}</EmptyState>
-              ) : (
-                <RankBars
-                  items={topGenres.map((g) => ({
-                    label: g.genre,
-                    value: g.plays,
-                  }))}
-                />
-              )}
             </Card>
           </div>
 
