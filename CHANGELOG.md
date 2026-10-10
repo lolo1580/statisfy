@@ -5,6 +5,14 @@ Toutes les évolutions notables de **Statisfy** sont documentées dans ce fichie
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [0.10.1] — 2026-10-10
+
+### Modifié
+
+- **Documentation** : le README principal passe en **anglais** (`README.md`) et
+  une version **française** est ajoutée (`README.fr.md`), avec un lien de langue
+  dans chacun.
+
 ## [0.10.0] — 2026-10-10
 
 ### Modifié

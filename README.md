@@ -2,68 +2,68 @@
 
 [![CI](https://github.com/lolo1580/statisfy/actions/workflows/ci.yml/badge.svg)](https://github.com/lolo1580/statisfy/actions/workflows/ci.yml)
 
-Tableau de bord **auto-hébergé** pour explorer vos statistiques d'écoute Spotify.
-Réécriture libre et moderne, inspirée de l'idée de *Your Spotify*, mais pensée
-pour être **simple à déployer**, **rapide** et **agréable à explorer**.
+**English** · [Français](README.fr.md)
 
-> Statisfy n'est pas affilié à Spotify. Les marques citées appartiennent à
-> leurs propriétaires respectifs.
-> Voir le [journal des modifications](CHANGELOG.md).
+A **self-hosted** dashboard to explore your Spotify listening stats. An
+independent, modern rewrite inspired by the idea of *Your Spotify*, but designed
+to be **easy to deploy**, **fast** and **pleasant to explore**.
 
-## ✨ Fonctionnalités
+> Statisfy is not affiliated with Spotify. All trademarks belong to their
+> respective owners.
+> See the [changelog](CHANGELOG.md).
 
-- **Source Spotify** : connexion OAuth (écoutes récentes + genres) et import de
-  vos exports de données (privacy / extended streaming history).
-- **Pochettes automatiques** : les visuels manquants (surtout après un import)
-  sont complétés via le **catalogue Spotify**.
-- **Statistiques riches** : temps d'écoute, top titres / artistes / albums,
-  genres pondérés, écoute quotidienne, répartition horaire, dernières écoutes.
-- **Bascule « écoutes / temps »** : sur les panneaux de classement (Tableau de
-  bord et Classements), un switch par panneau change l'affichage **et le tri**,
-  instantanément.
-- **Graphiques interactifs** : grille, axes (durées) et infobulle au survol
-  (date complète + temps d'écoute).
-- **Exploration** : pages détail **artiste** et **titre**, **recherche** dans la
-  bibliothèque.
-- **Récapitulatif (« Wrapped »)** : synthèse par année ou par mois avec
-  comparaison à la période précédente, jour/heure les plus actifs et artistes
-  découverts.
-- **Export** : récapitulatif en **image PNG** (1080×1080) et **CSV** de tout
-  l'historique.
-- **Statut** : page de santé de l'instance (dernière synchro, écoutes du jour,
-  statut des sources, taille de la base, activité récente).
-- **Filtres** : par période (aujourd'hui, semaine, mois, année, tout — calendaire,
-  dans le fuseau du compte) et par source (Spotify, import).
-- **Multilingue** : anglais (par défaut) et français, avec sélecteur de langue
-  dans l'interface (dates et nombres localisés).
-- **Tendances & heatmap** : heatmap annuelle façon GitHub et comparaison entre
-  deux périodes (artistes en hausse / en baisse).
-- **Découvertes** : page dédiée — obsessions du moment et artistes à
-  redécouvrir.
-- **Sauvegardes** : copie automatique de la base (rotation configurable) +
-  endpoint dédié.
-- **Déduplication robuste** : une écoute n'est jamais comptée deux fois.
-- **Sessions sécurisées** : mots de passe `scrypt`, sessions JWT révocables,
-  identifiants de sources chiffrés (AES-256-GCM).
-- **Déploiement Docker** en une commande et **synchronisation automatique**.
+## ✨ Features
+
+- **Spotify source**: OAuth connection (recent plays + genres) and import of
+  your data exports (privacy / extended streaming history).
+- **Automatic artwork**: missing visuals (especially after an import) are
+  completed via the **Spotify catalog**.
+- **Rich statistics**: listening time, top tracks / artists / albums, weighted
+  genres, daily listening, hourly breakdown, recent plays.
+- **Plays / time toggle**: on the ranking panels (Dashboard and Rankings), a
+  per-panel switch changes the display **and the sorting**, instantly.
+- **Interactive charts**: grid, axes (durations) and hover tooltip (full date +
+  listening time).
+- **Exploration**: **artist** and **track** detail pages, **search** across your
+  library.
+- **Recap ("Wrapped")**: yearly or monthly summary with comparison to the
+  previous period, busiest day/hour and discovered artists.
+- **Export**: recap as a **PNG image** (1080×1080) and **CSV** of the whole
+  history.
+- **Status**: instance health page (last sync, today's plays, source status,
+  database size, recent activity).
+- **Filters**: by period (today, week, month, year, all — calendar-based, in the
+  account's timezone) and by source (Spotify, import).
+- **Multilingual**: English (default) and French, with a language switcher in
+  the UI (localized dates and numbers).
+- **Trends & heatmap**: GitHub-style yearly heatmap and comparison between two
+  periods (rising / falling artists).
+- **Discoveries**: dedicated page — current obsessions and artists to
+  rediscover.
+- **Backups**: automatic database copy (configurable rotation) + dedicated
+  endpoint.
+- **Robust deduplication**: a play is never counted twice.
+- **Secure sessions**: `scrypt` passwords, revocable JWT sessions, encrypted
+  source credentials (AES-256-GCM).
+- **Docker deployment** in one command and **automatic synchronization**.
 
 ## 🧱 Stack
 
-| Élément | Choix |
+| Item | Choice |
 | --- | --- |
 | Framework | Next.js 16 (App Router, React 19, Server Actions) |
-| Langage | TypeScript |
-| Base de données | SQLite via Prisma 7 + driver adapter `better-sqlite3` |
-| UI | Tailwind CSS v4, composants maison, graphiques SVG sans dépendance |
+| Language | TypeScript |
+| Database | SQLite via Prisma 7 + `better-sqlite3` driver adapter |
+| UI | Tailwind CSS v4, hand-rolled components, dependency-free SVG charts |
 | Auth | `jose` (JWT), `node:crypto` (scrypt, AES-GCM) |
-| Image | `next/og` (récapitulatif PNG) |
+| Image | `next/og` (PNG recap) |
 
-## 🚀 Démarrage rapide (local)
+## 🚀 Quick start (local)
 
-Prérequis : **Node.js 22+** et **pnpm**.
+Requirements: **Node.js 22+** and **pnpm**.
 
 ```bash
-# 1. Dépendances
+# 1. Dependencies
 pnpm install
 
 # 2. Configuration
@@ -71,225 +71,222 @@ cp .env.example .env
 openssl rand -base64 32   # -> SESSION_SECRET
 openssl rand -base64 32   # -> CREDENTIALS_KEY
 
-# 3. Base de données
+# 3. Database
 pnpm db:push
 
-# 4. (optionnel) jeu de données de démonstration
+# 4. (optional) demo dataset
 pnpm db:seed
 
-# 5. Développement
+# 5. Development
 pnpm dev        # http://localhost:3000
 ```
 
-Le **premier compte créé devient administrateur**. En local, `pnpm db:seed`
-crée un compte de démo (`demo@statisfy.local` / `statisfy123`) — à ne pas
-conserver sur une instance publique.
+The **first account created becomes the administrator**. Locally, `pnpm db:seed`
+creates a demo account (`demo@statisfy.local` / `statisfy123`) — do not keep it
+on a public instance.
 
-### Production locale
+### Local production
 
 ```bash
 pnpm build
 pnpm start
 ```
 
-## 🐳 Docker (recommandé)
+## 🐳 Docker (recommended)
 
 ```bash
 cp .env.example .env
-# Renseignez SESSION_SECRET et CREDENTIALS_KEY
+# Fill in SESSION_SECRET and CREDENTIALS_KEY
 
 docker compose up -d --build
 ```
 
-- L'application est servie sur `http://localhost:3000`.
-- La base SQLite est persistée via le montage `./prisma:/data`.
-- Le schéma Prisma est appliqué automatiquement au démarrage.
-- Un service **`cron`** appelle `POST /api/sync` **toutes les 2 minutes**
-  (nécessite `SYNC_TOKEN`).
+- The app is served on `http://localhost:3000`.
+- The SQLite database is persisted through the `./prisma:/data` mount.
+- The Prisma schema is applied automatically on startup.
+- A **`cron`** service calls `POST /api/sync` **every 2 minutes**
+  (requires `SYNC_TOKEN`).
 
 ```bash
-docker compose ps                  # état des services
-docker compose logs -f statisfy    # journaux
-docker compose up -d --build       # reconstruire après une modification du code
-docker compose up -d               # recréer après une modification du .env
+docker compose ps                  # service status
+docker compose logs -f statisfy    # logs
+docker compose up -d --build       # rebuild after a code change
+docker compose up -d               # recreate after a .env change
 ```
 
 ## ⚙️ Configuration
 
-Toutes les variables sont documentées dans [`.env.example`](.env.example).
+Every variable is documented in [`.env.example`](.env.example).
 
 | Variable | Description |
 | --- | --- |
-| `DATABASE_URL` | Chemin SQLite, ex. `file:./prisma/dev.db`. |
-| `SESSION_SECRET` | Secret de signature des sessions (`openssl rand -base64 32`). |
-| `CREDENTIALS_KEY` | Clé AES-256 (32 octets base64) pour chiffrer les identifiants. |
-| `ALLOW_REGISTRATION` | `true`/`false` (surchargée depuis l'UI admin). |
-| `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | Application Spotify. |
-| `SPOTIFY_REDIRECT_URI` | Doit correspondre à une URL autorisée dans Spotify. |
-| `APP_URL` | URL publique de l'interface (redirections derrière un proxy). |
-| `COOKIE_DOMAIN` | Domaine partagé des cookies si UI et callback sont sur des sous-domaines distincts. |
-| `SYNC_TOKEN` | Jeton protégeant `POST /api/sync` (utilisé par le cron). |
-| `SYNC_MIN_INTERVAL_MS` | Intervalle minimal entre deux synchros déclenchées par l'API (défaut `120000`). |
-| `BACKUP_KEEP` | Nombre de sauvegardes de la base conservées (défaut `7`). |
+| `DATABASE_URL` | SQLite path, e.g. `file:./prisma/dev.db`. |
+| `SESSION_SECRET` | Session signing secret (`openssl rand -base64 32`). |
+| `CREDENTIALS_KEY` | AES-256 key (32 bytes base64) to encrypt credentials. |
+| `ALLOW_REGISTRATION` | `true`/`false` (overridable from the admin UI). |
+| `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | Spotify application. |
+| `SPOTIFY_REDIRECT_URI` | Must match a redirect URL allowed in Spotify. |
+| `APP_URL` | Public URL of the UI (redirects behind a proxy). |
+| `COOKIE_DOMAIN` | Shared cookie domain when the UI and the callback live on different subdomains. |
+| `SYNC_TOKEN` | Token protecting `POST /api/sync` (used by the cron). |
+| `SYNC_MIN_INTERVAL_MS` | Minimum interval between two API-triggered syncs (default `120000`). |
+| `BACKUP_KEEP` | Number of database backups to keep (default `7`). |
 
-## 🎵 Source Spotify
+## 🎵 Spotify source
 
-### Connexion OAuth
+### OAuth connection
 
-1. Créez une application sur le
-   [tableau de bord développeur Spotify](https://developer.spotify.com/dashboard).
-2. Ajoutez une URL de redirection. Le chemin `/oauth/spotify/callback` est
-   accepté (ainsi que `/api/sources/spotify/callback`), par exemple :
-   - en local : `http://localhost:3000/oauth/spotify/callback`
-   - en production : `https://statisfy.mondomaine.org/oauth/spotify/callback`
-3. Renseignez `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET` et
-   `SPOTIFY_REDIRECT_URI`, puis redémarrez.
-4. Dans **Réglages → Connecter Spotify**, cliquez sur *Connecter mon compte*.
-5. Cliquez sur **Synchroniser** : écoutes récentes **et genres** sont récupérés.
+1. Create an application on the
+   [Spotify developer dashboard](https://developer.spotify.com/dashboard).
+2. Add a redirect URL. The path `/oauth/spotify/callback` is accepted (as is
+   `/api/sources/spotify/callback`), for example:
+   - locally: `http://localhost:3000/oauth/spotify/callback`
+   - in production: `https://statisfy.mydomain.org/oauth/spotify/callback`
+3. Fill in `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET` and
+   `SPOTIFY_REDIRECT_URI`, then restart.
+4. In **Settings → Connect Spotify**, click *Connect my account*.
+5. Click **Sync**: recent plays **and genres** are fetched.
 
-> L'API Spotify ne renvoie que les 50 derniers morceaux. La synchronisation
-> automatique (cron) évite d'en perdre ; pour l'historique complet, utilisez
-> l'import ci-dessous.
+> The Spotify API only returns the last 50 tracks. Automatic syncing (cron)
+> avoids losing them; for the full history, use the import below.
 
-### Importer l'historique Spotify
+### Importing Spotify history
 
-1. Demandez vos données sur
-   [Spotify → Confidentialité](https://www.spotify.com/account/privacy/)
-   (« Extended streaming history » recommandé).
-2. Dans **Réglages → Importer un historique Spotify**, déposez l'archive `.zip`
-   reçue de Spotify, ou les fichiers `Streaming_History_Audio_*.json`
-   (jusqu'à 128 Mo par requête). Les pochettes manquantes sont ensuite
-   complétées automatiquement.
-3. L'import est **idempotent** : relancer un même fichier ne crée pas de doublon.
+1. Request your data on
+   [Spotify → Privacy](https://www.spotify.com/account/privacy/)
+   ("Extended streaming history" recommended).
+2. In **Settings → Import Spotify history**, drop the `.zip` archive you
+   received from Spotify, or the `Streaming_History_Audio_*.json` files
+   (up to 128 MB per request). Missing artwork is then completed automatically.
+3. The import is **idempotent**: re-running the same file creates no duplicate.
 
-Pour les gros historiques (plusieurs années), préférez la ligne de commande ou
-l'API HTTP (pas de limite navigateur) :
+For large histories (several years), prefer the command line or the HTTP API
+(no browser limit):
 
 ```bash
-# en ligne de commande, sur le serveur où se trouve l'export
-pnpm import:spotify-history ~/Téléchargements/my_spotify_data.zip --email vous@exemple.com
+# from the command line, on the server that has the export
+pnpm import:spotify-history ~/Downloads/my_spotify_data.zip --email you@example.com
 
-# via l'API (voir « POST /api/import/spotify-history » plus bas)
-curl --user 'vous@exemple.com:motdepasse' \
+# via the API (see "POST /api/import/spotify-history" below)
+curl --user 'you@example.com:password' \
   --data-binary @my_spotify_data.zip \
-  https://mon-domaine/api/import/spotify-history
+  https://my-domain/api/import/spotify-history
 ```
 
-### Migration depuis *Your Spotify*
+### Migrating from *Your Spotify*
 
-Deux méthodes pour récupérer l'historique de *Your Spotify* (MongoDB).
+Two ways to recover your *Your Spotify* history (MongoDB).
 
-**A. Depuis l'interface (recommandé)** — via un dump :
+**A. From the UI (recommended)** — via a dump:
 
-1. Faites un dump de la base :
+1. Dump the database:
    ```bash
    mongodump --uri="mongodb://localhost:27017/your_spotify" --out=./ys-dump
    ```
-2. Compressez le dossier en `.zip` (facultatif).
-3. Dans **Réglages → Import from Your Spotify**, déposez les fichiers du dump
-   (`infos`, `tracks`, `albums`, `artists`, en `.bson` ou `.json`) **ou** le
-   `.zip`. Les genres et pochettes sont repris, l'import est idempotent.
+2. Compress the folder into a `.zip` (optional).
+3. In **Settings → Import from Your Spotify**, drop the dump files
+   (`infos`, `tracks`, `albums`, `artists`, as `.bson` or `.json`) **or** the
+   `.zip`. Genres and artwork are picked up; the import is idempotent.
 
-**B. En ligne de commande** (connexion directe à MongoDB) :
+**B. From the command line** (direct MongoDB connection):
 
 ```bash
 MONGO_URL="mongodb://localhost:27017/your_spotify" \
-  pnpm import:your-spotify --email vous@exemple.com
+  pnpm import:your-spotify --email you@example.com
 ```
 
-- `--mongo <url>` : URL MongoDB (sinon variable `MONGO_URL`).
-- `--email <mail>` : compte Statisfy cible (sinon le plus ancien compte).
-- `--limit <n>` : limiter aux n premières écoutes (test).
+- `--mongo <url>`: MongoDB URL (otherwise the `MONGO_URL` variable).
+- `--email <mail>`: target Statisfy account (otherwise the oldest account).
+- `--limit <n>`: process only the first n plays (testing).
 
-Dans les deux cas, l'import est **idempotent** (relancer ne crée pas de doublon).
+In both cases, the import is **idempotent** (re-running creates no duplicate).
 
-> MongoDB 8 refuse de démarrer sur les noyaux Linux ≥ 6.19 (bug connu) : utilisez
-> une image MongoDB 6 ou 7 si nécessaire.
+> MongoDB 8 refuses to start on Linux kernels ≥ 6.19 (known bug): use a
+> MongoDB 6 or 7 image if needed.
 
 ## 🔌 API
 
 | Route | Description |
 | --- | --- |
-| `GET /api/sync` | Synchronise les connexions dues. Auth : `Bearer $SYNC_TOKEN` ou session admin. |
-| `POST /api/backup` | Sauvegarde la base SQLite. Auth : `Bearer $SYNC_TOKEN` ou session admin. |
-| `POST /api/import/spotify-history` | Importe un export Spotify (`.zip` « Extended streaming history » ou `.json`). Auth : `Bearer $SYNC_TOKEN`, HTTP Basic ou session admin. |
-| `POST /api/import/your-spotify` | Importe un dump *Your Spotify* (archive `.zip`) depuis un serveur. Auth : `Bearer $SYNC_TOKEN`, HTTP Basic (`-u email:motdepasse`) ou session admin. |
-| `GET /api/export` | Export CSV de l'historique de l'utilisateur connecté. |
-| `GET /api/wrapped/image` | Image PNG du récapitulatif (`?year=2026&month=10`). |
-| `GET /oauth/spotify/callback` | Retour OAuth Spotify (à déclarer côté Spotify). |
-| `GET /api/sources/spotify/start` | Démarre l'OAuth Spotify. |
+| `GET /api/sync` | Sync due connections. Auth: `Bearer $SYNC_TOKEN` or admin session. |
+| `POST /api/backup` | Back up the SQLite database. Auth: `Bearer $SYNC_TOKEN` or admin session. |
+| `POST /api/import/spotify-history` | Import a Spotify export (`.zip` "Extended streaming history" or `.json`). Auth: `Bearer $SYNC_TOKEN`, HTTP Basic or admin session. |
+| `POST /api/import/your-spotify` | Import a *Your Spotify* dump (`.zip` archive) from a server. Auth: `Bearer $SYNC_TOKEN`, HTTP Basic (`-u email:password`) or admin session. |
+| `GET /api/export` | CSV export of the logged-in user's history. |
+| `GET /api/wrapped/image` | PNG image of the recap (`?year=2026&month=10`). |
+| `GET /oauth/spotify/callback` | Spotify OAuth return (to declare on Spotify's side). |
+| `GET /api/sources/spotify/start` | Starts the Spotify OAuth flow. |
 
-Exemple de cron externe :
+External cron example:
 
 ```bash
-curl -X POST -H "Authorization: Bearer $SYNC_TOKEN" https://mon-domaine/api/sync
+curl -X POST -H "Authorization: Bearer $SYNC_TOKEN" https://my-domain/api/sync
 ```
 
-Importer un dump *Your Spotify* sans passer par le navigateur (utile quand le
-serveur source n'est joignable qu'en SSH) :
+Import a *Your Spotify* dump without a browser (useful when the source server is
+only reachable over SSH):
 
 ```bash
-# avec un compte standard (le plus simple)
-curl -u 'vous@exemple.com:motdepasse' \
+# with a standard account (simplest)
+curl -u 'you@example.com:password' \
   --data-binary @ys-dump.zip \
-  https://mon-domaine/api/import/your-spotify
+  https://my-domain/api/import/your-spotify
 
-# ou avec le jeton global
+# or with the global token
 curl -X POST -H "Authorization: Bearer $SYNC_TOKEN" \
   --data-binary @ys-dump.zip \
-  https://mon-domaine/api/import/your-spotify
+  https://my-domain/api/import/your-spotify
 ```
 
-Avec un compte standard, le dump est attribué à ce compte. Avec le jeton (ou une
-session admin), il est attribué au premier administrateur ; utilisez
-`?email=vous@exemple.com` pour cibler un autre compte. L'import est idempotent.
+With a standard account, the dump is assigned to that account. With the token
+(or an admin session), it is assigned to the first administrator; use
+`?email=you@example.com` to target another account. The import is idempotent.
 
-## 🗂️ Structure du projet
+## 🗂️ Project structure
 
 ```
 prisma/
-  schema.prisma        # Modèles (User, Play, Track, Artist, Album, Job, ...)
-  seed.ts              # Données de démonstration
+  schema.prisma        # Models (User, Play, Track, Artist, Album, Job, ...)
+  seed.ts              # Demo data
 src/
-  app/                 # Routes : login, dashboard, top, wrapped, insights,
+  app/                 # Routes: login, dashboard, top, wrapped, insights,
                        # history, status, search, artist/[id], track/[id],
                        # settings, api
-  components/          # UI (cartes, graphiques SVG, navigation, formulaires)
-  i18n/                # Dictionnaires (EN par défaut, FR) + helpers serveur
+  components/          # UI (cards, SVG charts, navigation, forms)
+  i18n/                # Dictionaries (EN by default, FR) + server helpers
   lib/
-    auth/              # Sessions, DAL, actions d'authentification
-    sources/           # Adaptateur Spotify, import, enrichissement, état OAuth
-    sync/              # Moteur d'ingestion idempotent + orchestration
-    stats.ts           # Requêtes d'agrégation (dont tendances/découvertes)
-    backup.ts          # Sauvegardes SQLite (VACUUM INTO + rotation)
-    period.ts          # Périodes du récapitulatif
-    crypto.ts          # Chiffrement des identifiants
-    db.ts              # Client Prisma
+    auth/              # Sessions, DAL, auth actions
+    sources/           # Spotify adapter, import, enrichment, OAuth state
+    sync/              # Idempotent ingestion engine + orchestration
+    stats.ts           # Aggregation queries (including trends/discoveries)
+    backup.ts          # SQLite backups (VACUUM INTO + rotation)
+    period.ts          # Recap periods
+    crypto.ts          # Credential encryption
+    db.ts              # Prisma client
 ```
 
-### Ajouter une source
+### Adding a source
 
-1. Implémentez `SourceAdapter` dans `src/lib/sources/`.
-2. Enregistrez-la dans `src/lib/sources/registry.ts`.
-3. Ajoutez le formulaire correspondant dans `src/app/(app)/settings`.
+1. Implement `SourceAdapter` in `src/lib/sources/`.
+2. Register it in `src/lib/sources/registry.ts`.
+3. Add the matching form in `src/app/(app)/settings`.
 
-Le moteur (`src/lib/sync/`) gère le reste : déduplication, résolution des
-entités, métadonnées et genres.
+The engine (`src/lib/sync/`) handles the rest: deduplication, entity resolution,
+metadata and genres.
 
-## 🗺️ Feuille de route
+## 🗺️ Roadmap
 
-- Comparateur de deux périodes côte à côte.
-- Format d'image « story » (1080×1920) pour le récapitulatif.
-- Mode multi-utilisateurs avancé (partage de tableaux de bord).
-- Tests automatisés.
+- Side-by-side two-period comparator.
+- "Story" image format (1080×1920) for the recap.
+- Advanced multi-user mode (dashboard sharing).
+- Automated tests.
 
-## ⚖️ Licence et note légale
+## ⚖️ License and legal notice
 
-Statisfy est une **réécriture indépendante** : aucun code de *Your Spotify*
-n'a été copié. Le projet est distribué sous **GNU General Public License v3.0**
-(voir [`LICENSE`](LICENSE)) : vous pouvez le modifier et le redistribuer, à
-condition que les œuvres dérivées restent sous la même licence (copyleft) et
-que leur code source soit fourni.
+Statisfy is an **independent rewrite**: no code from *Your Spotify* was copied.
+The project is distributed under the **GNU General Public License v3.0** (see
+[`LICENSE`](LICENSE)): you may modify and redistribute it, provided that
+derivative works remain under the same license (copyleft) and that their source
+code is provided.
 
-Les conditions d'utilisation de l'API Spotify et le respect de ses marques
-restent de votre responsabilité.
+Spotify API terms of use and trademark compliance remain your responsibility.
