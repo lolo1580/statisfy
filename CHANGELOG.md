@@ -5,6 +5,21 @@ Toutes les évolutions notables de **Statisfy** sont documentées dans ce fichie
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [0.10.2] — 2026-10-10
+
+### Ajouté
+
+- **Publication de l'image Docker sur GHCR** : nouveau workflow GitHub Actions
+  (`docker.yml`) qui construit et pousse une image multi-arch
+  (`linux/amd64`, `linux/arm64`) sur `ghcr.io/lolo1580/statisfy` à chaque push
+  sur `main` et chaque tag `v*`.
+
+### Modifié
+
+- `docker-compose.yml` : référence l'image GHCR (`image:`) en plus de
+  `build:` ; README (EN/FR) mis à jour avec la section de récupération de
+  l'image.
+
 ## [0.10.1] — 2026-10-10
 
 ### Modifié

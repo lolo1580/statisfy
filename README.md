@@ -1,6 +1,7 @@
 # 🎧 Statisfy
 
 [![CI](https://github.com/lolo1580/statisfy/actions/workflows/ci.yml/badge.svg)](https://github.com/lolo1580/statisfy/actions/workflows/ci.yml)
+[![Docker](https://github.com/lolo1580/statisfy/actions/workflows/docker.yml/badge.svg)](https://github.com/lolo1580/statisfy/actions/workflows/docker.yml)
 
 **English** · [Français](README.fr.md)
 
@@ -113,6 +114,30 @@ docker compose logs -f statisfy    # logs
 docker compose up -d --build       # rebuild after a code change
 docker compose up -d               # recreate after a .env change
 ```
+
+### Pull the prebuilt image (GHCR)
+
+Every push to `main` and every `v*` tag publishes a multi-arch image
+(`linux/amd64`, `linux/arm64`) to the GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/lolo1580/statisfy:latest
+```
+
+To deploy it without building locally:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+> The package is **private** as long as the repository is private. Authenticate
+> once with a token that has the `read:packages` scope:
+> ```bash
+> echo "$CR_PAT" | docker login ghcr.io -u <user> --password-stdin
+> ```
+> To make the image public: GitHub → profile → *Packages* → `statisfy` →
+> *Package settings* → *Change visibility*.
 
 ## ⚙️ Configuration
 
