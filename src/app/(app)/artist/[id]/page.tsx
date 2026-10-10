@@ -164,10 +164,9 @@ export default async function ArtistPage({
                         {track.albumName ?? "—"}
                       </p>
                     </div>
-                    <div className="text-right text-xs text-muted">
-                      <div>{formatNumber(track.plays, locale)}×</div>
-                      <div>{formatDuration(track.msPlayed)}</div>
-                    </div>
+                    <span className="text-xs text-muted">
+                      {formatDuration(track.msPlayed)}
+                    </span>
                   </Link>
                 </li>
               ))}
@@ -193,9 +192,7 @@ export default async function ArtistPage({
                     {album.name}
                   </p>
                   <p className="truncate text-xs text-muted">
-                    {t("dash.playsCount", {
-                      count: formatNumber(album.plays, locale),
-                    })}
+                    {formatDuration(album.msPlayed)}
                   </p>
                 </div>
               ))}

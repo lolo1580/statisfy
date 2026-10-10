@@ -5,6 +5,15 @@ Toutes les évolutions notables de **Statisfy** sont documentées dans ce fichie
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [0.9.4] — 2026-10-10
+
+### Modifié
+
+- **Classements** : le nombre d'écoutes (`N×`) est remplacé par le **temps
+  d'écoute** (min / h / j) sur le Tableau de bord, la page Classements, les pages
+  Artiste et Titre, le Récapitulatif, les Découvertes et la Recherche.
+  `formatDuration` affiche désormais aussi les jours (ex. « 2 j 5 h »).
+
 ## [0.9.3] — 2026-10-10
 
 ### Corrigé

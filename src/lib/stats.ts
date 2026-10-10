@@ -203,6 +203,7 @@ export type TopAlbum = {
   artistId: string
   artistName: string
   plays: number
+  msPlayed: number
   imageUrl: string | null
 }
 
@@ -241,6 +242,7 @@ export async function getTopAlbums(
         artistId: album.artist.id,
         artistName: album.artist.name,
         plays: g._count.albumId ?? 0,
+        msPlayed: g._sum.msPlayed ?? 0,
         imageUrl: album.imageUrl,
       },
     ]
@@ -576,7 +578,13 @@ export async function getTrackDetail(
 // --- Recherche --------------------------------------------------------------
 
 export type SearchResults = {
-  artists: Array<{ id: string; name: string; imageUrl: string | null; plays: number }>
+  artists: Array<{
+    id: string
+    name: string
+    imageUrl: string | null
+    plays: number
+    msPlayed: number
+  }>
   tracks: Array<{
     id: string
     name: string
@@ -614,9 +622,13 @@ export async function searchLibrary(
     by: ['artistId'],
     where: { userId, artistId: { in: artists.map((a) => a.id) } },
     _count: { artistId: true },
+    _sum: { msPlayed: true },
   })
   const playById = new Map(
     artistPlays.map((p) => [p.artistId, p._count.artistId]),
+  )
+  const msById = new Map(
+    artistPlays.map((p) => [p.artistId, p._sum.msPlayed ?? 0]),
   )
 
   return {
@@ -625,6 +637,7 @@ export async function searchLibrary(
       name: a.name,
       imageUrl: a.imageUrl,
       plays: playById.get(a.id) ?? 0,
+      msPlayed: msById.get(a.id) ?? 0,
     })),
     tracks: tracks.map((t) => ({
       id: t.id,
@@ -878,6 +891,7 @@ export type Rediscovery = {
   name: string
   imageUrl: string | null
   plays: number
+  msPlayed: number
   lastPlayed: Date | null
 }
 
@@ -903,6 +917,7 @@ export async function getRediscoveries(
       by: ["artistId"],
       where: { userId },
       _count: { artistId: true },
+      _sum: { msPlayed: true },
       _max: { playedAt: true },
     }),
   ])
@@ -929,6 +944,7 @@ export async function getRediscoveries(
         name: artist.name,
         imageUrl: artist.imageUrl,
         plays: c._count.artistId,
+        msPlayed: c._sum.msPlayed ?? 0,
         lastPlayed: c._max.playedAt ?? null,
       },
     ]

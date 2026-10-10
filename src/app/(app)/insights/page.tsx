@@ -6,7 +6,7 @@ import {
   getRediscoveries,
 } from "@/lib/stats";
 import { Badge, Card, Cover, EmptyState, SectionTitle } from "@/components/ui";
-import { formatDate, formatNumber } from "@/lib/format";
+import { formatDate, formatDuration, formatNumber } from "@/lib/format";
 import { getI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -101,7 +101,7 @@ export default async function InsightsPage() {
                     ) : null}
                   </div>
                   <span className="text-xs text-muted">
-                    {formatNumber(artist.plays, locale)}×
+                    {formatDuration(artist.msPlayed)}
                   </span>
                 </Link>
               </li>

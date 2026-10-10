@@ -3,8 +3,12 @@
 export function formatDuration(ms: number): string {
   if (!ms || ms < 0) return '0 min'
   const totalMinutes = Math.floor(ms / 60000)
-  const hours = Math.floor(totalMinutes / 60)
+  const days = Math.floor(totalMinutes / 1440)
+  const hours = Math.floor((totalMinutes % 1440) / 60)
   const minutes = totalMinutes % 60
+  if (days > 0) {
+    return hours === 0 ? `${days} j` : `${days} j ${hours} h`
+  }
   if (hours === 0) return `${minutes} min`
   if (minutes === 0) return `${hours} h`
   return `${hours} h ${String(minutes).padStart(2, '0')}`

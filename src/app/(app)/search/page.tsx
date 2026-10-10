@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { searchLibrary } from "@/lib/stats";
 import { Badge, Card, Cover, EmptyState, SectionTitle } from "@/components/ui";
-import { formatNumber } from "@/lib/format";
+import { formatDuration } from "@/lib/format";
 import { getI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export default async function SearchPage({
   searchParams,
 }: PageProps<"/search">) {
   const user = await getCurrentUser();
-  const { locale, t } = await getI18n();
+  const { t } = await getI18n();
   const sp = await searchParams;
   const query = typeof sp.q === "string" ? sp.q.trim() : "";
   const results = query
@@ -75,7 +75,7 @@ export default async function SearchPage({
                       <span className="min-w-0 flex-1 truncate text-sm font-medium">
                         {artist.name}
                       </span>
-                      <Badge>{formatNumber(artist.plays, locale)}×</Badge>
+                      <Badge>{formatDuration(artist.msPlayed)}</Badge>
                     </Link>
                   </li>
                 ))}

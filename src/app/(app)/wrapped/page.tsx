@@ -305,9 +305,7 @@ export default async function WrappedPage({
                         {artist.name}
                       </p>
                       <p className="truncate text-[10px] text-muted">
-                        {t("dash.playsCount", {
-                          count: formatNumber(artist.plays, locale),
-                        })}
+                        {formatDuration(artist.msPlayed)}
                       </p>
                     </Link>
                   ))}
@@ -354,7 +352,7 @@ export default async function WrappedPage({
                         </p>
                       </div>
                       <span className="text-xs text-muted">
-                        {formatNumber(track.plays, locale)}×
+                        {formatDuration(track.msPlayed)}
                       </span>
                     </Link>
                   </li>

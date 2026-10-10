@@ -182,7 +182,7 @@ export default async function DashboardPage({
                           </p>
                         </div>
                         <span className="text-xs text-muted">
-                          {formatNumber(track.plays, locale)}×
+                          {formatDuration(track.msPlayed)}
                         </span>
                       </Link>
                     </li>
@@ -225,7 +225,7 @@ export default async function DashboardPage({
                           ) : null}
                         </div>
                         <span className="text-xs text-muted">
-                          {formatNumber(artist.plays, locale)}×
+                          {formatDuration(artist.msPlayed)}
                         </span>
                       </Link>
                     </li>

@@ -4,7 +4,7 @@ import { getTopAlbums, getTopArtists, getTopTracks, type StatsRange } from "@/li
 import { RangeTabs, SourceFilter } from "@/components/range-tabs";
 import { parseRange, parseSource } from "@/lib/range";
 import { Badge, Card, Cover, EmptyState, SectionTitle } from "@/components/ui";
-import { formatDuration, formatNumber } from "@/lib/format";
+import { formatDuration } from "@/lib/format";
 import { getI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +24,7 @@ function href(
 
 export default async function TopPage({ searchParams }: PageProps<"/top">) {
   const user = await getCurrentUser();
-  const { locale, t } = await getI18n();
+  const { t } = await getI18n();
   const params = await searchParams;
   const parsed = parseRange(
     typeof params.range === "string" ? params.range : undefined,
@@ -80,10 +80,9 @@ export default async function TopPage({ searchParams }: PageProps<"/top">) {
                         {track.albumName ? ` — ${track.albumName}` : ""}
                       </p>
                     </div>
-                    <div className="text-right text-xs text-muted">
-                      <div>{formatNumber(track.plays, locale)}×</div>
-                      <div>{formatDuration(track.msPlayed)}</div>
-                    </div>
+                    <span className="text-xs text-muted">
+                      {formatDuration(track.msPlayed)}
+                    </span>
                   </Link>
                 </li>
               ))}
@@ -122,7 +121,7 @@ export default async function TopPage({ searchParams }: PageProps<"/top">) {
                         ) : null}
                       </div>
                       <span className="text-xs text-muted">
-                        {formatNumber(artist.plays, locale)}×
+                        {formatDuration(artist.msPlayed)}
                       </span>
                     </Link>
                   </li>
@@ -153,7 +152,7 @@ export default async function TopPage({ searchParams }: PageProps<"/top">) {
                           {album.artistName}
                         </p>
                       </div>
-                      <Badge>{formatNumber(album.plays, locale)}×</Badge>
+                      <Badge>{formatDuration(album.msPlayed)}</Badge>
                     </Link>
                   </li>
                 ))}
