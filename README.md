@@ -281,14 +281,15 @@ entités, métadonnées et genres.
 - Comparateur de deux périodes côte à côte.
 - Format d'image « story » (1080×1920) pour le récapitulatif.
 - Mode multi-utilisateurs avancé (partage de tableaux de bord).
-- Tests automatisés + CI GitHub Actions.
+- Tests automatisés.
 
 ## ⚖️ Licence et note légale
 
 Statisfy est une **réécriture indépendante** : aucun code de *Your Spotify*
-(licence GPL-3.0) n'a été copié. Le projet est distribué sous licence **MIT**
-(voir [`LICENSE`](LICENSE)) — vous êtes libre de le modifier et de le
-redistribuer.
+n'a été copié. Le projet est distribué sous **GNU General Public License v3.0**
+(voir [`LICENSE`](LICENSE)) : vous pouvez le modifier et le redistribuer, à
+condition que les œuvres dérivées restent sous la même licence (copyleft) et
+que leur code source soit fourni.
 
 Les conditions d'utilisation de l'API Spotify et le respect de ses marques
 restent de votre responsabilité.

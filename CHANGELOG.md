@@ -5,6 +5,13 @@ Toutes les évolutions notables de **Statisfy** sont documentées dans ce fichie
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [0.10.0] — 2026-10-10
+
+### Modifié
+
+- **Licence** : passage de MIT à **GNU GPL v3.0** (copyleft). Voir
+  [`LICENSE`](LICENSE) et le champ `license` de `package.json`.
+
 ## [0.9.8] — 2026-10-10
 
 ### Corrigé
