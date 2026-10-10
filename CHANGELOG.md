@@ -5,6 +5,22 @@ Toutes les évolutions notables de **Statisfy** sont documentées dans ce fichie
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [0.11.0-preview.1] — 2026-10-10
+
+> Version **preview** (pré-version) : image Docker
+> `ghcr.io/lolo1580/statisfy:v0.11.0-preview.1` (et l'alias `:preview`).
+
+### Ajouté
+
+- **Image GHCR configurable** : variable `STATISFY_IMAGE` dans `.env`
+  (documentée dans `.env.example`) et `docker-compose.yml` qui l'utilise
+  (`image: ${STATISFY_IMAGE:-ghcr.io/lolo1580/statisfy:latest}`).
+
+### Modifié
+
+- Workflow Docker : tag d'image **`preview`** pour les tags de pré-version ;
+  le tag `major.minor` n'est plus généré pour les pré-versions.
+
 ## [0.10.2] — 2026-10-10
 
 ### Ajouté

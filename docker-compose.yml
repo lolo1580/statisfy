@@ -1,8 +1,9 @@
 services:
   statisfy:
-    # Image publiée par la CI (GHCR). Pour construire en local, supprimez cette
-    # ligne et gardez `build: .` ci-dessous.
-    image: ghcr.io/lolo1580/statisfy:latest
+    # Image publiée par la CI (GHCR). Définissez STATISFY_IMAGE dans .env pour
+    # cibler un tag précis. Pour construire en local, supprimez cette ligne et
+    # gardez `build: .` ci-dessous.
+    image: ${STATISFY_IMAGE:-ghcr.io/lolo1580/statisfy:latest}
     build: .
     container_name: statisfy
     restart: unless-stopped
