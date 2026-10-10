@@ -192,6 +192,7 @@ Dans les deux cas, l'import est **idempotent** (relancer ne crée pas de doublon
 | --- | --- |
 | `GET /api/sync` | Synchronise les connexions dues. Auth : `Bearer $SYNC_TOKEN` ou session admin. |
 | `POST /api/backup` | Sauvegarde la base SQLite. Auth : `Bearer $SYNC_TOKEN` ou session admin. |
+| `POST /api/import/your-spotify` | Importe un dump *Your Spotify* (archive `.zip`) depuis un serveur. Auth : `Bearer $SYNC_TOKEN` ou session admin. |
 | `GET /api/export` | Export CSV de l'historique de l'utilisateur connecté. |
 | `GET /api/wrapped/image` | Image PNG du récapitulatif (`?year=2026&month=10`). |
 | `GET /oauth/spotify/callback` | Retour OAuth Spotify (à déclarer côté Spotify). |
@@ -202,6 +203,18 @@ Exemple de cron externe :
 ```bash
 curl -X POST -H "Authorization: Bearer $SYNC_TOKEN" https://mon-domaine/api/sync
 ```
+
+Importer un dump *Your Spotify* sans passer par le navigateur (utile quand le
+serveur source n'est joignable qu'en SSH) :
+
+```bash
+curl -X POST -H "Authorization: Bearer $SYNC_TOKEN" \
+  --data-binary @ys-dump.zip \
+  https://mon-domaine/api/import/your-spotify
+```
+
+Par défaut le dump est attribué au premier compte administrateur ; utilisez
+`?email=vous@exemple.com` pour cibler un autre compte. L'import est idempotent.
 
 ## 🗂️ Structure du projet
 

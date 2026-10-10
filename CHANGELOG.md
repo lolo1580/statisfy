@@ -5,6 +5,17 @@ Toutes les évolutions notables de **Statisfy** sont documentées dans ce fichie
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [0.6.0] — 2026-10-10
+
+### Ajouté
+
+- **Import *Your Spotify* par HTTP** : nouvelle route
+  `POST /api/import/your-spotify` acceptant l'archive `.zip` du dump
+  (`Authorization: Bearer $SYNC_TOKEN`, ou session admin). Permet d'importer
+  depuis un serveur joignable uniquement en SSH — sans upload navigateur ni
+  transfert de fichier. Cible le premier administrateur (ou `?email=`) ;
+  import idempotent.
+
 ## [0.5.0] — 2026-10-10
 
 ### Modifié
