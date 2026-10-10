@@ -153,7 +153,7 @@ export async function importYourSpotify(
   }
 }
 
-/** Complète les pochettes / photos d'artistes manquantes via Deezer. */
+/** Complète les pochettes / photos d'artistes manquantes via le catalogue Spotify. */
 export async function enrichImages(
   _state: SettingsState,
   _formData: FormData,

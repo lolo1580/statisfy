@@ -175,7 +175,7 @@ export const en: Dictionary = {
   "settings.enrich": "Enrich artwork",
   "settings.enriching": "Enriching…",
   "settings.enrichHint":
-    "Completes missing album covers and artist photos (especially after an import) via the public Deezer API.",
+    "Completes missing album covers and artist photos (especially after an import) using the Spotify catalog.",
   "settings.sources": "Connected sources",
   "settings.noSources": "No source yet.",
   "settings.lastSync": "Last sync: {date}",

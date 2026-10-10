@@ -172,7 +172,7 @@ export const fr: Dictionary = {
   "settings.enrich": "Enrichir les visuels",
   "settings.enriching": "Enrichissement…",
   "settings.enrichHint":
-    "Complète les pochettes d'albums et les photos d'artistes manquantes (notamment après un import) via l'API publique Deezer.",
+    "Complète les pochettes d'albums et les photos d'artistes manquantes (notamment après un import) via le catalogue Spotify.",
   "settings.sources": "Sources connectées",
   "settings.noSources": "Aucune source pour le moment.",
   "settings.lastSync": "Dernière synchro : {date}",

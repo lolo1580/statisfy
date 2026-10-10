@@ -125,7 +125,7 @@ async function main() {
     console.log(`🎵 ${existing} écoutes déjà présentes, ingestion ignorée.`)
   }
 
-  // Les fichiers Spotify ne contiennent pas d'image : on complète via Deezer.
+  // Les fichiers Spotify ne contiennent pas d'image : on complète via Spotify.
   const enriched = await enrichMissingImages(user.id, { max: 60 })
   console.log(
     `🖼️  Visuels : ${enriched.albumsUpdated}/${enriched.albumsChecked} album(s), ${enriched.artistsUpdated}/${enriched.artistsChecked} artiste(s).`,

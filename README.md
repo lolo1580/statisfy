@@ -4,8 +4,8 @@ Tableau de bord **auto-hébergé** pour explorer vos statistiques d'écoute Spot
 Réécriture libre et moderne, inspirée de l'idée de *Your Spotify*, mais pensée
 pour être **simple à déployer**, **rapide** et **agréable à explorer**.
 
-> Statisfy n'est affilié ni à Spotify ni à Deezer. Les marques citées
-> appartiennent à leurs propriétaires respectifs.
+> Statisfy n'est pas affilié à Spotify. Les marques citées appartiennent à
+> leurs propriétaires respectifs.
 > Voir le [journal des modifications](CHANGELOG.md).
 
 ## ✨ Fonctionnalités
@@ -13,7 +13,7 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
 - **Source Spotify** : connexion OAuth (écoutes récentes + genres) et import de
   vos exports de données (privacy / extended streaming history).
 - **Pochettes automatiques** : les visuels manquants (surtout après un import)
-  sont complétés via l'API publique Deezer, sans clé API.
+  sont complétés via le **catalogue Spotify**.
 - **Statistiques riches** : temps d'écoute, top titres / artistes / albums,
   genres pondérés, écoute quotidienne, répartition horaire, dernières écoutes.
 - **Exploration** : pages détail **artiste** et **titre**, **recherche** dans la
@@ -247,5 +247,5 @@ Statisfy est une **réécriture indépendante** : aucun code de *Your Spotify*
 (voir [`LICENSE`](LICENSE)) — vous êtes libre de le modifier et de le
 redistribuer.
 
-Les conditions d'utilisation des API tierces (Spotify, Deezer) et le respect de
-leurs marques restent de votre responsabilité.
+Les conditions d'utilisation de l'API Spotify et le respect de ses marques
+restent de votre responsabilité.

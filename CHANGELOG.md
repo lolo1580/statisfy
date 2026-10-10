@@ -5,6 +5,15 @@ Toutes les évolutions notables de **Statisfy** sont documentées dans ce fichie
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [0.5.0] — 2026-10-10
+
+### Modifié
+
+- **Enrichissement des visuels** : remplacement de l'API Deezer par le
+  **catalogue Spotify** (flux `client_credentials`, réutilise
+  `SPOTIFY_CLIENT_ID`/`SPOTIFY_CLIENT_SECRET`). Plus aucune dépendance à un
+  service tiers autre que Spotify.
+
 ## [0.4.0] — 2026-10-10
 
 ### Ajouté

@@ -164,13 +164,15 @@ export default async function SettingsPage({
         <YourSpotifyImportForm />
       </Card>
 
-      <Card>
-        <SectionTitle
-          title={t("settings.visuals")}
-          subtitle={t("settings.visualsSubtitle")}
-        />
-        <EnrichButton />
-      </Card>
+      {spotify.configured ? (
+        <Card>
+          <SectionTitle
+            title={t("settings.visuals")}
+            subtitle={t("settings.visualsSubtitle")}
+          />
+          <EnrichButton />
+        </Card>
+      ) : null}
 
       <Card>
         <SectionTitle title={t("settings.sources")} />
