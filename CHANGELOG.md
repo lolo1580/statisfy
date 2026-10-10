@@ -5,6 +5,15 @@ Toutes les évolutions notables de **Statisfy** sont documentées dans ce fichie
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [0.9.3] — 2026-10-10
+
+### Corrigé
+
+- **Graphe « Évolution de l'écoute » en mode « Tout »** : il n'affichait que les
+  90 derniers jours à cause d'une fenêtre par défaut. Il couvre désormais tout
+  l'historique, depuis la première écoute. Le graphe horaire agrège lui aussi
+  tout l'historique dans ce mode.
+
 ## [0.9.2] — 2026-10-10
 
 ### Modifié

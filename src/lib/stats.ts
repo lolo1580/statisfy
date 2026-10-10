@@ -40,7 +40,7 @@ function buildWhere(userId: string, range: StatsRange): Prisma.PlayWhereInput {
   return where
 }
 
-const DEFAULT_WINDOW_DAYS = 90
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type Overview = {
   totalPlays: number
@@ -314,12 +314,20 @@ export async function getDailyStats(
   timeZone: string,
   range: StatsRange,
 ): Promise<DailyStat[]> {
-  const days = range.days ?? DEFAULT_WINDOW_DAYS
-  const since = range.from ?? new Date(Date.now() - days * 24 * 60 * 60 * 1000)
-  const where: Prisma.PlayWhereInput = {
-    ...buildWhere(userId, { ...range, days: null }),
-    playedAt: { gte: since, ...(range.to ? { lt: range.to } : {}) },
-  }
+  const baseWhere = buildWhere(userId, { ...range, days: null })
+
+  // Fenêtre basse : borne `from` explicite, fenêtre glissante `days`, ou
+  // tout l'historique (aucune borne) quand `days` est `null`.
+  const since =
+    range.from ??
+    (range.days ? new Date(Date.now() - range.days * DAY_MS) : null)
+  const where: Prisma.PlayWhereInput = since
+    ? {
+        ...baseWhere,
+        playedAt: { gte: since, ...(range.to ? { lt: range.to } : {}) },
+      }
+    : baseWhere
+
   const plays = await prisma.play.findMany({
     where,
     select: { playedAt: true, msPlayed: true },
@@ -328,13 +336,33 @@ export async function getDailyStats(
   const offset = getTimezoneOffsetMs(timeZone)
   const buckets = new Map<string, DailyStat>()
 
-  // Pré-remplit tous les jours (heure locale) afin d'avoir un graphe continu.
-  for (let i = days - 1; i >= 0; i -= 1) {
-    const key = dayKey(
-      new Date(Date.now() - i * 24 * 60 * 60 * 1000),
-      timeZone,
-      offset,
-    )
+  // Jour de départ : début de fenêtre, ou premier jour d'écoute pour « tout ».
+  let startMs = Date.now()
+  if (range.from) {
+    startMs = range.from.getTime()
+  } else if (range.days) {
+    startMs = Date.now() - (range.days - 1) * DAY_MS
+  } else {
+    for (const play of plays) {
+      const time = play.playedAt.getTime()
+      if (time < startMs) startMs = time
+    }
+  }
+
+  // Pré-remplit chaque jour (heure locale) afin d'avoir un graphe continu.
+  const startDay = dayKey(new Date(startMs), timeZone, offset)
+  const endDay = dayKey(new Date(), timeZone, offset)
+  const totalDays = Math.max(
+    1,
+    Math.round(
+      (Date.parse(`${endDay}T00:00:00Z`) - Date.parse(`${startDay}T00:00:00Z`)) /
+        DAY_MS,
+    ) + 1,
+  )
+  for (let i = 0; i < totalDays; i += 1) {
+    const key = new Date(Date.parse(`${startDay}T00:00:00Z`) + i * DAY_MS)
+      .toISOString()
+      .slice(0, 10)
     buckets.set(key, { day: key, msPlayed: 0, plays: 0 })
   }
 
@@ -356,12 +384,16 @@ export async function getHourlyStats(
   timeZone: string,
   range: StatsRange,
 ): Promise<HourStat[]> {
-  const days = range.days ?? DEFAULT_WINDOW_DAYS
-  const since = range.from ?? new Date(Date.now() - days * 24 * 60 * 60 * 1000)
-  const where: Prisma.PlayWhereInput = {
-    ...buildWhere(userId, { ...range, days: null }),
-    playedAt: { gte: since, ...(range.to ? { lt: range.to } : {}) },
-  }
+  const baseWhere = buildWhere(userId, { ...range, days: null })
+  const since =
+    range.from ??
+    (range.days ? new Date(Date.now() - range.days * DAY_MS) : null)
+  const where: Prisma.PlayWhereInput = since
+    ? {
+        ...baseWhere,
+        playedAt: { gte: since, ...(range.to ? { lt: range.to } : {}) },
+      }
+    : baseWhere
   const plays = await prisma.play.findMany({
     where,
     select: { playedAt: true },
