@@ -3,7 +3,7 @@ import 'server-only'
 import { prisma } from '../db'
 import { decryptJson, encryptJson } from '../crypto'
 import { getAdapter } from '../sources/registry'
-import { parseSpotifyHistory } from '../sources/importer'
+import { parseSpotifyHistoryFiles } from '../sources/importer'
 import type { RawPlay } from '../sources/types'
 import { ingestPlays, type IngestResult } from './ingest'
 
@@ -95,23 +95,17 @@ export async function runSyncForConnection(
   }
 }
 
-/** Importe un ou plusieurs exports d'historique Spotify. */
+/** Importe un ou plusieurs exports d'historique Spotify (JSON ou ZIP). */
 export async function runImport(
   userId: string,
-  files: Array<{ name: string; text: string }>,
-): Promise<IngestResult> {
+  files: Array<{ name: string; data: Uint8Array }>,
+): Promise<IngestResult & { files: number }> {
   const job = await prisma.job.create({
     data: { userId, type: 'import', status: 'running', startedAt: new Date() },
   })
 
   try {
-    let plays: RawPlay[] = []
-    for (const file of files) {
-      if (file.name.toLowerCase().endsWith('.json')) {
-        plays = plays.concat(parseSpotifyHistory(file.text))
-      }
-    }
-
+    const { plays, files: parsedFiles } = parseSpotifyHistoryFiles(files)
     const result = await ingestPlays(userId, plays)
 
     await prisma.job.update({
@@ -124,7 +118,7 @@ export async function runImport(
         finishedAt: new Date(),
       },
     })
-    return result
+    return { ...result, files: parsedFiles }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erreur inconnue'
     await prisma.job.update({

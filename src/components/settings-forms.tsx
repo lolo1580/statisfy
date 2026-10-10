@@ -63,7 +63,7 @@ export function ImportForm() {
       <input
         type="file"
         name="files"
-        accept=".json,application/json"
+        accept=".json,.zip,application/json,application/zip"
         multiple
         className="block w-full cursor-pointer rounded-lg border border-dashed border-border bg-surface-2 px-3 py-6 text-sm text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent-soft file:px-3 file:py-1.5 file:text-accent"
       />

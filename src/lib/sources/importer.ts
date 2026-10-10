@@ -1,9 +1,64 @@
 import 'server-only'
 
+import { unzipSync } from 'fflate'
 import type { RawPlay } from './types'
 
+export type HistoryFile = { name: string; data: Uint8Array }
+
+export type HistoryParseResult = {
+  plays: RawPlay[]
+  /** Nombre de fichiers d'historique effectivement exploités. */
+  files: number
+}
+
 /**
- * Analyse des exports de données Spotify.
+ * Analyse un lot de fichiers de l'export de données Spotify.
+ *
+ * Accepte les `.json` (ou JSONL) ainsi que l'archive `.zip` livrée par Spotify
+ * (« Extended streaming history »), qui contient plusieurs fichiers
+ * `Streaming_History_Audio_*.json`.
+ */
+export function parseSpotifyHistoryFiles(files: HistoryFile[]): HistoryParseResult {
+  const plays: RawPlay[] = []
+  let parsed = 0
+
+  const collect = (name: string, data: Uint8Array): void => {
+    const rows = parseSpotifyHistory(decode(data))
+    if (rows.length > 0) {
+      plays.push(...rows)
+      parsed += 1
+    }
+  }
+
+  for (const file of files) {
+    const lower = file.name.toLowerCase()
+    if (lower.endsWith('.zip')) {
+      try {
+        const entries = unzipSync(file.data)
+        for (const [path, bytes] of Object.entries(entries)) {
+          if (path.endsWith('/')) continue
+          if (!path.toLowerCase().endsWith('.json')) continue
+          collect(path, bytes)
+        }
+      } catch {
+        // archive illisible : ignorée
+      }
+      continue
+    }
+    if (lower.endsWith('.json') || lower.endsWith('.jsonl')) {
+      collect(file.name, file.data)
+    }
+  }
+
+  return { plays, files: parsed }
+}
+
+function decode(data: Uint8Array): string {
+  return new TextDecoder().decode(data)
+}
+
+/**
+ * Analyse un export de données Spotify.
  *
  * Deux formats sont reconnus automatiquement :
  * - « Extended streaming history » : `Streaming_History_Audio_*.json`

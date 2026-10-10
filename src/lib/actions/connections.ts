@@ -10,7 +10,6 @@ import {
   mapYourSpotifyData,
 } from "../sources/your-spotify";
 import { SETTING_ALLOW_REGISTRATION, setSetting } from "../settings";
-import type { IngestResult } from "../sync/ingest";
 import { getI18n } from "@/i18n/server";
 
 export type SettingsState =
@@ -70,17 +69,17 @@ export async function importHistory(
     return { error: t("err.selectFile") };
   }
 
-  const payload: Array<{ name: string; text: string }> = [];
+  const payload: Array<{ name: string; data: Uint8Array }> = [];
   for (const file of files) {
-    if (!file.name.toLowerCase().endsWith(".json")) continue;
-    payload.push({ name: file.name, text: await file.text() });
-  }
-  if (payload.length === 0) {
-    return { error: t("err.noJson") };
+    payload.push({
+      name: file.name,
+      data: new Uint8Array(await file.arrayBuffer()),
+    });
   }
 
   try {
-    const result: IngestResult = await runImport(user.id, payload);
+    const result = await runImport(user.id, payload);
+    if (result.total === 0) return { error: t("err.noHistory") };
 
     // Complète les pochettes manquantes (les imports n'en contiennent pas).
     let enriched = 0;
@@ -99,6 +98,7 @@ export async function importHistory(
         t("msg.importDone", {
           inserted: result.inserted,
           total: result.total,
+          files: result.files,
         }) + (enriched ? t("msg.importDoneVisuals", { count: enriched }) : ""),
     };
   } catch (error) {

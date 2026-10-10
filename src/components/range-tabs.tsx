@@ -5,6 +5,8 @@ import { useI18n } from "@/components/i18n-provider";
 
 export const RANGES = [
   { value: "today", key: "range.today" },
+  { value: "week", key: "range.week" },
+  { value: "month", key: "range.month" },
   { value: "7", key: "range.7" },
   { value: "30", key: "range.30" },
   { value: "90", key: "range.90" },
@@ -41,7 +43,7 @@ export function RangeTabs({
 }) {
   const { t } = useI18n();
   return (
-    <div className="inline-flex rounded-xl border border-border bg-surface/70 p-1">
+    <div className="inline-flex flex-wrap rounded-xl border border-border bg-surface/70 p-1">
       {RANGES.map((range) => {
         const active = range.value === current;
         return (
@@ -74,7 +76,7 @@ export function SourceFilter({
 }) {
   const { t } = useI18n();
   return (
-    <div className="inline-flex rounded-xl border border-border bg-surface/70 p-1">
+    <div className="inline-flex flex-wrap rounded-xl border border-border bg-surface/70 p-1">
       {SOURCES.map((source) => {
         const value = source.value === "all" ? null : source.value;
         const active = (current ?? "all") === source.value;

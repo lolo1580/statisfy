@@ -150,10 +150,24 @@ Toutes les variables sont documentées dans [`.env.example`](.env.example).
 1. Demandez vos données sur
    [Spotify → Confidentialité](https://www.spotify.com/account/privacy/)
    (« Extended streaming history » recommandé).
-2. Dans **Réglages → Importer**, déposez les fichiers
-   `Streaming_History_Audio_*.json` (jusqu'à 128 Mo par requête). Les pochettes
-   manquantes sont ensuite complétées automatiquement.
+2. Dans **Réglages → Importer un historique Spotify**, déposez l'archive `.zip`
+   reçue de Spotify, ou les fichiers `Streaming_History_Audio_*.json`
+   (jusqu'à 128 Mo par requête). Les pochettes manquantes sont ensuite
+   complétées automatiquement.
 3. L'import est **idempotent** : relancer un même fichier ne crée pas de doublon.
+
+Pour les gros historiques (plusieurs années), préférez la ligne de commande ou
+l'API HTTP (pas de limite navigateur) :
+
+```bash
+# en ligne de commande, sur le serveur où se trouve l'export
+pnpm import:spotify-history ~/Téléchargements/my_spotify_data.zip --email vous@exemple.com
+
+# via l'API (voir « POST /api/import/spotify-history » plus bas)
+curl --user 'vous@exemple.com:motdepasse' \
+  --data-binary @my_spotify_data.zip \
+  https://mon-domaine/api/import/spotify-history
+```
 
 ### Migration depuis *Your Spotify*
 
@@ -192,6 +206,7 @@ Dans les deux cas, l'import est **idempotent** (relancer ne crée pas de doublon
 | --- | --- |
 | `GET /api/sync` | Synchronise les connexions dues. Auth : `Bearer $SYNC_TOKEN` ou session admin. |
 | `POST /api/backup` | Sauvegarde la base SQLite. Auth : `Bearer $SYNC_TOKEN` ou session admin. |
+| `POST /api/import/spotify-history` | Importe un export Spotify (`.zip` « Extended streaming history » ou `.json`). Auth : `Bearer $SYNC_TOKEN`, HTTP Basic ou session admin. |
 | `POST /api/import/your-spotify` | Importe un dump *Your Spotify* (archive `.zip`) depuis un serveur. Auth : `Bearer $SYNC_TOKEN`, HTTP Basic (`-u email:motdepasse`) ou session admin. |
 | `GET /api/export` | Export CSV de l'historique de l'utilisateur connecté. |
 | `GET /api/wrapped/image` | Image PNG du récapitulatif (`?year=2026&month=10`). |

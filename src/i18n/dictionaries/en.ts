@@ -48,6 +48,8 @@ export const en: Dictionary = {
 
   // Range & source filters
   "range.today": "Today",
+  "range.week": "Week",
+  "range.month": "Month",
   "range.7": "7d",
   "range.30": "30d",
   "range.90": "90d",
@@ -168,7 +170,7 @@ export const en: Dictionary = {
   "settings.import": "Import Spotify history",
   "settings.importSubtitle": "From your Spotify privacy data",
   "settings.importHint":
-    "Files Streaming_History_Audio_*.json (Extended) or StreamingHistory*.json. Multiple files accepted.",
+    "Spotify data export (.zip) or the Streaming_History_Audio_*.json / StreamingHistory*.json files. Multiple files accepted.",
   "settings.importCta": "Import",
   "settings.importing": "Importing…",
   "settings.visuals": "Artwork",
@@ -196,12 +198,13 @@ export const en: Dictionary = {
   // Settings / connection action messages
   "msg.syncDone": "Sync done: {count} new play(s).",
   "msg.importDone":
-    "Import done: {inserted} play(s) imported out of {total} read.",
+    "Import done: {inserted} play(s) imported out of {total} read ({files} file(s)).",
   "msg.importDoneVisuals": " {count} artwork added.",
   "msg.enrichDone":
     "Artwork enriched: {albums}/{albumsChecked} album(s) and {artists}/{artistsChecked} artist(s).",
   "err.selectFile": "Select at least one JSON file.",
   "err.noJson": "No .json file recognised.",
+  "err.noHistory": "No playable history found in the selected files.",
   "err.importFailed": "Import failed.",
   "err.syncFailed": "Sync failed.",
   "err.connectionNotFound": "Connection not found.",

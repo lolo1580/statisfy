@@ -44,7 +44,9 @@ export const fr: Dictionary = {
   "autherr.required": "Adresse e-mail et mot de passe requis.",
 
   // Range & source filters
-  "range.today": "Aujourd'hui",
+  "range.today": "Auj.",
+  "range.week": "Sem.",
+  "range.month": "Mois",
   "range.7": "7 j",
   "range.30": "30 j",
   "range.90": "90 j",
@@ -165,7 +167,7 @@ export const fr: Dictionary = {
   "settings.import": "Importer un historique Spotify",
   "settings.importSubtitle": "Depuis vos données de confidentialité Spotify",
   "settings.importHint":
-    "Fichiers Streaming_History_Audio_*.json (Extended) ou StreamingHistory*.json. Plusieurs fichiers acceptés.",
+    "Export de données Spotify (.zip) ou les fichiers Streaming_History_Audio_*.json / StreamingHistory*.json. Plusieurs fichiers acceptés.",
   "settings.importCta": "Importer",
   "settings.importing": "Import en cours…",
   "settings.visuals": "Visuels",
@@ -193,12 +195,13 @@ export const fr: Dictionary = {
   // Settings / connection action messages
   "msg.syncDone": "Synchronisation terminée : {count} nouvelle(s) écoute(s).",
   "msg.importDone":
-    "Import terminé : {inserted} écoute(s) importée(s) sur {total} lue(s).",
+    "Import terminé : {inserted} écoute(s) importée(s) sur {total} lue(s) ({files} fichier(s)).",
   "msg.importDoneVisuals": " {count} visuel(s) ajouté(s).",
   "msg.enrichDone":
     "Visuels enrichis : {albums}/{albumsChecked} album(s) et {artists}/{artistsChecked} artiste(s).",
   "err.selectFile": "Sélectionnez au moins un fichier JSON.",
   "err.noJson": "Aucun fichier .json reconnu.",
+  "err.noHistory": "Aucun historique exploitable dans les fichiers sélectionnés.",
   "err.importFailed": "Échec de l'import.",
   "err.syncFailed": "Échec de la synchronisation.",
   "err.connectionNotFound": "Connexion introuvable.",

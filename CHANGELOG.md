@@ -5,6 +5,26 @@ Toutes les évolutions notables de **Statisfy** sont documentées dans ce fichie
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [0.9.0] — 2026-10-10
+
+### Ajouté
+
+- **Import de l'historique Spotify complet** : la section « Importer un
+  historique Spotify » accepte désormais l'archive `.zip` livrée par Spotify
+  (« Extended streaming history »), en plus des fichiers `.json`. Nouvel
+  endpoint `POST /api/import/spotify-history` et commande
+  `pnpm import:spotify-history` (fichier ou dossier) pour les gros historiques.
+  Les podcasts sont ignorés ; l'import reste idempotent.
+- **Filtres « Cette semaine » et « Ce mois »** dans les sélecteurs de période
+  (semaine ISO à partir du lundi, mois calendaire), en complément de
+  « Aujourd'hui ».
+
+### Modifié
+
+- L'authentification des endpoints d'import (jeton `SYNC_TOKEN`, HTTP Basic ou
+  session admin) est factorisée dans un helper partagé
+  (`src/lib/api/import-target.ts`).
+
 ## [0.8.0] — 2026-10-10
 
 ### Ajouté
