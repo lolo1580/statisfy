@@ -162,6 +162,7 @@ export default async function DashboardPage({
                 title={t("dash.topTracks")}
                 items={topTracks}
                 query={query}
+                empty={t("dash.noTracks")}
               />
             </Card>
 
@@ -170,6 +171,7 @@ export default async function DashboardPage({
                 title={t("dash.topArtists")}
                 items={topArtists}
                 query={query}
+                empty={t("dash.noArtists")}
               />
             </Card>
 
@@ -178,6 +180,7 @@ export default async function DashboardPage({
                 title={t("dash.genres")}
                 subtitle={t("dash.genresWeighted")}
                 items={topGenres}
+                empty={t("dash.genresUnavailable")}
               />
             </Card>
           </div>

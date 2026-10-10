@@ -5,6 +5,19 @@ Toutes les évolutions notables de **Statisfy** sont documentées dans ce fichie
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [0.9.6] — 2026-10-10
+
+### Ajouté
+
+- **Bascule « Écoutes / Temps » sur la page Classements** (Top titres, Top
+  artistes, Top albums), comme sur le Tableau de bord : switch par panneau qui
+  change l'affichage **et le tri**, instantanément. Panneaux de classement
+  mutualisés dans `src/components/ranking-panels.tsx`.
+
+### Modifié
+
+- **README** mis à jour : bascule écoutes/temps et graphiques interactifs.
+
 ## [0.9.5] — 2026-10-10
 
 ### Ajouté

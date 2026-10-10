@@ -18,6 +18,11 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
   sont complétés via le **catalogue Spotify**.
 - **Statistiques riches** : temps d'écoute, top titres / artistes / albums,
   genres pondérés, écoute quotidienne, répartition horaire, dernières écoutes.
+- **Bascule « écoutes / temps »** : sur les panneaux de classement (Tableau de
+  bord et Classements), un switch par panneau change l'affichage **et le tri**,
+  instantanément.
+- **Graphiques interactifs** : grille, axes (durées) et infobulle au survol
+  (date complète + temps d'écoute).
 - **Exploration** : pages détail **artiste** et **titre**, **recherche** dans la
   bibliothèque.
 - **Récapitulatif (« Wrapped »)** : synthèse par année ou par mois avec
