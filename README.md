@@ -131,13 +131,12 @@ docker compose pull
 docker compose up -d
 ```
 
-> The package is **private** as long as the repository is private. Authenticate
-> once with a token that has the `read:packages` scope:
+> With a **public repository** (as here) the image is public: `docker pull`
+> works without authentication. For a private repository/package,
+> authenticate once with a token that has the `read:packages` scope:
 > ```bash
 > echo "$CR_PAT" | docker login ghcr.io -u <user> --password-stdin
 > ```
-> To make the image public: GitHub → profile → *Packages* → `statisfy` →
-> *Package settings* → *Change visibility*.
 
 ## ⚙️ Configuration
 
