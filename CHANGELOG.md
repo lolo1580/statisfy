@@ -5,6 +5,16 @@ Toutes les évolutions notables de **Statisfy** sont documentées dans ce fichie
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [0.7.0] — 2026-10-10
+
+### Ajouté
+
+- **Prise en charge des écrans très larges (21:9 / 32:9)** : nouveaux points de
+  rupture Tailwind `3xl` (1920 px) et `4xl` (2560 px). Le conteneur s'élargit
+  progressivement jusqu'à 2000 px et plusieurs grilles se densifient sur
+  ultra-large : classements du Tableau de bord en 3 colonnes, Réglages et
+  Découvertes sur 2 colonnes.
+
 ## [0.6.0] — 2026-10-10
 
 ### Ajouté

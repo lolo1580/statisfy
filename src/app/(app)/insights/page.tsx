@@ -32,6 +32,7 @@ export default async function InsightsPage() {
         {t("insights.title")}
       </h1>
 
+      <div className="grid gap-6 3xl:grid-cols-2 3xl:items-start">
       <Card>
         <SectionTitle
           title={t("insights.obsessions")}
@@ -108,6 +109,7 @@ export default async function InsightsPage() {
           </ol>
         )}
       </Card>
+      </div>
 
       {discoveredThisMonth.count > 0 ? (
         <Card>

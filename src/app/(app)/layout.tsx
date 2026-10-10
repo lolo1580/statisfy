@@ -17,7 +17,7 @@ export default async function AppLayout({
   const { locale, t } = await getI18n();
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-6 sm:px-8">
+    <div className="mx-auto w-full max-w-6xl px-5 py-6 sm:px-8 xl:max-w-7xl 3xl:max-w-[1720px] 4xl:max-w-[2000px]">
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <Link
           href="/dashboard"

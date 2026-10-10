@@ -80,6 +80,7 @@ export default async function SettingsPage({
         </div>
       ) : null}
 
+      <div className="grid gap-6 3xl:grid-cols-2 3xl:items-start">
       <Card>
         <SectionTitle
           title={t("settings.account")}
@@ -303,6 +304,7 @@ export default async function SettingsPage({
           </div>
         </Card>
       ) : null}
+      </div>
     </div>
   );
 }
