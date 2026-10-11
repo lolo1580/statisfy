@@ -116,12 +116,17 @@ export function AreaChart({
   const H = 100;
   const step = n > 1 ? W / (n - 1) : W;
   const { max, ticks } = axisTicks(Math.max(...points.map((p) => p.value), 1));
+  const single = n === 1;
   const coords = points.map((p, i) => {
     const x = i * step;
     const y = H - (p.value / max) * H;
     return [x, y] as const;
   });
-  const line = smoothLine(coords);
+  // Un point unique : bande plate sur toute la largeur (sinon l'aire se referme
+  // en triangle trompeur — ex. « Écoute quotidienne » sur un seul jour).
+  const line = single
+    ? `M0,${coords[0][1].toFixed(2)} L${W},${coords[0][1].toFixed(2)}`
+    : smoothLine(coords);
   const area = `${line} L${W},${H} L0,${H} Z`;
 
   const labelIndexes = (() => {
@@ -136,7 +141,7 @@ export function AreaChart({
   })();
 
   const hovered = hover != null ? points[hover] : null;
-  const hoverX = hover != null ? ((hover * step) / W) * 100 : 0;
+  const hoverX = hover != null ? (single ? 50 : ((hover * step) / W) * 100) : 0;
   const hoverY = hover != null ? (coords[hover][1] / H) * 100 : 0;
 
   const onMove = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -238,7 +243,7 @@ export function AreaChart({
           <span
             key={idx}
             className="absolute -translate-x-1/2 whitespace-nowrap text-[10px] text-muted"
-            style={{ left: `${((idx * step) / W) * 100}%` }}
+            style={{ left: n === 1 ? "50%" : `${((idx * step) / W) * 100}%` }}
           >
             {points[idx].label}
           </span>
@@ -452,7 +457,7 @@ export function CompareChart({
           <span
             key={idx}
             className="absolute -translate-x-1/2 whitespace-nowrap text-[10px] text-muted"
-            style={{ left: `${((idx * step) / W) * 100}%` }}
+            style={{ left: n === 1 ? "50%" : `${((idx * step) / W) * 100}%` }}
           >
             {points[idx].label}
           </span>

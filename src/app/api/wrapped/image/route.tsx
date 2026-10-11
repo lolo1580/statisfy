@@ -46,7 +46,6 @@ type StatLine = { plays: string; artists: string; tracks: string };
 
 type CardProps = {
   user: string;
-  host: string;
   locale: string;
   periodLabel: string;
   overview: Overview;
@@ -211,7 +210,7 @@ function Header({ periodLabel }: { periodLabel: string }) {
   );
 }
 
-function Footer({ user, host }: { user: string; host: string }) {
+function Footer({ user }: { user: string }) {
   return (
     <div
       style={{
@@ -222,7 +221,6 @@ function Footer({ user, host }: { user: string; host: string }) {
       }}
     >
       <span style={{ display: "flex" }}>{user}</span>
-      <span style={{ display: "flex" }}>{host}</span>
       <span style={{ display: "flex" }}>Spotify</span>
     </div>
   );
@@ -269,7 +267,7 @@ function Hero({
 
 /** Carte carrée 1080×1080 (par défaut). */
 function SquareCard(props: CardProps) {
-  const { user, host, periodLabel, overview, stats, artists, tracks, covers, labels, locale, playCount } =
+  const { user, periodLabel, overview, stats, artists, tracks, covers, labels, locale, playCount } =
     props;
   return (
     <div
@@ -308,14 +306,14 @@ function SquareCard(props: CardProps) {
 
       <TrackList tracks={tracks} playCount={playCount} fontSize={26} max={5} />
 
-      <Footer user={user} host={host} />
+      <Footer user={user} />
     </div>
   );
 }
 
 /** Carte verticale 1080×1920 (format « story »). */
 function StoryCard(props: CardProps) {
-  const { user, host, periodLabel, overview, stats, artists, tracks, covers, labels, locale, playCount } =
+  const { user, periodLabel, overview, stats, artists, tracks, covers, labels, locale, playCount } =
     props;
   return (
     <div
@@ -354,7 +352,7 @@ function StoryCard(props: CardProps) {
 
       <TrackList tracks={tracks} playCount={playCount} fontSize={32} max={6} />
 
-      <Footer user={user} host={host} />
+      <Footer user={user} />
     </div>
   );
 }
@@ -385,14 +383,12 @@ export async function GET(request: NextRequest) {
     artists.map((artist) => toDataUri(artist.imageUrl)),
   );
 
-  const host = new URL(request.url).host;
   const periodLabel = formatPeriodLabel(period, locale, t("recap.yearLabel"));
   const playCount = (count: number) =>
     t("dash.playsCount", { count: formatNumber(count, locale) });
 
   const cardProps: CardProps = {
     user: user.name,
-    host,
     locale,
     periodLabel,
     overview,

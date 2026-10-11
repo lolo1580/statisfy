@@ -81,6 +81,12 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Corrigé
 
+- **Image exportée du récapitulatif** : le pied de l'image n'affiche plus l'hôte
+  de l'instance (`IP:port`), mais seulement le nom du compte et l'attribution
+  Spotify.
+- **Graphique « Écoute quotidienne » sur un seul jour** : un point unique était
+  rendu comme une **aire triangulaire** pleine largeur ; il s'affiche désormais
+  comme une **bande plate** avec le **libellé centré** (`AreaChart`).
 - **Provenance des écoutes** : les imports de fichiers sont enregistrés avec la
   source `import` (et non plus `spotify` comme les synchros). Un script de
   rattrapage (`pnpm db:backfill-source`) corrige les bases existantes ; cette
@@ -167,7 +173,12 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 - **OAuth** : la redirection de retour n'accepte plus que l'URL publique
   configurée ou l'origine de la requête courante (fin de la redirection ouverte
   via des en-têtes de proxy usurpés).
-- **CSP** ajouté en production (hors dev, où Next utilise `eval`).
+- **CSP avec nonce** : en production, `proxy.ts` (l'« ancien middleware » de
+  Next 16) génère un **nonce par requête** et le pose sur la réponse **et** sur
+  les en-têtes de requête, ce qui permet à Next d'associer ce nonce à ses
+  scripts d'hydratation (`script-src 'self' 'nonce-…' 'strict-dynamic'`,
+  **sans `'unsafe-inline'`**). Les routes API et les fichiers statiques sont
+  exclus du proxy. Le CSP est désactivé en dev (Next y utilise `eval`).
 - **Inscriptions** : consommation **atomique** des invitations (transaction) —
   une même invitation ne peut plus servir à deux inscriptions simultanées, et
   l'échec annule la création du compte. Un jeton invalide n'est plus bloquant
