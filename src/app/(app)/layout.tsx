@@ -38,6 +38,7 @@ export default async function AppLayout({
             type="search"
             name="q"
             placeholder={t("shell.searchPlaceholder")}
+            aria-label={t("shell.searchPlaceholder")}
             className="w-full rounded-lg border border-border bg-surface-2 px-3 py-1.5 text-sm outline-none transition-colors placeholder:text-muted/70 focus:border-accent"
           />
         </form>

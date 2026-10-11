@@ -13,21 +13,7 @@ import {
   type SpotifyAccessState,
 } from "@/lib/actions/spotify-access";
 import { useI18n } from "@/components/i18n-provider";
-
-const inputClass =
-  "w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted/70 focus:border-accent";
-
-function Feedback({
-  state,
-}: {
-  state: { error?: string; message?: string } | undefined;
-}) {
-  if (!state) return null;
-  if (state.error) return <p className="text-sm text-red-400">{state.error}</p>;
-  if (state.message)
-    return <p className="text-sm text-accent">{state.message}</p>;
-  return null;
-}
+import { Feedback, inputClass } from "@/components/form-ui";
 
 export function SyncButton({ connectionId }: { connectionId: string }) {
   const { t } = useI18n();

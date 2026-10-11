@@ -1,6 +1,7 @@
 import { getOptionalUser } from "@/lib/auth/dal";
 import { prisma } from "@/lib/db";
 import { csvCell } from "@/lib/csv";
+import { takeToken } from "@/lib/rate-limit-store";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,11 @@ export async function GET() {
   const user = await getOptionalUser();
   if (!user) {
     return new Response("Non autorisé.", { status: 401 });
+  }
+  if (!takeToken(`export:${user.id}`, 20, 60 * 60 * 1000)) {
+    return new Response("Trop de requêtes, réessayez plus tard.", {
+      status: 429,
+    });
   }
 
   const encoder = new TextEncoder();

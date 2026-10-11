@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth/dal";
-import { assertPublicHttpUrl } from "@/lib/net";
+import { fetchPublicUrl } from "@/lib/net";
 import {
   getOverview,
   getTopArtists,
@@ -23,9 +23,9 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 async function toDataUri(url?: string | null): Promise<string | null> {
   if (!url) return null;
   try {
-    // Anti-SSRF : refuse les schémas non http(s) et les hôtes privés/locaux.
-    const safe = await assertPublicHttpUrl(url);
-    const res = await fetch(safe, {
+    // Anti-SSRF : refuse les schémas non http(s), les hôtes privés/locaux, et
+    // revalide chaque redirection (un hôte public peut rediriger vers l'interne).
+    const res = await fetchPublicUrl(url, {
       cache: "no-store",
       signal: AbortSignal.timeout(5_000),
     });

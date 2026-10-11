@@ -39,7 +39,7 @@ export default async function RegisterPage({
         <LocaleSwitcher current={locale} />
       </div>
       <div className="mb-8 text-center">
-        <div className="mb-2 text-3xl">🎧</div>
+        <div className="mb-2 text-3xl" aria-hidden>🎧</div>
         <h1 className="text-2xl font-semibold tracking-tight">
           {t("auth.signUpTitle")}
         </h1>

@@ -3,9 +3,7 @@
 import { useActionState } from "react";
 import { login, register, type AuthState } from "@/lib/auth/actions";
 import { useI18n } from "@/components/i18n-provider";
-
-const inputClass =
-  "w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted/70 focus:border-accent";
+import { inputClass } from "@/components/form-ui";
 
 function FieldError({ messages }: { messages?: string[] }) {
   if (!messages?.length) return null;

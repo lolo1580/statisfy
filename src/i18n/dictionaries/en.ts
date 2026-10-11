@@ -12,7 +12,6 @@ export const en: Dictionary = {
   "nav.trends": "Trends",
   "nav.recap": "Recap",
   "nav.history": "History",
-  "nav.status": "Status",
   "nav.settings": "Settings",
   "nav.logout": "Sign out",
   "nav.pendingRequests": "{count} pending Spotify request(s)",
@@ -168,11 +167,7 @@ export const en: Dictionary = {
   "status.week": "This week",
   "status.total": "Total",
   "status.lastSync": "Last sync",
-  "status.connections": "Connections",
-  "status.connectionsSubtitle": "Listening sources and sync state",
-  "status.noSources": "No source connected.",
   "status.never": "never",
-  "status.nextSync": "next sync ≈ {time} (every {minutes} min)",
   "status.system": "System",
   "status.app": "Application",
   "status.version": "Version",
@@ -183,8 +178,6 @@ export const en: Dictionary = {
   "status.autoSync": "Auto sync",
   "status.autoSyncOn": "enabled (every {minutes} min)",
   "status.autoSyncOff": "disabled (no SYNC_TOKEN)",
-  "status.activity": "Recent activity",
-  "status.noActivity": "No sync recorded.",
   "status.import": "Import",
   "status.sync": "Sync",
   "status.importedHistory": "Imported history",
@@ -319,7 +312,6 @@ export const en: Dictionary = {
   "msg.enrichDone":
     "Artwork enriched: {albums}/{albumsChecked} album(s) and {artists}/{artistsChecked} artist(s).",
   "err.selectFile": "Select at least one JSON file.",
-  "err.noJson": "No .json file recognised.",
   "err.noHistory": "No playable history found in the selected files.",
   "err.importFailed": "Import failed.",
   "err.syncFailed": "Sync failed.",
@@ -378,7 +370,6 @@ export const en: Dictionary = {
   "track.kicker": "Track",
   "track.plays": "Plays",
   "track.lastPlay": "Last play",
-  "track.duration": "Duration",
   "track.noPlays": "No plays for this track in the selected period.",
 
   // Charts
@@ -397,8 +388,6 @@ export const en: Dictionary = {
   "history.heatmapSubtitle": "Daily plays over the last 12 months",
   "status.backups": "Backups",
   "status.backupsValue": "{count} file(s)",
-  "msg.backupDone": "Backup created: {file} ({kept} kept).",
-  "err.backupFailed": "Backup failed.",
 
   "bytes.b": "B",
   "bytes.kb": "KB",

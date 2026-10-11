@@ -2,8 +2,8 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/dal";
 import {
   getDailyStats,
-  getHourlyStats,
   getRecentPlays,
+  getTimelineStats,
   type StatsRange,
 } from "@/lib/stats";
 import { RangeTabs } from "@/components/range-tabs";
@@ -37,12 +37,12 @@ export default async function HistoryPage({
     to: parsed.to,
   };
 
-  const [daily, hourly, recent, heatmap] = await Promise.all([
-    getDailyStats(user.id, user.timezone, filters),
-    getHourlyStats(user.id, user.timezone, filters),
+  const [timeline, recent, heatmap] = await Promise.all([
+    getTimelineStats(user.id, user.timezone, filters),
     getRecentPlays(user.id, filters, 50),
     getDailyStats(user.id, user.timezone, { days: 371 }),
   ]);
+  const { daily, hourly } = timeline;
 
   return (
     <div className="space-y-6">

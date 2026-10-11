@@ -25,6 +25,7 @@ export function Nav({ pendingCount = 0 }: { pendingCount?: number }) {
           <Link
             key={link.href}
             href={link.href}
+            aria-current={active ? "page" : undefined}
             className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors ${
               active
                 ? "bg-accent-soft text-accent"

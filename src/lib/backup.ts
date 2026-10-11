@@ -29,6 +29,11 @@ export async function createTemporarySnapshot(): Promise<Snapshot> {
   );
   const escaped = file.replace(/'/g, "''");
   await prisma.$executeRawUnsafe(`VACUUM INTO '${escaped}'`);
+  try {
+    fs.chmodSync(/*turbopackIgnore: true*/ file, 0o600);
+  } catch {
+    // permissions best-effort
+  }
   return { file, dispose: () => fs.rmSync(file, { force: true }) };
 }
 
@@ -55,11 +60,17 @@ export async function runBackup(): Promise<BackupResult> {
   fs.mkdirSync(/*turbopackIgnore: true*/ dir, { recursive: true });
 
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const target = path.join(dir, `statisfy-${stamp}.db`);
+  const suffix = Math.random().toString(36).slice(2, 8);
+  const target = path.join(dir, `statisfy-${stamp}-${suffix}.db`);
 
   // `VACUUM INTO` produit un fichier cohérent même si la base est utilisée.
   const escaped = target.replace(/'/g, "''");
   await prisma.$executeRawUnsafe(`VACUUM INTO '${escaped}'`);
+  try {
+    fs.chmodSync(/*turbopackIgnore: true*/ target, 0o600);
+  } catch {
+    // permissions best-effort
+  }
 
   const files = fs
     .readdirSync(/*turbopackIgnore: true*/ dir)

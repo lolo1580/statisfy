@@ -180,39 +180,45 @@ export default async function SettingsPage({
   const jobType = (value: string) =>
     value === "import" ? t("status.import") : t("status.sync");
 
-  const dbUrl = process.env.DATABASE_URL ?? "";
-  const dbPath = dbUrl.startsWith("file:") ? dbUrl.slice("file:".length) : "";
+  // I/O disque réservées à l'administrateur (moindre privilège) et faites en
+  // asynchrone pour ne pas bloquer la boucle d'événements.
   let dbBytes: number | null = null;
-  try {
-    if (dbPath) dbBytes = fs.statSync(/*turbopackIgnore: true*/ dbPath).size;
-  } catch {
-    dbBytes = null;
-  }
-
-  const backupDir = process.env.BACKUP_DIR || path.join(process.cwd(), "backups");
   let backupCount = 0;
   let backupLatest: string | null = null;
-  try {
-    const files = fs
-      .readdirSync(/*turbopackIgnore: true*/ backupDir)
-      .filter((name) => name.startsWith("statisfy-") && name.endsWith(".db"))
-      .sort();
-    backupCount = files.length;
-    if (files.length > 0) {
-      const stat = fs.statSync(
-        /*turbopackIgnore: true*/ path.join(
-          /*turbopackIgnore: true*/ backupDir,
-          files[files.length - 1],
-        ),
-      );
-      backupLatest = new Intl.DateTimeFormat(locale, {
-        dateStyle: "short",
-        timeStyle: "short",
-        timeZone: user.timezone,
-      }).format(stat.mtime);
+  if (user.isAdmin) {
+    const dbUrl = process.env.DATABASE_URL ?? "";
+    const dbPath = dbUrl.startsWith("file:") ? dbUrl.slice("file:".length) : "";
+    try {
+      if (dbPath) {
+        dbBytes = (await fs.promises.stat(/*turbopackIgnore: true*/ dbPath)).size;
+      }
+    } catch {
+      dbBytes = null;
     }
-  } catch {
-    backupCount = 0;
+
+    const backupDir =
+      process.env.BACKUP_DIR || path.join(process.cwd(), "backups");
+    try {
+      const files = (await fs.promises.readdir(/*turbopackIgnore: true*/ backupDir))
+        .filter((name) => name.startsWith("statisfy-") && name.endsWith(".db"))
+        .sort();
+      backupCount = files.length;
+      if (files.length > 0) {
+        const stat = await fs.promises.stat(
+          /*turbopackIgnore: true*/ path.join(
+            /*turbopackIgnore: true*/ backupDir,
+            files[files.length - 1],
+          ),
+        );
+        backupLatest = new Intl.DateTimeFormat(locale, {
+          dateStyle: "short",
+          timeStyle: "short",
+          timeZone: user.timezone,
+        }).format(stat.mtime);
+      }
+    } catch {
+      backupCount = 0;
+    }
   }
 
   const lastSync = connections
@@ -896,17 +902,19 @@ export default async function SettingsPage({
             }
           />
         </div>
-        <Card>
-          <SectionTitle title={t("status.system")} />
-          <dl className="space-y-2 text-sm">
-            {systemRows.map(([label, value]) => (
-              <div key={label} className="flex justify-between gap-4">
-                <dt className="text-muted">{label}</dt>
-                <dd className="text-right">{value}</dd>
-              </div>
-            ))}
-          </dl>
-        </Card>
+        {user.isAdmin ? (
+          <Card>
+            <SectionTitle title={t("status.system")} />
+            <dl className="space-y-2 text-sm">
+              {systemRows.map(([label, value]) => (
+                <div key={label} className="flex justify-between gap-4">
+                  <dt className="text-muted">{label}</dt>
+                  <dd className="text-right">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </Card>
+        ) : null}
       </div>
     </div>
   );

@@ -5,6 +5,8 @@ import {
   mapYourSpotifyData,
 } from "@/lib/sources/your-spotify";
 import { runPlaysIngest } from "@/lib/sync/engine";
+import { readBodyLimited } from "@/lib/http-body";
+import { takeToken } from "@/lib/rate-limit-store";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -24,17 +26,24 @@ export async function POST(request: NextRequest) {
   if (!target.ok) return target.response;
   const { user } = target;
 
+  if (!takeToken(`import:${user.id}`, 30, 60 * 60 * 1000)) {
+    return NextResponse.json(
+      { error: "Too many imports, try again later." },
+      { status: 429 },
+    );
+  }
+
   const declared = Number(request.headers.get("content-length") ?? "0");
   if (declared > MAX_BODY_BYTES) {
     return NextResponse.json({ error: "Payload too large" }, { status: 413 });
   }
 
-  const buffer = new Uint8Array(await request.arrayBuffer());
+  const buffer = await readBodyLimited(request, MAX_BODY_BYTES);
+  if (!buffer) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
   if (buffer.length === 0) {
     return NextResponse.json({ error: "Empty body" }, { status: 400 });
-  }
-  if (buffer.length > MAX_BODY_BYTES) {
-    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
   }
 
   const isZip = buffer[0] === 0x50 && buffer[1] === 0x4b; // "PK"

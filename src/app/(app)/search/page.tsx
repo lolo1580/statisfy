@@ -33,6 +33,7 @@ export default async function SearchPage({
           defaultValue={query}
           autoFocus
           placeholder={t("search.placeholder")}
+          aria-label={t("search.placeholder")}
           className="w-full rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm outline-none transition-colors placeholder:text-muted/70 focus:border-accent"
         />
         <button

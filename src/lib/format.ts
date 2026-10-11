@@ -28,16 +28,16 @@ export function formatNumber(value: number, locale: string = "en"): string {
  * Décale (ms) d'un fuseau IANA par rapport à UTC à un instant donné.
  * Positif à l'est de Greenwich.
  *
- * Le résultat est mémorisé par fuseau et par jour UTC : les changements d'heure
- * n'interviennent qu'une à deux fois par an, donc ce cache reste correct pour
- * l'immense majorité des instants (seuls quelques jours de bascule peuvent être
- * décalés d'une heure).
+ * Le résultat est mémorisé par fuseau et par **heure** UTC : les changements
+ * d'heure n'interviennent qu'une à deux fois par an, donc ce cache reste correct
+ * partout sauf au maximum l'heure de bascule. La taille du cache est bornée.
  */
 const OFFSET_CACHE = new Map<string, number>()
-const CACHE_DAY_MS = 86_400_000
+const CACHE_STEP_MS = 3_600_000
+const OFFSET_CACHE_MAX = 20_000
 
 export function getTimezoneOffsetMs(timeZone: string, at: Date = new Date()): number {
-  const key = `${timeZone}|${Math.floor(at.getTime() / CACHE_DAY_MS)}`
+  const key = `${timeZone}|${Math.floor(at.getTime() / CACHE_STEP_MS)}`
   const cached = OFFSET_CACHE.get(key)
   if (cached !== undefined) return cached
 
@@ -52,9 +52,13 @@ export function getTimezoneOffsetMs(timeZone: string, at: Date = new Date()): nu
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
+      fractionalSecondDigits: 3,
     })
     const parts = formatter.formatToParts(at)
-    const get = (type: string) => Number(parts.find((p) => p.type === type)?.value)
+    const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0)
+    // `fractionalSecondDigits` garantit un décalage exact à la milliseconde :
+    // sans les ms, l'offset pouvait être décalé de <1 s et faire basculer la
+    // clé de jour (minuit local) sur la veille.
     const asUtc = Date.UTC(
       get('year'),
       get('month') - 1,
@@ -62,11 +66,13 @@ export function getTimezoneOffsetMs(timeZone: string, at: Date = new Date()): nu
       get('hour'),
       get('minute'),
       get('second'),
+      get('fractionalSecond'),
     )
     result = asUtc - at.getTime()
   } catch {
     result = 0
   }
+  if (OFFSET_CACHE.size >= OFFSET_CACHE_MAX) OFFSET_CACHE.clear()
   OFFSET_CACHE.set(key, result)
   return result
 }

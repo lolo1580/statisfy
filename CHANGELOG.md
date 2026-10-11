@@ -87,6 +87,15 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 - **Graphique « Écoute quotidienne » sur un seul jour** : un point unique était
   rendu comme une **aire triangulaire** pleine largeur ; il s'affiche désormais
   comme une **bande plate** avec le **libellé centré** (`AreaChart`).
+- **Découvertes** : `getDiscoveredArtists` renvoie la vraie durée écoutée
+  (`msPlayed` était figé à `0`).
+- **Genres** : le JSON des genres stockés est parsé de façon **défensive**
+  (une valeur corrompue ne casse plus le rendu).
+- **Fuseaux** : le cache de décalage est indexé par **heure** (au lieu du jour
+  UTC) et borné — corrige un décalage d'une heure les jours de changement
+  d'heure et une fuite mémoire. Le décalage est aussi calculé **à la
+  milliseconde** (les millisecondes étaient ignorées, ce qui pouvait faire
+  basculer une écoute de minuit sur la veille).
 - **Provenance des écoutes** : les imports de fichiers sont enregistrés avec la
   source `import` (et non plus `spotify` comme les synchros). Un script de
   rattrapage (`pnpm db:backfill-source`) corrige les bases existantes ; cette
@@ -137,6 +146,15 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 - **Période par défaut** : le tableau de bord, les classements, l'historique et
   les pages artiste/titre s'ouvrent désormais sur **Aujourd'hui** (au lieu de
   « Tout »).
+- **Agrégations** : `getOverview` passe de **4 requêtes à 2** (un seul `groupBy`
+  multi-clés) ; les séries jour/heure et le récapitulatif sont désormais agrégés
+  **en SQL par tranches de 15 min** (`getTimeBuckets`) au lieu de charger toutes
+  les écoutes en mémoire — résultat **identique** (vérifié sur 6 fuseaux, dont
+  `+5:30`/`+5:45`) mais mémoire bornée. Les stats disque des Réglages sont faites
+  en **asynchrone**. La synchronisation Spotify est **débitée dans le temps**
+  (timeout + reprise sur erreur réseau), **verrouillée par connexion** (pas de
+  double sync), et la reprise se base sur la **dernière écoute ingérée**
+  (`lastPlayAt`) plutôt que sur l'heure de synchro.
 - **Vue d'ensemble** : le graphe « Écoute dans le temps » passe en **heures**
   quand la période couvre un seul jour (aujourd'hui) ; la carte « Quand
   écoutez-vous ? » est retirée (redondante).
@@ -191,6 +209,18 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   caractères, et un compte déjà approuvé ne peut pas se rétrograder en attente.
 - **Moindre privilège** : la liste des comptes et des invitations n'est
   chargée côté serveur que pour un **administrateur**.
+- **SSRF** : la récupération des visuels distants **revalide chaque
+  redirection** (`fetch` en `redirect: "manual"`), fermant le contournement par
+  redirection vers un hôte interne (`169.254.169.254`, etc.).
+- **Imports** : le corps est lu **en streaming** avec un plafond réel (le
+  `Content-Length` seul était contournable en transfert `chunked`) ; imports et
+  exports sont **limités en débit**.
+- **Informations système** : les détails de l'instance (Node, `NODE_ENV`,
+  uptime, taille de la base, sauvegardes) ne sont plus affichés qu'aux
+  **administrateurs**.
+- **POST `/api/sync`** : comparaison du `SYNC_TOKEN` en **temps constant**.
+- **Sauvegardes** : nom de fichier rendu unique (évite les collisions de deux
+  sauvegardes dans la même seconde) et fichier créé en **`0600`**.
 
 ## [0.11.0-preview.1] — 2026-10-10
 

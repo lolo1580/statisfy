@@ -20,12 +20,15 @@ export function retryDelayMs(
   return Math.min(BASE_DELAY_MS * 2 ** attempt, MAX_DELAY_MS);
 }
 
-export type SpotifyFetchOptions = { maxAttempts?: number };
+export type SpotifyFetchOptions = { maxAttempts?: number; timeoutMs?: number };
+
+const DEFAULT_TIMEOUT_MS = 15_000;
 
 /**
  * `fetch` vers l'API Spotify avec respect des limites de débit : réessaie les
  * réponses `429` (en honorant `Retry-After`) et `5xx` avec un backoff
- * exponentiel, puis renvoie la dernière réponse.
+ * exponentiel, ainsi que les erreurs réseau / timeouts. Applique un **timeout**
+ * par défaut pour qu'une connexion qui pend ne bloque pas la synchronisation.
  */
 export async function spotifyFetch(
   input: string | URL,
@@ -33,8 +36,18 @@ export async function spotifyFetch(
   options: SpotifyFetchOptions = {},
 ): Promise<Response> {
   const maxAttempts = options.maxAttempts ?? 4;
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   for (let attempt = 0; ; attempt += 1) {
-    const res = await fetch(input, init);
+    const signal = init?.signal ?? AbortSignal.timeout(timeoutMs);
+    let res: Response;
+    try {
+      res = await fetch(input, { ...init, signal });
+    } catch (error) {
+      // Erreur réseau ou dépassement du délai : nouvelle tentative.
+      if (attempt >= maxAttempts - 1) throw error;
+      await sleep(retryDelayMs(null, attempt));
+      continue;
+    }
     const retryable = res.status === 429 || res.status >= 500;
     if (!retryable || attempt >= maxAttempts - 1) return res;
     await sleep(retryDelayMs(res.headers.get("retry-after"), attempt));

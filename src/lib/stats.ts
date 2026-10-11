@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { prisma } from './db'
-import type { Prisma } from '../generated/prisma/client'
+import { Prisma } from '../generated/prisma/client'
 import { dayKey, hourOf } from './format'
 import { computeTrends } from './trends'
 
@@ -40,6 +40,19 @@ function buildWhere(userId: string, range: StatsRange): Prisma.PlayWhereInput {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** Parse défensif du JSON des genres stockés (`[]` si absent ou corrompu). */
+function parseGenres(value: string | null | undefined): string[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.filter((g): g is string => typeof g === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 export type Overview = {
   totalPlays: number
   totalMs: number
@@ -55,7 +68,7 @@ export async function getOverview(
   range: StatsRange,
 ): Promise<Overview> {
   const where = buildWhere(userId, range)
-  const [aggregate, artistRows, trackRows, albumRows] = await Promise.all([
+  const [aggregate, combos] = await Promise.all([
     prisma.play.aggregate({
       where,
       _count: { _all: true },
@@ -63,17 +76,30 @@ export async function getOverview(
       _min: { playedAt: true },
       _max: { playedAt: true },
     }),
-    prisma.play.groupBy({ by: ['artistId'], where }),
-    prisma.play.groupBy({ by: ['trackId'], where }),
-    prisma.play.groupBy({ by: ['albumId'], where }),
+    // Un seul groupBy multi-clés (au lieu de 3) : les triplets (artiste, piste,
+    // album) sont ≤ au nombre de pistes distinctes, donc moins de lignes que la
+    // somme des trois groupBy séparés.
+    prisma.play.groupBy({
+      by: ['artistId', 'trackId', 'albumId'],
+      where,
+    }),
   ])
+
+  const artists = new Set<string>()
+  const tracks = new Set<string>()
+  const albums = new Set<string>()
+  for (const row of combos) {
+    artists.add(row.artistId)
+    tracks.add(row.trackId)
+    if (row.albumId) albums.add(row.albumId)
+  }
 
   return {
     totalPlays: aggregate._count._all,
     totalMs: aggregate._sum.msPlayed ?? 0,
-    distinctArtists: artistRows.length,
-    distinctTracks: trackRows.length,
-    distinctAlbums: albumRows.filter((r) => r.albumId !== null).length,
+    distinctArtists: artists.size,
+    distinctTracks: tracks.size,
+    distinctAlbums: albums.size,
     firstPlay: aggregate._min.playedAt ?? null,
     lastPlay: aggregate._max.playedAt ?? null,
   }
@@ -198,7 +224,7 @@ export async function getTopArtists(
         plays: g._count.artistId,
         msPlayed: g._sum.msPlayed ?? 0,
         imageUrl: artist.imageUrl,
-        genres: artist.genres ? (JSON.parse(artist.genres) as string[]) : [],
+        genres: parseGenres(artist.genres),
       },
     ]
   })
@@ -286,7 +312,7 @@ export async function getTopGenres(
     if (!artist.genres) continue
     const plays = countById.get(artist.id) ?? 0
     const msPlayed = msById.get(artist.id) ?? 0
-    for (const genre of JSON.parse(artist.genres) as string[]) {
+    for (const genre of parseGenres(artist.genres)) {
       const current = totals.get(genre) ?? { plays: 0, msPlayed: 0 }
       current.plays += plays
       current.msPlayed += msPlayed
@@ -302,48 +328,82 @@ export async function getTopGenres(
 
 export type DailyStat = { day: string; msPlayed: number; plays: number }
 
+/**
+ * Agrégation temporelle en SQL par **tranches de 15 minutes UTC** : nombre de
+ * lignes borné (jamais plus que le nombre d'écoutes) et surtout bien inférieur
+ * quand l'écoute est dense.
+ *
+ * Le pas de 15 min garantit que le début de tranche tombe exactement sur la
+ * frontière de jour/heure locale pour tous les fuseaux modernes (offsets
+ * multiples de 15 min), y compris ceux à offset `:30`/`:45`.
+ */
+export type TimeBucket = { bucket: number; plays: number; msPlayed: number }
+
+const BUCKET_SECONDS = 900
+
+async function getTimeBuckets(
+  userId: string,
+  range: StatsRange,
+): Promise<TimeBucket[]> {
+  const conditions: Prisma.Sql[] = [Prisma.sql`userId = ${userId}`]
+  if (range.from) conditions.push(Prisma.sql`playedAt >= ${range.from}`)
+  if (range.to) conditions.push(Prisma.sql`playedAt < ${range.to}`)
+  if (!range.from && !range.to && range.days) {
+    conditions.push(
+      Prisma.sql`playedAt >= ${new Date(Date.now() - range.days * DAY_MS)}`,
+    )
+  }
+  if (range.artistId) conditions.push(Prisma.sql`artistId = ${range.artistId}`)
+  if (range.trackId) conditions.push(Prisma.sql`trackId = ${range.trackId}`)
+  if (range.albumId) conditions.push(Prisma.sql`albumId = ${range.albumId}`)
+
+  const rows = await prisma.$queryRaw<
+    Array<{ bucket: number | bigint; plays: number | bigint; msPlayed: number | bigint }>
+  >(
+    Prisma.sql`
+      SELECT CAST(strftime('%s', playedAt) AS INTEGER) / ${BUCKET_SECONDS} AS bucket,
+             COUNT(*) AS plays,
+             CAST(COALESCE(SUM(msPlayed), 0) AS INTEGER) AS msPlayed
+      FROM Play
+      WHERE ${Prisma.join(conditions, " AND ")}
+      GROUP BY bucket
+      ORDER BY bucket
+    `,
+  )
+  return rows.map((row) => ({
+    bucket: Number(row.bucket),
+    plays: Number(row.plays),
+    msPlayed: Number(row.msPlayed),
+  }))
+}
+
+/** Instant UTC du début d'une tranche (index de tranches de 15 min). */
+function bucketDate(bucket: number): Date {
+  return new Date(bucket * BUCKET_SECONDS * 1000)
+}
+
 export async function getDailyStats(
   userId: string,
   timeZone: string,
   range: StatsRange,
 ): Promise<DailyStat[]> {
-  const baseWhere = buildWhere(userId, { ...range, days: null })
+  const buckets = await getTimeBuckets(userId, range)
 
-  // Fenêtre basse : borne `from` explicite, fenêtre glissante `days`, ou
-  // tout l'historique (aucune borne) quand `days` est `null`.
-  const since =
-    range.from ??
-    (range.days ? new Date(Date.now() - range.days * DAY_MS) : null)
-  const where: Prisma.PlayWhereInput = since
-    ? {
-        ...baseWhere,
-        playedAt: { gte: since, ...(range.to ? { lt: range.to } : {}) },
-      }
-    : baseWhere
-
-  const plays = await prisma.play.findMany({
-    where,
-    select: { playedAt: true, msPlayed: true },
-  })
-
-  const buckets = new Map<string, DailyStat>()
+  const daily = new Map<string, DailyStat>()
 
   // Jour de départ : début de fenêtre, ou premier jour d'écoute pour « tout ».
   let startMs = Date.now()
   if (range.from) {
     startMs = range.from.getTime()
   } else if (range.days) {
-    startMs = Date.now() - (range.days - 1) * DAY_MS
-  } else {
-    for (const play of plays) {
-      const time = play.playedAt.getTime()
-      if (time < startMs) startMs = time
-    }
+    startMs = Date.now() - range.days * DAY_MS
+  } else if (buckets.length > 0) {
+    startMs = bucketDate(buckets[0].bucket).getTime()
   }
 
   // Pré-remplit chaque jour (heure locale) afin d'avoir un graphe continu.
   const startDay = dayKey(new Date(startMs), timeZone)
-  const endDay = dayKey(new Date(), timeZone)
+  const endDay = dayKey(range.to ?? new Date(), timeZone)
   const totalDays = Math.max(
     1,
     Math.round(
@@ -355,57 +415,88 @@ export async function getDailyStats(
     const key = new Date(Date.parse(`${startDay}T00:00:00Z`) + i * DAY_MS)
       .toISOString()
       .slice(0, 10)
-    buckets.set(key, { day: key, msPlayed: 0, plays: 0 })
+    daily.set(key, { day: key, msPlayed: 0, plays: 0 })
   }
 
-  for (const play of plays) {
-    const key = dayKey(play.playedAt, timeZone)
-    const bucket = buckets.get(key) ?? { day: key, msPlayed: 0, plays: 0 }
-    bucket.msPlayed += play.msPlayed
-    bucket.plays += 1
-    buckets.set(key, bucket)
+  for (const bucket of buckets) {
+    const key = dayKey(bucketDate(bucket.bucket), timeZone)
+    const stat = daily.get(key) ?? { day: key, msPlayed: 0, plays: 0 }
+    stat.msPlayed += bucket.msPlayed
+    stat.plays += bucket.plays
+    daily.set(key, stat)
   }
 
-  return [...buckets.values()].sort((a, b) => a.day.localeCompare(b.day))
+  return [...daily.values()].sort((a, b) => a.day.localeCompare(b.day))
 }
 
 export type HourStat = { hour: number; plays: number; msPlayed: number }
 
 export type HourlyStats = { hours: HourStat[]; activeDays: number }
 
-export async function getHourlyStats(
+export type TimelineStats = { daily: DailyStat[]; hourly: HourlyStats }
+
+/**
+ * Série quotidienne **et** répartition horaire en une seule lecture des écoutes
+ * (au lieu de deux scans complets). Utilisé par les pages qui affichent les
+ * deux (tableau de bord, historique).
+ */
+export async function getTimelineStats(
   userId: string,
   timeZone: string,
   range: StatsRange,
-): Promise<HourlyStats> {
-  const baseWhere = buildWhere(userId, { ...range, days: null })
-  const since =
-    range.from ??
-    (range.days ? new Date(Date.now() - range.days * DAY_MS) : null)
-  const where: Prisma.PlayWhereInput = since
-    ? {
-        ...baseWhere,
-        playedAt: { gte: since, ...(range.to ? { lt: range.to } : {}) },
-      }
-    : baseWhere
-  const plays = await prisma.play.findMany({
-    where,
-    select: { playedAt: true, msPlayed: true },
-  })
+): Promise<TimelineStats> {
+  const hourBuckets = await getTimeBuckets(userId, range)
 
-  const buckets: HourStat[] = Array.from({ length: 24 }, (_, hour) => ({
+  const daily = new Map<string, DailyStat>()
+  let startMs = Date.now()
+  if (range.from) {
+    startMs = range.from.getTime()
+  } else if (range.days) {
+    startMs = Date.now() - range.days * DAY_MS
+  } else if (hourBuckets.length > 0) {
+    startMs = bucketDate(hourBuckets[0].bucket).getTime()
+  }
+  const startDay = dayKey(new Date(startMs), timeZone)
+  const endDay = dayKey(range.to ?? new Date(), timeZone)
+  const totalDays = Math.max(
+    1,
+    Math.round(
+      (Date.parse(`${endDay}T00:00:00Z`) - Date.parse(`${startDay}T00:00:00Z`)) /
+        DAY_MS,
+    ) + 1,
+  )
+  for (let i = 0; i < totalDays; i += 1) {
+    const key = new Date(Date.parse(`${startDay}T00:00:00Z`) + i * DAY_MS)
+      .toISOString()
+      .slice(0, 10)
+    daily.set(key, { day: key, msPlayed: 0, plays: 0 })
+  }
+
+  const hours: HourStat[] = Array.from({ length: 24 }, (_, hour) => ({
     hour,
     plays: 0,
     msPlayed: 0,
   }))
-  const days = new Set<string>()
-  for (const play of plays) {
-    const bucket = buckets[hourOf(play.playedAt, timeZone)]
-    bucket.plays += 1
-    bucket.msPlayed += play.msPlayed
-    days.add(dayKey(play.playedAt, timeZone))
+  const activeDays = new Set<string>()
+
+  for (const bucket of hourBuckets) {
+    const date = bucketDate(bucket.bucket)
+    const key = dayKey(date, timeZone)
+    const stat = daily.get(key) ?? { day: key, msPlayed: 0, plays: 0 }
+    stat.msPlayed += bucket.msPlayed
+    stat.plays += bucket.plays
+    daily.set(key, stat)
+
+    const hour = hours[hourOf(date, timeZone)]
+    hour.plays += bucket.plays
+    hour.msPlayed += bucket.msPlayed
+    activeDays.add(key)
   }
-  return { hours: buckets, activeDays: days.size }
+
+  return {
+    daily: [...daily.values()].sort((a, b) => a.day.localeCompare(b.day)),
+    hourly: { hours, activeDays: activeDays.size },
+  }
 }
 
 export type RecentPlay = {
@@ -487,7 +578,7 @@ export async function getArtistDetail(
       id: artist.id,
       name: artist.name,
       imageUrl: artist.imageUrl,
-      genres: artist.genres ? (JSON.parse(artist.genres) as string[]) : [],
+      genres: parseGenres(artist.genres),
     },
     overview,
     topTracks,
@@ -532,9 +623,7 @@ export async function getTrackDetail(
     getRecentPlays(userId, scoped, 15),
   ])
 
-  const genres = track.artist.genres
-    ? (JSON.parse(track.artist.genres) as string[])
-    : []
+  const genres = parseGenres(track.artist.genres)
 
   return {
     track: {
@@ -659,30 +748,28 @@ export async function getWrappedExtras(
   timeZone: string,
   range: StatsRange,
 ): Promise<WrappedExtras> {
-  const plays = await prisma.play.findMany({
-    where: buildWhere(userId, range),
-    select: { playedAt: true, msPlayed: true },
-  })
+  const hourBuckets = await getTimeBuckets(userId, range)
 
   const daily = new Map<string, TimelineBucket>()
   const monthly = new Map<string, TimelineBucket>()
   const hours = new Array<number>(24).fill(0)
 
-  for (const play of plays) {
-    const dayKeyValue = dayKey(play.playedAt, timeZone)
+  for (const bucket of hourBuckets) {
+    const date = bucketDate(bucket.bucket)
+    const dayKeyValue = dayKey(date, timeZone)
     const monthKey = dayKeyValue.slice(0, 7)
 
     const day = daily.get(dayKeyValue) ?? { key: dayKeyValue, msPlayed: 0, plays: 0 }
-    day.msPlayed += play.msPlayed
-    day.plays += 1
+    day.msPlayed += bucket.msPlayed
+    day.plays += bucket.plays
     daily.set(dayKeyValue, day)
 
     const month = monthly.get(monthKey) ?? { key: monthKey, msPlayed: 0, plays: 0 }
-    month.msPlayed += play.msPlayed
-    month.plays += 1
+    month.msPlayed += bucket.msPlayed
+    month.plays += bucket.plays
     monthly.set(monthKey, month)
 
-    hours[hourOf(play.playedAt, timeZone)] += 1
+    hours[hourOf(date, timeZone)] += bucket.plays
   }
 
   const dailyArr = [...daily.values()].sort((a, b) => a.key.localeCompare(b.key))
@@ -712,7 +799,9 @@ export async function getWrappedExtras(
 export type DiscoveredArtists = {
   count: number
   artists: TopArtist[]
-}/** Artistes écoutés pour la première fois pendant la période. */
+}
+
+/** Artistes écoutés pour la première fois pendant la période. */
 export async function getDiscoveredArtists(
   userId: string,
   range: StatsRange,
@@ -729,6 +818,7 @@ export async function getDiscoveredArtists(
       by: ['artistId'],
       where: buildWhere(userId, range),
       _count: { artistId: true },
+      _sum: { msPlayed: true },
     }),
   ])
 
@@ -751,9 +841,9 @@ export async function getDiscoveredArtists(
           id: artist.id,
           name: artist.name,
           plays: row._count.artistId,
-          msPlayed: 0,
+          msPlayed: row._sum.msPlayed ?? 0,
           imageUrl: artist.imageUrl,
-          genres: artist.genres ? (JSON.parse(artist.genres) as string[]) : [],
+          genres: parseGenres(artist.genres),
         },
       ]
     }),

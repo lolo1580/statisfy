@@ -2,9 +2,8 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/dal";
 import {
   getArtistTrends,
-  getDailyStats,
-  getHourlyStats,
   getOverview,
+  getTimelineStats,
   getTopArtists,
   getTopGenres,
   getTopTracks,
@@ -44,11 +43,10 @@ export default async function DashboardPage({
   };
   const query = `range=${parsed.key}`;
 
-  const [overview, daily, hourly, topTracks, topArtists, topGenres, trends, anyPlays] =
+  const [overview, timeline, topTracks, topArtists, topGenres, trends, anyPlays] =
     await Promise.all([
       getOverview(user.id, filters),
-      getDailyStats(user.id, user.timezone, filters),
-      getHourlyStats(user.id, user.timezone, filters),
+      getTimelineStats(user.id, user.timezone, filters),
       getTopTracks(user.id, filters, 10),
       getTopArtists(user.id, filters, 10),
       getTopGenres(user.id, filters, 10),
@@ -61,12 +59,12 @@ export default async function DashboardPage({
   // devient horaire pour rester pertinent.
   const isSingleDay = parsed.days === 1;
   const overTimePoints = isSingleDay
-    ? hourly.hours.map((h) => ({
+    ? timeline.hourly.hours.map((h) => ({
         label: `${String(h.hour).padStart(2, "0")}h`,
         value: h.msPlayed,
         title: `${String(h.hour).padStart(2, "0")}:00`,
       }))
-    : daily.map((d) => ({
+    : timeline.daily.map((d) => ({
         label: dayLabel(d.day),
         value: d.msPlayed,
         title: dayTitle(d.day),

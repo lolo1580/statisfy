@@ -7,10 +7,30 @@ import { parseSpotifyHistoryFiles } from '../sources/importer'
 import type { RawPlay } from '../sources/types'
 import { ingestPlays, type IngestResult } from './ingest'
 
-/** Synchronise une connexion source Spotify. */
+/** Connexions en cours de synchronisation (verrou par connexion). */
+const inFlight = new Set<string>()
+
+/**
+ * Synchronise une connexion source Spotify.
+ *
+ * Un verrou en mémoire par connexion empêche deux synchronisations simultanées
+ * de la même source (cron + action manuelle, ou deux appels concurrents).
+ */
 export async function runSyncForConnection(
   connectionId: string,
 ): Promise<IngestResult> {
+  if (inFlight.has(connectionId)) {
+    throw new Error('Synchronisation déjà en cours pour cette connexion.')
+  }
+  inFlight.add(connectionId)
+  try {
+    return await runSync(connectionId)
+  } finally {
+    inFlight.delete(connectionId)
+  }
+}
+
+async function runSync(connectionId: string): Promise<IngestResult> {
   const connection = await prisma.sourceConnection.findUnique({
     where: { id: connectionId },
   })
@@ -38,9 +58,12 @@ export async function runSyncForConnection(
       : {}
 
     const credentialsBefore = JSON.stringify(credentials)
-    // Léger recouvrement pour ne rien manquer entre deux synchronisations.
-    const since = connection.lastSyncedAt
-      ? new Date(connection.lastSyncedAt.getTime() - 60 * 60 * 1000)
+    // Reprise basée sur la **dernière écoute ingérée** (+ léger recouvrement) et
+    // non sur l'heure de synchro : évite de « sauter » des écoutes arrivées avec
+    // du retard. `lastSyncedAt` reste le marqueur de throttle du cron.
+    const watermark = connection.lastPlayAt ?? connection.lastSyncedAt
+    const since = watermark
+      ? new Date(watermark.getTime() - 60 * 60 * 1000)
       : null
 
     const plays = await adapter.fetchPlays({
@@ -52,11 +75,17 @@ export async function runSyncForConnection(
 
     const result = await ingestPlays(connection.userId, plays)
 
+    const newestPlayedAt = plays.reduce<Date | null>(
+      (max, play) => (!max || play.playedAt > max ? play.playedAt : max),
+      null,
+    )
+
     const updates: Record<string, unknown> = {
       lastSyncedAt: new Date(),
       lastError: null,
       status: 'active',
     }
+    if (newestPlayedAt) updates.lastPlayAt = newestPlayedAt
     if (JSON.stringify(credentials) !== credentialsBefore) {
       updates.credentials = encryptJson(credentials)
     }

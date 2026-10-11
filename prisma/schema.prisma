@@ -74,6 +74,9 @@ model SourceConnection {
   // JSON non sensible : options, région...
   config      String?
   lastSyncedAt DateTime?
+  // Horodatage de la plus récente écoute ingérée (marqueur de reprise `since`,
+  // distinct de `lastSyncedAt` qui sert de throttle au cron).
+  lastPlayAt  DateTime?
   lastError   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

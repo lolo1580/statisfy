@@ -36,7 +36,12 @@ export default async function WrappedPage({
         </h1>
         <div className="flex flex-wrap items-center gap-2">
           <form action="/wrapped" className="flex flex-wrap items-end gap-2">
-            <select name="year" defaultValue={period.year} className={selectClass}>
+            <select
+              name="year"
+              defaultValue={period.year}
+              aria-label={t("recap.periodYear")}
+              className={selectClass}
+            >
               {yearOptions.map((year) => (
                 <option key={year} value={year}>
                   {year}
@@ -46,6 +51,7 @@ export default async function WrappedPage({
             <select
               name="month"
               defaultValue={period.month ?? 0}
+              aria-label={t("recap.periodMonth")}
               className={selectClass}
             >
               <option value={0}>{t("recap.wholeYear")}</option>
@@ -57,7 +63,7 @@ export default async function WrappedPage({
             </select>
             <button
               type="submit"
-              className="rounded-lg bg-accent px-4 py-1.5 text-sm font-semibold text-[#140d04] transition-opacity hover:opacity-90"
+              className="rounded-lg bg-accent px-4 py-1.5 text-sm font-semibold text-[#04140d] transition-opacity hover:opacity-90"
             >
               {t("recap.view")}
             </button>

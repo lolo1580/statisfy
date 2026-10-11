@@ -69,3 +69,28 @@ export async function assertPublicHttpUrl(raw: string): Promise<URL> {
   }
   return url;
 }
+
+/**
+ * `fetch` vers une URL http(s) publique en **revalidant chaque redirection** :
+ * un hôte public peut rediriger vers `169.254.169.254` ou un service interne,
+ * ce qui contournerait `assertPublicHttpUrl`. On suit donc les redirections
+ * manuellement, en ré-appliquant la garde avant chaque saut.
+ */
+export async function fetchPublicUrl(
+  raw: string,
+  init: RequestInit = {},
+  maxRedirects = 3,
+): Promise<Response> {
+  let current = (await assertPublicHttpUrl(raw)).toString();
+  for (let hop = 0; hop <= maxRedirects; hop += 1) {
+    const res = await fetch(current, { ...init, redirect: "manual" });
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get("location");
+      if (!location) return res;
+      current = (await assertPublicHttpUrl(new URL(location, current).toString())).toString();
+      continue;
+    }
+    return res;
+  }
+  throw new Error("Trop de redirections.");
+}

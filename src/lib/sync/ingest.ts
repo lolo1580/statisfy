@@ -21,9 +21,27 @@ function buildDedupKey(play: RawPlay): string {
 
 function mergeGenres(existing: string | null, incoming?: string[]): string | null {
   if (!incoming?.length) return existing
-  const current: string[] = existing ? (JSON.parse(existing) as string[]) : []
+  let current: string[] = []
+  if (existing) {
+    try {
+      const parsed = JSON.parse(existing)
+      if (Array.isArray(parsed)) current = parsed.filter((g): g is string => typeof g === "string")
+    } catch {
+      current = []
+    }
+  }
   const merged = [...new Set([...current, ...incoming])]
   return JSON.stringify(merged)
+}
+
+/** Violation de contrainte unique Prisma (P2002). */
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === "P2002"
+  )
 }
 
 /**
@@ -211,6 +229,47 @@ export async function ingestPlays(
   }
 
   const seen = new Set<string>()
+
+  // Préchargement des entités existantes (ids externes, albums, pistes) pour
+  // éviter une requête par entité distincte (N+1). Les artistes ne sont
+  // volontairement pas préchargés : leur résolution peut enrichir genres/image.
+  const distinct = (values: Array<string | undefined>): string[] => [
+    ...new Set(values.filter((v): v is string => Boolean(v))),
+  ]
+  const extIds = distinct(
+    plays.flatMap((p) => [p.externalArtistId, p.externalAlbumId, p.externalTrackId]),
+  )
+  const albumNames = distinct(plays.map((p) => p.albumName?.trim()))
+  const trackNames = distinct(plays.map((p) => p.trackName?.trim()))
+
+  if (extIds.length > 0) {
+    const refs = await prisma.externalRef.findMany({
+      where: { externalId: { in: extIds } },
+      select: { externalId: true, artistId: true, albumId: true, trackId: true },
+    })
+    for (const ref of refs) {
+      if (ref.artistId) artistByExt.set(ref.externalId, ref.artistId)
+      if (ref.albumId) albumByExt.set(ref.externalId, ref.albumId)
+      if (ref.trackId) trackByExt.set(ref.externalId, ref.trackId)
+    }
+  }
+  if (albumNames.length > 0) {
+    const albums = await prisma.album.findMany({
+      where: { name: { in: albumNames } },
+      select: { id: true, artistId: true, name: true },
+    })
+    for (const album of albums) albumByKey.set(`${album.artistId}|${album.name}`, album.id)
+  }
+  if (trackNames.length > 0) {
+    const tracks = await prisma.track.findMany({
+      where: { name: { in: trackNames } },
+      select: { id: true, artistId: true, albumId: true, name: true },
+    })
+    for (const track of tracks) {
+      trackByKey.set(`${track.artistId}|${track.albumId ?? ""}|${track.name}`, track.id)
+    }
+  }
+
   const rows: Array<{
     userId: string
     trackId: string
@@ -256,9 +315,22 @@ export async function ingestPlays(
     })
     const existingKeys = new Set(existing.map((e) => e.dedupKey))
     const fresh = chunk.filter((r) => !existingKeys.has(r.dedupKey))
-    if (fresh.length > 0) {
+    if (fresh.length === 0) continue
+    try {
       const result = await prisma.play.createMany({ data: fresh })
       inserted += result.count
+    } catch (error) {
+      if (!isUniqueViolation(error)) throw error
+      // Course avec une autre synchro/import : on insère ligne par ligne en
+      // ignorant les doublons déjà créés (idempotent) plutôt que d'avorter.
+      for (const row of fresh) {
+        try {
+          await prisma.play.create({ data: row })
+          inserted += 1
+        } catch (rowError) {
+          if (!isUniqueViolation(rowError)) throw rowError
+        }
+      }
     }
   }
 
