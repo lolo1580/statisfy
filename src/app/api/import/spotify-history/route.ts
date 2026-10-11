@@ -5,6 +5,9 @@ import { runImport } from "@/lib/sync/engine";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
+/** Taille maximale du corps accepté (archive d'export Spotify). */
+const MAX_BODY_BYTES = 256 * 1024 * 1024;
+
 /**
  * Import d'un export de données Spotify (« Extended streaming history »)
  * envoyé en POST.
@@ -23,9 +26,17 @@ export async function POST(request: NextRequest) {
   if (!target.ok) return target.response;
   const { user } = target;
 
+  const declared = Number(request.headers.get("content-length") ?? "0");
+  if (declared > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
+
   const buffer = new Uint8Array(await request.arrayBuffer());
   if (buffer.length === 0) {
     return NextResponse.json({ error: "Empty body" }, { status: 400 });
+  }
+  if (buffer.length > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
   }
 
   const isZip = buffer[0] === 0x50 && buffer[1] === 0x4b; // "PK"

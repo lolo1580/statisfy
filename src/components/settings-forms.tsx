@@ -8,9 +8,20 @@ import {
   syncConnection,
   type SettingsState,
 } from "@/lib/actions/connections";
+import {
+  requestSpotifyAccess,
+  type SpotifyAccessState,
+} from "@/lib/actions/spotify-access";
 import { useI18n } from "@/components/i18n-provider";
 
-function Feedback({ state }: { state: SettingsState }) {
+const inputClass =
+  "w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted/70 focus:border-accent";
+
+function Feedback({
+  state,
+}: {
+  state: { error?: string; message?: string } | undefined;
+}) {
   if (!state) return null;
   if (state.error) return <p className="text-sm text-red-400">{state.error}</p>;
   if (state.message)
@@ -126,6 +137,52 @@ export function EnrichButton() {
           className="rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-50"
         >
           {pending ? t("settings.enriching") : t("settings.enrich")}
+        </button>
+      </form>
+      <Feedback state={state} />
+    </div>
+  );
+}
+
+/** Demande d'accès à l'API Spotify (validation par un administrateur). */
+export function SpotifyRequestForm({
+  defaultAccount,
+}: {
+  defaultAccount?: string;
+}) {
+  const { t } = useI18n();
+  const [state, action, pending] = useActionState<SpotifyAccessState, FormData>(
+    requestSpotifyAccess,
+    undefined,
+  );
+
+  return (
+    <div className="space-y-2">
+      <form action={action} className="flex flex-wrap items-end gap-2">
+        <div className="min-w-[220px] flex-1">
+          <label
+            htmlFor="spotify-account"
+            className="mb-1 block text-xs text-muted"
+          >
+            {t("settings.spotifyAccount")}
+          </label>
+          <input
+            id="spotify-account"
+            name="account"
+            defaultValue={defaultAccount}
+            maxLength={200}
+            className={inputClass}
+            placeholder={t("settings.spotifyAccountPlaceholder")}
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={pending}
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[#04140d] transition-opacity hover:opacity-90 disabled:opacity-50"
+        >
+          {pending
+            ? t("settings.spotifyRequesting")
+            : t("settings.spotifyRequestCta")}
         </button>
       </form>
       <Feedback state={state} />

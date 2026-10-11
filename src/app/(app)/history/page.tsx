@@ -4,24 +4,18 @@ import {
   getDailyStats,
   getHourlyStats,
   getRecentPlays,
-  getSourceBreakdown,
   type StatsRange,
 } from "@/lib/stats";
-import { RangeTabs, SourceFilter } from "@/components/range-tabs";
-import { parseRange, parseSource } from "@/lib/range";
+import { RangeTabs } from "@/components/range-tabs";
+import { parseRange } from "@/lib/range";
 import { AreaChart, BarsChart, Heatmap } from "@/components/charts";
-import { Badge, Card, Cover, EmptyState, SectionTitle } from "@/components/ui";
-import { formatDateTime, formatDuration, formatNumber } from "@/lib/format";
+import { Card, Cover, EmptyState, SectionTitle } from "@/components/ui";
+import { formatDateTime, formatDuration } from "@/lib/format";
 import { getI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
 
 const dayLabel = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(2, 4)}`;
-
-const SOURCE_TONES: Record<string, "accent" | "violet" | "neutral"> = {
-  spotify: "accent",
-  import: "neutral",
-};
 
 export default async function HistoryPage({
   searchParams,
@@ -37,22 +31,17 @@ export default async function HistoryPage({
     typeof params.range === "string" ? params.range : undefined,
     user.timezone,
   );
-  const source = parseSource(
-    typeof params.source === "string" ? params.source : undefined,
-  );
   const filters: StatsRange = {
     days: parsed.days,
     from: parsed.from,
     to: parsed.to,
-    source,
   };
 
-  const [daily, hourly, recent, sources, heatmap] = await Promise.all([
+  const [daily, hourly, recent, heatmap] = await Promise.all([
     getDailyStats(user.id, user.timezone, filters),
     getHourlyStats(user.id, user.timezone, filters),
     getRecentPlays(user.id, filters, 50),
-    getSourceBreakdown(user.id, filters),
-    getDailyStats(user.id, user.timezone, { days: 371, source }),
+    getDailyStats(user.id, user.timezone, { days: 371 }),
   ]);
 
   return (
@@ -62,24 +51,9 @@ export default async function HistoryPage({
           {t("history.title")}
         </h1>
         <div className="flex flex-wrap items-center gap-2">
-          <RangeTabs basePath="/history" current={parsed.key} source={source} />
-          <SourceFilter
-            basePath="/history"
-            current={source}
-            rangeKey={parsed.key}
-          />
+          <RangeTabs basePath="/history" current={parsed.key} />
         </div>
       </div>
-
-      {sources.length > 1 ? (
-        <div className="flex flex-wrap gap-2">
-          {sources.map((entry) => (
-            <Badge key={entry.source} tone="violet">
-              {entry.source} · {formatNumber(entry.plays, locale)}
-            </Badge>
-          ))}
-        </div>
-      ) : null}
 
       <Card>
         <SectionTitle
@@ -106,13 +80,16 @@ export default async function HistoryPage({
           subtitle={t("history.hourlySubtitle")}
         />
         <BarsChart
-          bars={hourly.map((h) => ({
-            label: `${String(h.hour).padStart(2, "0")}h`,
-            value: h.plays,
-            title: t("dash.playsCount", {
-              count: formatNumber(h.plays, locale),
-            }),
-          }))}
+          variant="duration"
+          bars={hourly.hours.map((h) => {
+            const avgMs =
+              hourly.activeDays > 0 ? h.msPlayed / hourly.activeDays : 0;
+            return {
+              label: `${String(h.hour).padStart(2, "0")}h`,
+              value: avgMs,
+              title: `${formatDuration(avgMs, locale)} ${t("dash.avgPerDay")}`,
+            };
+          })}
         />
       </Card>
 
@@ -147,11 +124,8 @@ export default async function HistoryPage({
                 <div className="hidden text-right text-xs text-muted sm:block">
                   {formatDateTime(play.playedAt, user.timezone, locale)}
                 </div>
-                <Badge tone={SOURCE_TONES[play.source] ?? "neutral"}>
-                  {play.source}
-                </Badge>
                 <span className="hidden w-16 text-right text-xs text-muted md:inline">
-                  {formatDuration(play.msPlayed)}
+                  {formatDuration(play.msPlayed, locale)}
                 </span>
               </li>
             ))}

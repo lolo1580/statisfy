@@ -7,14 +7,179 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Ajouté
+
+- **Validation des accès Spotify** : en mode *Development*, Spotify limite
+  l'application à une liste de comptes. Chaque utilisateur doit donc **demander
+  l'accès** (Réglages → Connecter Spotify, en indiquant son compte Spotify) ;
+  un administrateur **approuve ou refuse** la demande depuis la section
+  « **Demandes d'accès Spotify** ». Tant qu'une demande est en attente, la
+  connexion Spotify est bloquée — à la fois dans l'interface **et** sur la route
+  OAuth (`/api/sources/spotify/start`) — tandis que l'**import d'historique**
+  reste autorisé. Les administrateurs sont autorisés d'office, et les comptes
+  ayant déjà une connexion Spotify restent valides.
+
+- **Suivi des demandes Spotify** : **badge** dans la navigation pour
+  l'administrateur, **statut** par compte (en attente / approuvé / refusé),
+  **révocation** d'un accès approuvé (supprime la connexion et ses jetons),
+  **annulation** de sa propre demande par l'utilisateur, **confirmation** avant
+  suppression d'un compte, et **purge automatique** des invitations expirées ou
+  consommées.
+
+- **Partage public du récapitulatif** : depuis les **Réglages**, chaque
+  utilisateur peut activer un **lien public en lecture seule** vers son
+  récapitulatif (`/share/wrapped/<jeton>`), le **régénérer** ou le
+  **désactiver**. Le jeton est opaque (192 bits), la page n'est pas indexée par
+  les moteurs, et les liens internes vers les fiches artistes/titres sont
+  neutralisés en mode public.
+
+- **Tests** : nouveaux tests des flux récents (`rate-limit`, règles d'accès
+  Spotify, mots de passe temporaires, bornes d'invitation) — **69 tests**.
+
+- **Multi-utilisateur & gestion des comptes** : nouvelles sections
+  administrateur dans les **Réglages** —
+  « **Utilisateurs** » (liste des comptes avec nombre d'écoutes et de sources,
+  promotion/retrait du rôle administrateur, **réinitialisation du mot de passe**
+  avec mot de passe temporaire, suppression en cascade) et
+  « **Invitations** » (génération de liens d'inscription, éventuellement
+  restreints à une adresse e-mail, avec durée de validité et révocation). Un
+  lien d'invitation valide permet de créer un compte **même lorsque les
+  inscriptions publiques sont fermées**. Chaque compte peut aussi **changer son
+  propre mot de passe** depuis **Réglages → Compte**.
+
+- **Export de la base** : nouvelle section « Export » dans les **Réglages** —
+  téléchargement de l'historique en CSV et de la **base SQLite complète** (`.db`)
+  via `GET /api/export/db`. L'instantané est produit par `VACUUM INTO` (cohérent
+  même base en cours d'utilisation) et le téléchargement est réservé aux
+  administrateurs (la base contient tous les comptes et les identifiants
+  chiffrés).
+
+- **Comparateur de deux périodes** : nouvelle page « Comparateur » (`/compare`)
+  pour opposer deux périodes (année entière ou mois précis) côte à côte —
+  synthèse des écarts, graphique du temps d'écoute superposé et classements
+  (artistes, titres, genres) en parallèle.
+- **Image « story » du récapitulatif** : le récapitulatif peut être exporté en
+  PNG vertical **1080×1920** (9:16), en plus du carré 1080×1080, via le paramètre
+  `format=story` de `GET /api/wrapped/image`.
+- **Tests automatisés** : **Vitest** avec des tests unitaires des helpers purs
+  (`format`, `period`, `range`, `compare`, `password`, `crypto`), exécutés dans
+  la CI via `pnpm test` (`pnpm test:watch` en local).
+- **Page Tendances** (`/trends`) : comparaison de deux fenêtres consécutives
+  (**7 j / 30 j / 90 j / 1 an**) pour les **artistes, titres et albums** en
+  hausse et en baisse, avec un lien « toutes les tendances » depuis le tableau de
+  bord. Le calcul (`computeTrends`) est un helper pur testé
+  (`src/lib/trends.ts`).
+
+### Retiré
+
+- **Page Découvertes** (`/insights`) : page et entrée de menu supprimées ; ses
+  tendances sont désormais couvertes par la page **Tendances**. La fonction de
+  redécouvertes (`getRediscoveries`) est retirée avec elle.
+- **Filtre de source** : le sélecteur « Spotify / Import » et la répartition par
+  source sont retirés (toutes les écoutes viennent de Spotify). La provenance
+  reste enregistrée et exportée en CSV.
+
+### Corrigé
+
+- **Provenance des écoutes** : les imports de fichiers sont enregistrés avec la
+  source `import` (et non plus `spotify` comme les synchros). Un script de
+  rattrapage (`pnpm db:backfill-source`) corrige les bases existantes ; cette
+  information reste visible dans l'export CSV.
+- **Titres homonymes** : la résolution d'une piste tient désormais compte de
+  l'**album**, évitant de fusionner deux titres de même nom du même artiste
+  (studio/live, albums distincts).
+- **Tendances** : le comparateur de la page Tendances et la carte du tableau de
+  bord utilisent la période réellement sélectionnée (bornes calendaires) et non
+  plus une fenêtre glissante.
+- **Statistiques** : le jour et l'heure locale d'une écoute sont désormais
+  calculés **par écoute** (avec cache) au lieu d'un décalage fixe. Corrige une
+  heure d'écart pour les écoutes de la saison opposée dans les fuseaux à heure
+  d'été (répartition horaire, écoute quotidienne, récapitulatif).
+- **Graphique « Quand écoutez-vous ? »** : affiche désormais le **temps d'écoute
+  moyen par jour actif** par heure locale (axe en durées) au lieu d'un cumul
+  d'écoutes trompeur. Le graphique mensuel du récapitulatif profite aussi de
+  l'échelle de durées (fin des millisecondes brutes sur l'axe).
+- **Fond** : suppression de la « cassure » horizontale du dégradé décoratif au
+  défilement. Les halos étaient peints dans la boîte du `<body>` limitée à la
+  hauteur de la fenêtre (`height: 100%`) ; ils sont désormais fixés à la fenêtre
+  (`position: fixed`) et la couleur de base porte sur `<html>`.
+- **Durées** : l'unité « jour » est localisée (`j` en français, `d` en anglais)
+  partout où une durée est affichée.
+
 ### Modifié
 
+- **Intégration Spotify** : scopes réduits au strict nécessaire
+  (`user-read-recently-played`), gestion des limites de débit (`Retry-After` +
+  backoff exponentiel via `spotifyFetch`), remontée des messages d'erreur Spotify
+  dans les retours utilisateur, redirect URI local en `127.0.0.1` (HTTPS
+  obligatoire en production), et **attribution Spotify** ajoutée dans l'interface
+  et les images exportées.
+- **Docker** : l'image s'exécute désormais en **utilisateur non-root** (`node`)
+  et n'embarque plus les dépendances de développement (`pnpm prune --prod`),
+  réduisant sa taille.
+- **Démarrage** : une sauvegarde de la base est créée avant `prisma db push`
+  (3 dernières conservées) pour se prémunir d'une évolution de schéma.
+- **Export CSV** : généré en **flux paginé** (pagination par curseur), la
+  mémoire reste bornée quelle que soit la taille de l'historique.
+- **Statut intégré aux Réglages** : les statistiques de la page « Statut »
+  (écoutes du jour / de la semaine / totales, dernière synchro) et les
+  informations système (uptime, taille de la base, sauvegardes, sync auto) sont
+  désormais affichées dans la page **Réglages**. L'entrée « Statut » est retirée
+  du menu et `/status` redirige vers `/settings`.
+- **Tableau de bord** : les panneaux Top titres, Top artistes et Genres affichent
+  désormais le **top 10** (au lieu de 5 / 5 / 8), harmonisé sur les trois.
+- **Période par défaut** : le tableau de bord, les classements, l'historique et
+  les pages artiste/titre s'ouvrent désormais sur **Aujourd'hui** (au lieu de
+  « Tout »).
+- **Vue d'ensemble** : le graphe « Écoute dans le temps » passe en **heures**
+  quand la période couvre un seul jour (aujourd'hui) ; la carte « Quand
+  écoutez-vous ? » est retirée (redondante).
 - **Publication de l'image Docker désormais manuelle** : le workflow « Docker »
   ne se déclenche plus automatiquement (ni sur `main`, ni sur les tags de
   pré-version). Lancez-le à la main (Actions → *Docker* → *Run workflow*).
 - **Build local par défaut** : `docker-compose.yml` construit l'image depuis les
   sources ; la ligne `image:` (GHCR) est commentée et optionnelle, et
   `STATISFY_IMAGE` est commentée dans `.env`/`.env.example`.
+
+### Sécurité
+
+- **Anti-SSRF sur les visuels distants** : `GET /api/wrapped/image` n'accepte
+  plus que les URLs http(s) vers un hôte public (résolution DNS incluse) et
+  refuse les adresses privées / loopback / lien-local ; il limite la taille
+  (5 Mo) et le délai (5 s) de récupération et n'accepte que les `image/*`. Les
+  imports « Your Spotify » pouvant contenir des URLs arbitraires, cela ferme un
+  vecteur SSRF côté serveur.
+- **En-têtes HTTP de sécurité** : `X-Content-Type-Options`, `X-Frame-Options`,
+  `Referrer-Policy`, `X-DNS-Prefetch-Control` et `Permissions-Policy` ajoutés à
+  toutes les réponses.
+- **Limite de taille** sur les endpoints d'import : `413` au-delà de 256 Mo
+  (vérifié sur `Content-Length` puis sur le corps réel).
+- **Anti force-brute** : limitation de débit sur la connexion (10 essais /
+  15 min par couple IP + email, 30 / 15 min par IP) et sur l'inscription
+  (5 / h par IP), avec message « trop de tentatives ».
+- **Endpoints durcis** : le jeton `SYNC_TOKEN` n'est plus accepté en *query
+  string*, `POST /api/backup` n'accepte plus `GET`, et les erreurs de sauvegarde
+  ne renvoient plus de message interne brut.
+- **CSV** : les cellules commençant par `=`, `+`, `-` ou `@` sont neutralisées à
+  l'export (injection de formule tableur).
+- **Archives** : décompression bornée (plafond par entrée et cumulé) contre les
+  « zip bombs ».
+- **OAuth** : la redirection de retour n'accepte plus que l'URL publique
+  configurée ou l'origine de la requête courante (fin de la redirection ouverte
+  via des en-têtes de proxy usurpés).
+- **CSP** ajouté en production (hors dev, où Next utilise `eval`).
+- **Inscriptions** : consommation **atomique** des invitations (transaction) —
+  une même invitation ne peut plus servir à deux inscriptions simultanées, et
+  l'échec annule la création du compte. Un jeton invalide n'est plus bloquant
+  lorsque les inscriptions publiques sont **ouvertes**. Durée de validité
+  bornée (≤ 365 jours).
+- **Mot de passe** : le changement est désormais **limité en débit**
+  (anti force-brute du mot de passe courant) et révoque les sessions
+  **autres que la session courante**.
+- **Demandes d'accès Spotify** : **limitées en débit**, champ borné à 200
+  caractères, et un compte déjà approuvé ne peut pas se rétrograder en attente.
+- **Moindre privilège** : la liste des comptes et des invitations n'est
+  chargée côté serveur que pour un **administrateur**.
 
 ## [0.11.0-preview.1] — 2026-10-10
 

@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { getArtistDetail, type StatsRange } from "@/lib/stats";
-import { RangeTabs, SourceFilter } from "@/components/range-tabs";
-import { parseRange, parseSource } from "@/lib/range";
+import { RangeTabs } from "@/components/range-tabs";
+import { parseRange } from "@/lib/range";
 import { AreaChart } from "@/components/charts";
 import {
   Badge,
@@ -36,14 +36,10 @@ export default async function ArtistPage({
     typeof sp.range === "string" ? sp.range : undefined,
     user.timezone,
   );
-  const source = parseSource(
-    typeof sp.source === "string" ? sp.source : undefined,
-  );
   const filters: StatsRange = {
     days: parsed.days,
     from: parsed.from,
     to: parsed.to,
-    source,
   };
 
   const detail = await getArtistDetail(user.id, id, filters, user.timezone);
@@ -78,23 +74,14 @@ export default async function ArtistPage({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <RangeTabs
-            basePath={`/artist/${artist.id}`}
-            current={parsed.key}
-            source={source}
-          />
-          <SourceFilter
-            basePath={`/artist/${artist.id}`}
-            current={source}
-            rangeKey={parsed.key}
-          />
+          <RangeTabs basePath={`/artist/${artist.id}`} current={parsed.key} />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           label={t("dash.listeningTime")}
-          value={formatDuration(overview.totalMs)}
+          value={formatDuration(overview.totalMs, locale)}
           hint={t("dash.playsCount", {
             count: formatNumber(overview.totalPlays, locale),
           })}
@@ -149,9 +136,7 @@ export default async function ArtistPage({
               {detail.topTracks.map((track, index) => (
                 <li key={track.id}>
                   <Link
-                    href={`/track/${track.id}?range=${parsed.key}${
-                      source ? `&source=${source}` : ""
-                    }`}
+                    href={`/track/${track.id}?range=${parsed.key}`}
                     className="flex items-center gap-3 rounded-lg p-1.5 transition-colors hover:bg-surface-2"
                   >
                     <span className="w-5 text-sm text-muted">{index + 1}</span>
@@ -165,7 +150,7 @@ export default async function ArtistPage({
                       </p>
                     </div>
                     <span className="text-xs text-muted">
-                      {formatDuration(track.msPlayed)}
+                      {formatDuration(track.msPlayed, locale)}
                     </span>
                   </Link>
                 </li>
@@ -192,7 +177,7 @@ export default async function ArtistPage({
                     {album.name}
                   </p>
                   <p className="truncate text-xs text-muted">
-                    {formatDuration(album.msPlayed)}
+                    {formatDuration(album.msPlayed, locale)}
                   </p>
                 </div>
               ))}
@@ -221,7 +206,7 @@ export default async function ArtistPage({
                 <span className="hidden text-right text-xs text-muted sm:block">
                   {formatDateTime(play.playedAt, user.timezone, locale)}
                 </span>
-                <Badge>{formatDuration(play.msPlayed)}</Badge>
+                <Badge>{formatDuration(play.msPlayed, locale)}</Badge>
               </li>
             ))}
           </ul>

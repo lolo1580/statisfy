@@ -1,5 +1,7 @@
 import 'server-only'
 
+import pkg from '../../package.json'
+
 /**
  * Accès centralisé aux variables d'environnement.
  *
@@ -34,6 +36,9 @@ export function getCredentialsKey(): Buffer {
 
 export const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Statisfy'
 
+/** Version de l'application (lue depuis `package.json`). */
+export const appVersion: string = pkg.version
+
 /** URL publique de l'instance (pour les redirections derrière un proxy). */
 export const appUrl = process.env.APP_URL || ''
 
@@ -55,7 +60,7 @@ export const spotify = {
   clientSecret: process.env.SPOTIFY_CLIENT_SECRET || '',
   redirectUri:
     process.env.SPOTIFY_REDIRECT_URI ||
-    'http://localhost:3000/api/sources/spotify/callback',
+    'http://127.0.0.1:3000/api/sources/spotify/callback',
   get configured() {
     return Boolean(this.clientId && this.clientSecret)
   },

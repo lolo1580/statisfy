@@ -2,17 +2,16 @@ import 'server-only'
 
 import { prisma } from './db'
 import type { Prisma } from '../generated/prisma/client'
-import { dayKey, getTimezoneOffsetMs, hourOf } from './format'
+import { dayKey, hourOf } from './format'
+import { computeTrends } from './trends'
 
 /**
  * Filtres applicables aux agrégations.
  * - `days: null` = tout l'historique.
- * - `source` restreint à une source (spotify, import).
  * - `artistId` / `trackId` / `albumId` restreignent à une entité.
  */
 export type StatsRange = {
   days: number | null
-  source?: string | null
   artistId?: string
   trackId?: string
   albumId?: string
@@ -33,7 +32,6 @@ function buildWhere(userId: string, range: StatsRange): Prisma.PlayWhereInput {
       gte: new Date(Date.now() - range.days * 24 * 60 * 60 * 1000),
     }
   }
-  if (range.source) where.source = range.source
   if (range.artistId) where.artistId = range.artistId
   if (range.trackId) where.trackId = range.trackId
   if (range.albumId) where.albumId = range.albumId
@@ -302,28 +300,6 @@ export async function getTopGenres(
     .slice(0, limit)
 }
 
-export type SourceStat = { source: string; plays: number; msPlayed: number }
-
-/** Répartition des écoutes par source (Spotify, import). */
-export async function getSourceBreakdown(
-  userId: string,
-  range: StatsRange,
-): Promise<SourceStat[]> {
-  const where = buildWhere(userId, range)
-  const grouped = await prisma.play.groupBy({
-    by: ['source'],
-    where,
-    _count: { source: true },
-    _sum: { msPlayed: true },
-    orderBy: { _count: { source: 'desc' } },
-  })
-  return grouped.map((g) => ({
-    source: g.source,
-    plays: g._count.source,
-    msPlayed: g._sum.msPlayed ?? 0,
-  }))
-}
-
 export type DailyStat = { day: string; msPlayed: number; plays: number }
 
 export async function getDailyStats(
@@ -350,7 +326,6 @@ export async function getDailyStats(
     select: { playedAt: true, msPlayed: true },
   })
 
-  const offset = getTimezoneOffsetMs(timeZone)
   const buckets = new Map<string, DailyStat>()
 
   // Jour de départ : début de fenêtre, ou premier jour d'écoute pour « tout ».
@@ -367,8 +342,8 @@ export async function getDailyStats(
   }
 
   // Pré-remplit chaque jour (heure locale) afin d'avoir un graphe continu.
-  const startDay = dayKey(new Date(startMs), timeZone, offset)
-  const endDay = dayKey(new Date(), timeZone, offset)
+  const startDay = dayKey(new Date(startMs), timeZone)
+  const endDay = dayKey(new Date(), timeZone)
   const totalDays = Math.max(
     1,
     Math.round(
@@ -384,7 +359,7 @@ export async function getDailyStats(
   }
 
   for (const play of plays) {
-    const key = dayKey(play.playedAt, timeZone, offset)
+    const key = dayKey(play.playedAt, timeZone)
     const bucket = buckets.get(key) ?? { day: key, msPlayed: 0, plays: 0 }
     bucket.msPlayed += play.msPlayed
     bucket.plays += 1
@@ -394,13 +369,15 @@ export async function getDailyStats(
   return [...buckets.values()].sort((a, b) => a.day.localeCompare(b.day))
 }
 
-export type HourStat = { hour: number; plays: number }
+export type HourStat = { hour: number; plays: number; msPlayed: number }
+
+export type HourlyStats = { hours: HourStat[]; activeDays: number }
 
 export async function getHourlyStats(
   userId: string,
   timeZone: string,
   range: StatsRange,
-): Promise<HourStat[]> {
+): Promise<HourlyStats> {
   const baseWhere = buildWhere(userId, { ...range, days: null })
   const since =
     range.from ??
@@ -413,18 +390,22 @@ export async function getHourlyStats(
     : baseWhere
   const plays = await prisma.play.findMany({
     where,
-    select: { playedAt: true },
+    select: { playedAt: true, msPlayed: true },
   })
 
-  const offset = getTimezoneOffsetMs(timeZone)
   const buckets: HourStat[] = Array.from({ length: 24 }, (_, hour) => ({
     hour,
     plays: 0,
+    msPlayed: 0,
   }))
+  const days = new Set<string>()
   for (const play of plays) {
-    buckets[hourOf(play.playedAt, timeZone, offset)].plays += 1
+    const bucket = buckets[hourOf(play.playedAt, timeZone)]
+    bucket.plays += 1
+    bucket.msPlayed += play.msPlayed
+    days.add(dayKey(play.playedAt, timeZone))
   }
-  return buckets
+  return { hours: buckets, activeDays: days.size }
 }
 
 export type RecentPlay = {
@@ -436,7 +417,6 @@ export type RecentPlay = {
   artistName: string
   albumName: string | null
   imageUrl: string | null
-  source: string
   msPlayed: number
 }
 
@@ -460,7 +440,6 @@ export async function getRecentPlays(
     artistName: p.track.artist.name,
     albumName: p.track.album?.name ?? null,
     imageUrl: p.track.album?.imageUrl ?? p.track.imageUrl ?? null,
-    source: p.source,
     msPlayed: p.msPlayed,
   }))
 }
@@ -478,7 +457,6 @@ export type ArtistDetail = {
   topTracks: TopTrack[]
   topAlbums: TopAlbum[]
   daily: DailyStat[]
-  sources: SourceStat[]
   recent: RecentPlay[]
 }
 
@@ -495,13 +473,12 @@ export async function getArtistDetail(
   if (!artist) return null
 
   const scoped: StatsRange = { ...range, artistId }
-  const [overview, topTracks, topAlbums, daily, sources, recent] =
+  const [overview, topTracks, topAlbums, daily, recent] =
     await Promise.all([
       getOverview(userId, scoped),
       getTopTracks(userId, scoped, 10),
       getTopAlbums(userId, scoped, 6),
       getDailyStats(userId, timeZone, scoped),
-      getSourceBreakdown(userId, scoped),
       getRecentPlays(userId, scoped, 15),
     ])
 
@@ -516,7 +493,6 @@ export async function getArtistDetail(
     topTracks,
     topAlbums,
     daily,
-    sources,
     recent,
   }
 }
@@ -534,7 +510,6 @@ export type TrackDetail = {
   }
   overview: Overview
   daily: DailyStat[]
-  sources: SourceStat[]
   recent: RecentPlay[]
 }
 
@@ -551,10 +526,9 @@ export async function getTrackDetail(
   if (!track) return null
 
   const scoped: StatsRange = { ...range, trackId }
-  const [overview, daily, sources, recent] = await Promise.all([
+  const [overview, daily, recent] = await Promise.all([
     getOverview(userId, scoped),
     getDailyStats(userId, timeZone, scoped),
-    getSourceBreakdown(userId, scoped),
     getRecentPlays(userId, scoped, 15),
   ])
 
@@ -585,7 +559,6 @@ export async function getTrackDetail(
     },
     overview,
     daily,
-    sources,
     recent,
   }
 }
@@ -691,14 +664,12 @@ export async function getWrappedExtras(
     select: { playedAt: true, msPlayed: true },
   })
 
-  const offset = getTimezoneOffsetMs(timeZone)
   const daily = new Map<string, TimelineBucket>()
   const monthly = new Map<string, TimelineBucket>()
   const hours = new Array<number>(24).fill(0)
 
   for (const play of plays) {
-    const local = new Date(play.playedAt.getTime() + offset)
-    const dayKeyValue = local.toISOString().slice(0, 10)
+    const dayKeyValue = dayKey(play.playedAt, timeZone)
     const monthKey = dayKeyValue.slice(0, 7)
 
     const day = daily.get(dayKeyValue) ?? { key: dayKeyValue, msPlayed: 0, plays: 0 }
@@ -711,7 +682,7 @@ export async function getWrappedExtras(
     month.plays += 1
     monthly.set(monthKey, month)
 
-    hours[local.getUTCHours()] += 1
+    hours[hourOf(play.playedAt, timeZone)] += 1
   }
 
   const dailyArr = [...daily.values()].sort((a, b) => a.key.localeCompare(b.key))
@@ -808,160 +779,181 @@ export async function getPlayingYears(userId: string): Promise<number[]> {
   return years
 }
 
-// --- Tendances / découvertes ------------------------------------------------
+// --- Tendances --------------------------------------------------------------
 
-export type ArtistTrend = {
+export type TrendRow = {
   id: string
   name: string
   imageUrl: string | null
+  subtitle: string | null
   current: number
   previous: number
   delta: number
 }
 
-export type ArtistTrends = {
-  rising: ArtistTrend[]
-  falling: ArtistTrend[]
+export type Trends = {
+  rising: TrendRow[]
+  falling: TrendRow[]
   hasPrevious: boolean
 }
 
+export type TrendKind = "artist" | "track" | "album"
+
+/** Comptage d'écoutes par identifiant sur une fenêtre [from, to). */
+async function groupCount(
+  kind: TrendKind,
+  where: Prisma.PlayWhereInput,
+): Promise<Map<string, number>> {
+  const map = new Map<string, number>()
+  if (kind === "artist") {
+    const rows = await prisma.play.groupBy({
+      by: ["artistId"],
+      where,
+      _count: { _all: true },
+    })
+    for (const row of rows) map.set(row.artistId, row._count._all)
+  } else if (kind === "track") {
+    const rows = await prisma.play.groupBy({
+      by: ["trackId"],
+      where,
+      _count: { _all: true },
+    })
+    for (const row of rows) map.set(row.trackId, row._count._all)
+  } else {
+    const rows = await prisma.play.groupBy({
+      by: ["albumId"],
+      where,
+      _count: { _all: true },
+    })
+    for (const row of rows) {
+      if (row.albumId) map.set(row.albumId, row._count._all)
+    }
+  }
+  return map
+}
+
+type EntityMeta = {
+  name: string
+  imageUrl: string | null
+  subtitle: string | null
+}
+
+/** Métadonnées (nom, visuel, sous-titre) des entités pour l'affichage. */
+async function entityMeta(
+  kind: TrendKind,
+  ids: string[],
+): Promise<Map<string, EntityMeta>> {
+  const map = new Map<string, EntityMeta>()
+  if (ids.length === 0) return map
+  if (kind === "artist") {
+    const rows = await prisma.artist.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, name: true, imageUrl: true },
+    })
+    for (const row of rows) {
+      map.set(row.id, { name: row.name, imageUrl: row.imageUrl, subtitle: null })
+    }
+  } else if (kind === "track") {
+    const rows = await prisma.track.findMany({
+      where: { id: { in: ids } },
+      include: { artist: true, album: true },
+    })
+    for (const row of rows) {
+      map.set(row.id, {
+        name: row.name,
+        imageUrl: row.album?.imageUrl ?? row.imageUrl ?? null,
+        subtitle: row.artist.name,
+      })
+    }
+  } else {
+    const rows = await prisma.album.findMany({
+      where: { id: { in: ids } },
+      include: { artist: true },
+    })
+    for (const row of rows) {
+      map.set(row.id, {
+        name: row.name,
+        imageUrl: row.imageUrl,
+        subtitle: row.artist.name,
+      })
+    }
+  }
+  return map
+}
+
 /**
- * Compare deux périodes consécutives de même durée et renvoie les artistes qui
- * progressent le plus (et ceux qui reculent).
+ * Compare deux fenêtres consécutives de même durée (`range.days`) et renvoie les
+ * entités qui progressent le plus (et celles qui reculent).
  */
+export async function getTrends(
+  userId: string,
+  kind: TrendKind,
+  range: StatsRange,
+  limit = 5,
+): Promise<Trends> {
+  // Fenêtre courante : bornes explicites si fournies (période calendaire),
+  // sinon une fenêtre glissante de `days`.
+  const currentTo = range.to ?? new Date()
+  const currentFrom = range.from
+    ? range.from
+    : range.days
+      ? new Date(currentTo.getTime() - range.days * 24 * 60 * 60 * 1000)
+      : null
+  if (!currentFrom || currentFrom.getTime() >= currentTo.getTime()) {
+    return { rising: [], falling: [], hasPrevious: false }
+  }
+
+  const span = currentTo.getTime() - currentFrom.getTime()
+  const previousFrom = new Date(currentFrom.getTime() - span)
+
+  const windowWhere = (from: Date, to: Date): Prisma.PlayWhereInput => ({
+    userId,
+    playedAt: { gte: from, lt: to },
+  })
+
+  const [currentMap, previousMap] = await Promise.all([
+    groupCount(kind, windowWhere(currentFrom, currentTo)),
+    groupCount(kind, windowWhere(previousFrom, currentFrom)),
+  ])
+
+  const counts = computeTrends(currentMap, previousMap, limit)
+  if (counts.rising.length === 0 && counts.falling.length === 0) {
+    return { rising: [], falling: [], hasPrevious: counts.hasPrevious }
+  }
+
+  const ids = [...new Set([...counts.rising, ...counts.falling].map((r) => r.id))]
+  const meta = await entityMeta(kind, ids)
+
+  const enrich = (rows: typeof counts.rising): TrendRow[] =>
+    rows.flatMap((row) => {
+      const entity = meta.get(row.id)
+      if (!entity) return []
+      return [
+        {
+          id: row.id,
+          name: entity.name,
+          imageUrl: entity.imageUrl,
+          subtitle: entity.subtitle,
+          current: row.current,
+          previous: row.previous,
+          delta: row.delta,
+        },
+      ]
+    })
+
+  return {
+    rising: enrich(counts.rising),
+    falling: enrich(counts.falling),
+    hasPrevious: counts.hasPrevious,
+  }
+}
+
+/** Tendances d'artistes (raccourci conservé pour les vues existantes). */
 export async function getArtistTrends(
   userId: string,
   range: StatsRange,
   limit = 5,
-): Promise<ArtistTrends> {
-  if (!range.days) return { rising: [], falling: [], hasPrevious: false }
-
-  const span = range.days * 24 * 60 * 60 * 1000
-  const now = Date.now()
-  const currentFrom = new Date(now - span)
-  const currentTo = new Date(now)
-  const previousFrom = new Date(now - 2 * span)
-  const previousTo = currentFrom
-
-  const windowWhere = (from: Date, to: Date): Prisma.PlayWhereInput => ({
-    userId,
-    ...(range.source ? { source: range.source } : {}),
-    playedAt: { gte: from, lt: to },
-  })
-
-  const [current, previous] = await Promise.all([
-    prisma.play.groupBy({
-      by: ["artistId"],
-      where: windowWhere(currentFrom, currentTo),
-      _count: { artistId: true },
-    }),
-    prisma.play.groupBy({
-      by: ["artistId"],
-      where: windowWhere(previousFrom, previousTo),
-      _count: { artistId: true },
-    }),
-  ])
-
-  const currentMap = new Map(current.map((r) => [r.artistId, r._count.artistId]))
-  const previousMap = new Map(
-    previous.map((r) => [r.artistId, r._count.artistId]),
-  )
-  const ids = [...new Set([...currentMap.keys(), ...previousMap.keys()])]
-  if (ids.length === 0) return { rising: [], falling: [], hasPrevious: false }
-
-  const artists = await prisma.artist.findMany({
-    where: { id: { in: ids } },
-    select: { id: true, name: true, imageUrl: true },
-  })
-  const byId = new Map(artists.map((a) => [a.id, a]))
-
-  const rows: ArtistTrend[] = ids.map((id) => {
-    const c = currentMap.get(id) ?? 0
-    const p = previousMap.get(id) ?? 0
-    return {
-      id,
-      name: byId.get(id)?.name ?? "—",
-      imageUrl: byId.get(id)?.imageUrl ?? null,
-      current: c,
-      previous: p,
-      delta: c - p,
-    }
-  })
-
-  return {
-    rising: rows
-      .filter((r) => r.delta > 0)
-      .sort((a, b) => b.delta - a.delta || b.current - a.current)
-      .slice(0, limit),
-    falling: rows
-      .filter((r) => r.delta < 0)
-      .sort((a, b) => a.delta - b.delta || a.current - b.current)
-      .slice(0, limit),
-    hasPrevious: previous.length > 0,
-  }
+): Promise<Trends> {
+  return getTrends(userId, "artist", range, limit)
 }
 
-export type Rediscovery = {
-  id: string
-  name: string
-  imageUrl: string | null
-  plays: number
-  msPlayed: number
-  lastPlayed: Date | null
-}
-
-/**
- * Artistes écoutés auparavant mais délaissés récemment (aucune écoute sur les
- * `recentDays` derniers jours), classés par nombre d'écoutes historiques.
- */
-export async function getRediscoveries(
-  userId: string,
-  options: { recentDays?: number; minPlays?: number; limit?: number } = {},
-): Promise<Rediscovery[]> {
-  const recentDays = options.recentDays ?? 90
-  const minPlays = options.minPlays ?? 5
-  const limit = options.limit ?? 8
-  const cutoff = new Date(Date.now() - recentDays * 24 * 60 * 60 * 1000)
-
-  const [recent, all] = await Promise.all([
-    prisma.play.groupBy({
-      by: ["artistId"],
-      where: { userId, playedAt: { gte: cutoff } },
-    }),
-    prisma.play.groupBy({
-      by: ["artistId"],
-      where: { userId },
-      _count: { artistId: true },
-      _sum: { msPlayed: true },
-      _max: { playedAt: true },
-    }),
-  ])
-
-  const recentSet = new Set(recent.map((r) => r.artistId))
-  const candidates = all
-    .filter((r) => !recentSet.has(r.artistId) && r._count.artistId >= minPlays)
-    .sort((a, b) => b._count.artistId - a._count.artistId)
-    .slice(0, limit)
-  if (candidates.length === 0) return []
-
-  const artists = await prisma.artist.findMany({
-    where: { id: { in: candidates.map((c) => c.artistId) } },
-    select: { id: true, name: true, imageUrl: true },
-  })
-  const byId = new Map(artists.map((a) => [a.id, a]))
-
-  return candidates.flatMap((c) => {
-    const artist = byId.get(c.artistId)
-    if (!artist) return []
-    return [
-      {
-        id: artist.id,
-        name: artist.name,
-        imageUrl: artist.imageUrl,
-        plays: c._count.artistId,
-        msPlayed: c._sum.msPlayed ?? 0,
-        lastPlayed: c._max.playedAt ?? null,
-      },
-    ]
-  })
-}

@@ -1,28 +1,19 @@
 /** Utilitaires d'affichage et de gestion du temps. */
 
-export function formatDuration(ms: number): string {
+export function formatDuration(ms: number, locale: string = 'fr'): string {
   if (!ms || ms < 0) return '0 min'
   const totalMinutes = Math.floor(ms / 60000)
   const days = Math.floor(totalMinutes / 1440)
   const hours = Math.floor((totalMinutes % 1440) / 60)
   const minutes = totalMinutes % 60
+  // Seule l'unité « jour » diffère selon la langue (j / d).
+  const dayUnit = locale.toLowerCase().startsWith('fr') ? 'j' : 'd'
   if (days > 0) {
-    return hours === 0 ? `${days} j` : `${days} j ${hours} h`
+    return hours === 0 ? `${days} ${dayUnit}` : `${days} ${dayUnit} ${hours} h`
   }
   if (hours === 0) return `${minutes} min`
   if (minutes === 0) return `${hours} h`
   return `${hours} h ${String(minutes).padStart(2, '0')}`
-}
-
-export function formatDurationLong(ms: number): string {
-  if (!ms || ms < 0) return '0 minute'
-  const totalSeconds = Math.floor(ms / 1000)
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const parts: string[] = []
-  if (hours) parts.push(`${hours} h`)
-  if (minutes || !hours) parts.push(`${minutes} min`)
-  return parts.join(' ')
 }
 
 export function formatNumber(value: number, locale: string = "en"): string {
@@ -33,7 +24,24 @@ export function formatNumber(value: number, locale: string = "en"): string {
  * Décalage (ms) d'un fuseau IANA par rapport à UTC à un instant donné.
  * Positif à l'est de Greenwich.
  */
+/**
+ * Décale (ms) d'un fuseau IANA par rapport à UTC à un instant donné.
+ * Positif à l'est de Greenwich.
+ *
+ * Le résultat est mémorisé par fuseau et par jour UTC : les changements d'heure
+ * n'interviennent qu'une à deux fois par an, donc ce cache reste correct pour
+ * l'immense majorité des instants (seuls quelques jours de bascule peuvent être
+ * décalés d'une heure).
+ */
+const OFFSET_CACHE = new Map<string, number>()
+const CACHE_DAY_MS = 86_400_000
+
 export function getTimezoneOffsetMs(timeZone: string, at: Date = new Date()): number {
+  const key = `${timeZone}|${Math.floor(at.getTime() / CACHE_DAY_MS)}`
+  const cached = OFFSET_CACHE.get(key)
+  if (cached !== undefined) return cached
+
+  let result = 0
   try {
     const formatter = new Intl.DateTimeFormat('en-US', {
       timeZone,
@@ -55,10 +63,12 @@ export function getTimezoneOffsetMs(timeZone: string, at: Date = new Date()): nu
       get('minute'),
       get('second'),
     )
-    return asUtc - at.getTime()
+    result = asUtc - at.getTime()
   } catch {
-    return 0
+    result = 0
   }
+  OFFSET_CACHE.set(key, result)
+  return result
 }
 
 /** Clé de jour locale « YYYY-MM-DD » pour un instant donné. */

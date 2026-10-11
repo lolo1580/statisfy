@@ -6,6 +6,7 @@ import { prisma } from '../db'
 import { encryptJson } from '../crypto'
 import { appUrl, cookieDomain } from '../env'
 import { exchangeSpotifyCode } from './spotify'
+import { spotifyFetch } from './spotify-http'
 import {
   normalizeOrigin,
   requestOrigin,
@@ -45,11 +46,17 @@ export async function handleSpotifyCallback(request: NextRequest) {
   clearStateCookie(jar)
 
   const state = await verifyOAuthState(rawState)
-  const fallback =
-    normalizeOrigin(appUrl) ??
-    normalizeOrigin(await requestOrigin()) ??
-    new URL(request.url).origin
-  const base = normalizeOrigin(state?.ret) ?? fallback
+  // Origines de confiance : l'URL publique configurée et l'origine de la requête
+  // courante. On n'accepte l'URL de retour (signée) que si elle y figure, ce qui
+  // ferme la redirection ouverte via des en-têtes de proxy usurpés.
+  const appOrigin = normalizeOrigin(appUrl)
+  const reqOrigin = normalizeOrigin(await requestOrigin())
+  const allowed = new Set(
+    [appOrigin, reqOrigin].filter((value): value is string => Boolean(value)),
+  )
+  const fallback = appOrigin ?? reqOrigin ?? new URL(request.url).origin
+  const requested = normalizeOrigin(state?.ret)
+  const base = requested && allowed.has(requested) ? requested : fallback
   const back = (query: string) => NextResponse.redirect(`${base}/settings${query}`)
 
   if (oauthError) return back('?error=spotify_denied')
@@ -61,7 +68,7 @@ export async function handleSpotifyCallback(request: NextRequest) {
   try {
     const credentials = await exchangeSpotifyCode(code)
 
-    const profileRes = await fetch('https://api.spotify.com/v1/me', {
+    const profileRes = await spotifyFetch('https://api.spotify.com/v1/me', {
       headers: { Authorization: `Bearer ${credentials.accessToken}` },
       cache: 'no-store',
     })

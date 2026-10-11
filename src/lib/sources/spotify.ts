@@ -2,15 +2,13 @@ import 'server-only'
 
 import type { RawPlay, SourceAdapter, SyncContext } from './types'
 import { spotify } from '../env'
+import { spotifyFetch, spotifyErrorMessage } from './spotify-http'
 
 const ACCOUNTS = 'https://accounts.spotify.com'
 const API = 'https://api.spotify.com/v1'
 
-export const SPOTIFY_SCOPES = [
-  'user-read-recently-played',
-  'user-read-currently-playing',
-  'user-top-read',
-].join(' ')
+// Scopes minimaux : la synchronisation n'utilise que les écoutes récentes.
+export const SPOTIFY_SCOPES = ['user-read-recently-played'].join(' ')
 
 type SpotifyCredentials = {
   accessToken?: string
@@ -48,7 +46,7 @@ export async function exchangeSpotifyCode(code: string): Promise<SpotifyCredenti
   const basic = Buffer.from(`${spotify.clientId}:${spotify.clientSecret}`).toString(
     'base64',
   )
-  const res = await fetch(`${ACCOUNTS}/api/token`, {
+  const res = await spotifyFetch(`${ACCOUNTS}/api/token`, {
     method: 'POST',
     headers: {
       Authorization: `Basic ${basic}`,
@@ -61,7 +59,9 @@ export async function exchangeSpotifyCode(code: string): Promise<SpotifyCredenti
     }),
   })
   if (!res.ok) {
-    throw new Error(`Échange de code Spotify échoué (${res.status}).`)
+    throw new Error(
+      `Échange de code Spotify échoué : ${await spotifyErrorMessage(res)}.`,
+    )
   }
   const data = (await res.json()) as {
     access_token: string
@@ -86,7 +86,7 @@ async function ensureToken(creds: SpotifyCredentials): Promise<string> {
   const basic = Buffer.from(`${spotify.clientId}:${spotify.clientSecret}`).toString(
     'base64',
   )
-  const res = await fetch(`${ACCOUNTS}/api/token`, {
+  const res = await spotifyFetch(`${ACCOUNTS}/api/token`, {
     method: 'POST',
     headers: {
       Authorization: `Basic ${basic}`,
@@ -98,7 +98,9 @@ async function ensureToken(creds: SpotifyCredentials): Promise<string> {
     }),
   })
   if (!res.ok) {
-    throw new Error(`Rafraîchissement du token Spotify échoué (${res.status}).`)
+    throw new Error(
+      `Rafraîchissement du token Spotify échoué : ${await spotifyErrorMessage(res)}.`,
+    )
   }
   const data = (await res.json()) as {
     access_token: string
@@ -119,7 +121,7 @@ async function fetchArtistGenres(
   const unique = [...new Set(artistIds)].filter(Boolean)
   for (let i = 0; i < unique.length; i += 50) {
     const batch = unique.slice(i, i + 50)
-    const res = await fetch(`${API}/artists?ids=${batch.join(',')}`, {
+    const res = await spotifyFetch(`${API}/artists?ids=${batch.join(',')}`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
     })
@@ -158,12 +160,14 @@ export const spotifyAdapter: SourceAdapter = {
       url.searchParams.set('after', String(ctx.since.getTime()))
     }
 
-    const res = await fetch(url, {
+    const res = await spotifyFetch(url, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
     })
     if (!res.ok) {
-      throw new Error(`Spotify a répondu ${res.status}.`)
+      throw new Error(
+        `Spotify a répondu : ${await spotifyErrorMessage(res)}.`,
+      )
     }
     const data = (await res.json()) as { items?: RecentlyPlayedItem[] }
     const items = data.items ?? []

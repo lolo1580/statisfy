@@ -5,12 +5,16 @@ export const fr: Dictionary = {
   // Navigation & shell
   "nav.overview": "Vue d'ensemble",
   "nav.rankings": "Classements",
+  "nav.compare": "Comparateur",
+  "nav.trends": "Tendances",
   "nav.recap": "Récapitulatif",
   "nav.history": "Historique",
   "nav.status": "Statut",
   "nav.settings": "Réglages",
   "nav.logout": "Déconnexion",
+  "nav.pendingRequests": "{count} demande(s) Spotify en attente",
   "shell.searchPlaceholder": "Rechercher…",
+  "shell.spotifyAttribution": "Données et visuels musicaux fournis par Spotify.",
 
   // Authentication
   "auth.tagline": "Vos statistiques d'écoute, chez vous.",
@@ -31,6 +35,7 @@ export const fr: Dictionary = {
   "auth.createAccountCta": "Créer le compte",
   "auth.creating": "Création…",
   "auth.alreadyAccount": "Déjà inscrit ?",
+  "auth.invited": "Vous avez été invité à rejoindre cette instance.",
 
   // Validation & auth errors
   "validation.nameMin": "Au moins 2 caractères.",
@@ -42,6 +47,10 @@ export const fr: Dictionary = {
   "autherr.taken": "Un compte existe déjà avec cette adresse.",
   "autherr.credentials": "Identifiants incorrects.",
   "autherr.required": "Adresse e-mail et mot de passe requis.",
+  "autherr.rateLimited": "Trop de tentatives. Réessayez dans {minutes} min.",
+  "autherr.inviteInvalid": "Ce lien d'invitation est invalide ou a expiré.",
+  "autherr.inviteEmail":
+    "Cette invitation est réservée à une autre adresse e-mail.",
 
   // Range & source filters
   "range.today": "Auj.",
@@ -49,7 +58,6 @@ export const fr: Dictionary = {
   "range.month": "Mois",
   "range.year": "Année",
   "range.all": "Tout",
-  "source.all": "Toutes",
   "source.spotify": "Spotify",
   "source.import": "Import",
 
@@ -64,6 +72,7 @@ export const fr: Dictionary = {
   "dash.albums": "Albums",
   "dash.overTime": "Écoute dans le temps",
   "dash.dailyTime": "Temps d'écoute quotidien",
+  "dash.hourlyTime": "Temps d'écoute par heure",
   "dash.topTracks": "Top titres",
   "dash.metricPlays": "Écoutes",
   "dash.metricTime": "Temps",
@@ -74,11 +83,9 @@ export const fr: Dictionary = {
   "dash.noArtists": "Pas encore d'artistes.",
   "dash.genresUnavailable":
     "Genres indisponibles. Synchronisez Spotify pour les enrichir.",
-  "dash.whenListen": "Quand écoutez-vous ?",
-  "dash.byHour": "Répartition par heure locale",
+  "dash.avgPerDay": "moy./jour",
   "dash.empty":
     "Aucune donnée pour l'instant. Rendez-vous dans Réglages pour connecter une source ou importer votre historique Spotify.",
-  "dash.sourceChip": "{label} · {plays} écoutes ({duration})",
 
   // Rankings
   "top.title": "Classements",
@@ -86,11 +93,37 @@ export const fr: Dictionary = {
   "top.topArtists": "Artistes les plus écoutés",
   "top.topAlbums": "Albums les plus écoutés",
 
+  // Compare
+  "compare.title": "Comparer des périodes",
+  "compare.periodA": "Période A",
+  "compare.periodB": "Période B",
+  "compare.compare": "Comparer",
+  "compare.swap": "Inverser",
+  "compare.summary": "Synthèse",
+  "compare.metric": "Indicateur",
+  "compare.delta": "Évolution",
+  "compare.overlay": "Comparaison du temps d'écoute",
+  "compare.sideBySide": "Côte à côte",
+  "compare.sameShape":
+    "Choisissez deux périodes de même type (deux mois ou deux années) pour les superposer.",
+  "compare.noData": "Aucune écoute sur cette période.",
+
+  // Trends
+  "trends.title": "Tendances",
+  "trends.w7": "7 j",
+  "trends.w30": "30 j",
+  "trends.w90": "90 j",
+  "trends.w365": "1 an",
+  "trends.noRising": "Aucune hausse sur cette fenêtre.",
+  "trends.noFalling": "Aucune baisse sur cette fenêtre.",
+  "trends.noPrevious": "Pas de période précédente à comparer.",
+  "trends.link": "Toutes les tendances",
+
   // History
   "history.title": "Historique",
   "history.daily": "Écoute quotidienne",
   "history.hourly": "Répartition horaire",
-  "history.hourlySubtitle": "Heure locale, sur la période sélectionnée",
+  "history.hourlySubtitle": "Moyenne par jour actif, sur la période sélectionnée",
   "history.recent": "50 dernières écoutes",
   "history.noPlays": "Aucune écoute enregistrée.",
 
@@ -102,6 +135,7 @@ export const fr: Dictionary = {
   "recap.view": "Voir",
   "recap.wholeYear": "Toute l'année",
   "recap.download": "Télécharger l'image",
+  "recap.downloadStory": "Image story (9:16)",
   "recap.heroKicker": "Votre {period} en musique",
   "recap.listening": "d'écoute",
   "recap.plays": "écoutes",
@@ -138,6 +172,7 @@ export const fr: Dictionary = {
   "status.nextSync": "prochain sync ≈ {time} (toutes les {minutes} min)",
   "status.system": "Système",
   "status.app": "Application",
+  "status.version": "Version",
   "status.env": "Environnement",
   "status.node": "Node.js",
   "status.uptime": "Démarré depuis",
@@ -190,6 +225,88 @@ export const fr: Dictionary = {
   "settings.disabled": "désactivée",
   "settings.disableReg": "Désactiver les inscriptions",
   "settings.enableReg": "Autoriser les inscriptions",
+  "settings.export": "Export",
+  "settings.exportHint": "Télécharger vos données",
+  "settings.exportCsv": "Historique (CSV)",
+  "settings.exportDb": "Base de données (.db)",
+
+  // Settings / gestion des utilisateurs (admin)
+  "settings.users": "Utilisateurs",
+  "settings.usersSubtitle": "Comptes de cette instance",
+  "settings.userAdmin": "Admin",
+  "settings.you": "Vous",
+  "settings.userStats": "{plays} écoutes · {sources} source(s)",
+  "settings.makeAdmin": "Nommer admin",
+  "settings.removeAdmin": "Retirer admin",
+  "settings.deleteUser": "Supprimer",
+  "settings.resetPassword": "Réinitialiser le mot de passe",
+  "settings.resetting": "Réinitialisation…",
+  "settings.changePassword": "Changer le mot de passe",
+  "settings.currentPassword": "Mot de passe actuel",
+  "settings.newPassword": "Nouveau mot de passe",
+  "settings.passwordChanged": "Mot de passe mis à jour.",
+  "settings.passwordWrong": "Mot de passe actuel incorrect.",
+  "settings.invitations": "Invitations",
+  "settings.invitationsSubtitle": "Inviter des personnes à créer un compte",
+  "settings.inviteEmail": "Adresse e-mail (facultatif)",
+  "settings.inviteEmailPlaceholder": "Restreindre à cette adresse",
+  "settings.inviteDays": "Valable",
+  "settings.inviteDaysValue": "{days} jour(s)",
+  "settings.inviteCreate": "Créer une invitation",
+  "settings.inviteCreating": "Création…",
+  "settings.inviteCreated": "Lien d'invitation :",
+  "settings.inviteNone": "Aucune invitation.",
+  "settings.anyEmail": "Toute adresse",
+  "settings.invitePending": "En attente",
+  "settings.inviteUsed": "Utilisée",
+  "settings.inviteExpired": "Expirée",
+  "settings.inviteExpires": "Expire le {date}",
+  "settings.revoke": "Révoquer",
+  "settings.copy": "Copier",
+  "settings.copied": "Copié !",
+
+  // Demandes d'accès Spotify
+  "settings.spotifyAccount": "Compte Spotify (e-mail ou identifiant)",
+  "settings.spotifyAccountPlaceholder": "vous@spotify.com",
+  "settings.spotifyAccessNeeded":
+    "L'accès à Spotify doit être validé par un administrateur avant de pouvoir connecter votre compte. Indiquez votre compte Spotify pour qu'il soit autorisé.",
+  "settings.spotifyRequestCta": "Demander l'accès Spotify",
+  "settings.spotifyRequesting": "Envoi…",
+  "settings.spotifyPending":
+    "Demande envoyée le {date}. En attente de validation par un administrateur.",
+  "settings.spotifyRejected":
+    "Votre demande précédente a été refusée. Vous pouvez en envoyer une nouvelle.",
+  "settings.spotifyAccountLabel": "Compte demandé : {account}",
+  "settings.spotifyRequests": "Demandes d'accès Spotify",
+  "settings.spotifyRequestsSubtitle":
+    "Approuvez les comptes que vous avez ajoutés à votre application Spotify",
+  "settings.spotifyNoRequests": "Aucune demande en attente.",
+  "settings.spotifyApprove": "Approuver",
+  "settings.spotifyReject": "Refuser",
+  "settings.spotifyRevoke": "Révoquer l'accès",
+  "settings.spotifyCancel": "Annuler la demande",
+  "settings.spotifyApproved": "Approuvé",
+  "settings.spotifyPendingBadge": "En attente",
+  "settings.spotifyRejectedBadge": "Refusé",
+  "settings.confirmDeleteUser":
+    "Supprimer « {name} » ? Toutes ses données seront effacées.",
+  "settings.confirmRevoke":
+    "Révoquer l'accès Spotify de « {name} » ? Sa connexion sera supprimée.",
+  "settings.spotifyRequestedAt": "Demandé le {date}",
+
+  // Partage du récapitulatif
+  "settings.share": "Partager le récapitulatif",
+  "settings.shareSubtitle": "Lien public en lecture seule vers votre récap",
+  "settings.shareHint":
+    "Toute personne disposant du lien peut consulter votre récapitulatif. Vous pouvez le désactiver à tout moment.",
+  "settings.shareEnable": "Activer le partage",
+  "settings.shareDisable": "Désactiver le partage",
+  "settings.shareRegenerate": "Régénérer le lien",
+  "settings.shareLink": "Lien public :",
+  "settings.confirmUnshare":
+    "Désactiver le lien public ? Les liens existants cesseront de fonctionner.",
+  "share.kicker": "Récapitulatif partagé",
+  "share.footer": "Réalisé avec {name}",
 
   // Settings / connection action messages
   "msg.syncDone": "Synchronisation terminée : {count} nouvelle(s) écoute(s).",
@@ -204,6 +321,13 @@ export const fr: Dictionary = {
   "err.importFailed": "Échec de l'import.",
   "err.syncFailed": "Échec de la synchronisation.",
   "err.connectionNotFound": "Connexion introuvable.",
+  "err.forbidden": "Action non autorisée.",
+  "err.userNotFound": "Utilisateur introuvable.",
+  "err.spotifyAccountRequired": "Indiquez votre compte Spotify.",
+  "msg.spotifyRequested":
+    "Demande envoyée. Un administrateur va la valider.",
+  "msg.passwordReset":
+    "Mot de passe temporaire : {password} — transmettez-le de façon sûre, puis invitez l'utilisateur à le changer.",
   "err.enrichFailed": "Échec de l'enrichissement des visuels.",
   "settings.yourspotify": "Importer depuis Your Spotify",
   "settings.yourspotifySubtitle": "Dump MongoDB (BSON ou JSON)",
@@ -221,6 +345,8 @@ export const fr: Dictionary = {
   "notice.spotify_denied": "Connexion Spotify annulée.",
   "notice.spotify_state": "Session OAuth invalide ou expirée, réessayez.",
   "notice.spotify_exchange": "Échec de l'échange de jeton auprès de Spotify.",
+  "notice.spotify_not_approved":
+    "Votre accès à Spotify n'a pas encore été validé.",
 
   // Search
   "search.title": "Recherche",
@@ -249,7 +375,6 @@ export const fr: Dictionary = {
   "track.kicker": "Titre",
   "track.plays": "Écoutes",
   "track.lastPlay": "Dernière écoute",
-  "track.sources": "Sources",
   "track.duration": "Durée",
   "track.noPlays": "Aucune écoute de ce titre sur la période sélectionnée.",
 
@@ -260,23 +385,13 @@ export const fr: Dictionary = {
   // Generic
   "generic.noData": "Aucune donnée.",
 
-  // Insights, tendances & sauvegardes
-  "nav.insights": "Découvertes",
+  // Tendances, heatmap & sauvegardes
   "dash.trends": "Tendances",
   "dash.trendsSubtitle": "vs {days} jours précédents",
   "dash.rising": "En hausse",
   "dash.falling": "En baisse",
   "history.heatmap": "Activité annuelle",
   "history.heatmapSubtitle": "Écoutes par jour sur 12 mois",
-  "insights.title": "Découvertes",
-  "insights.obsessions": "Obsessions",
-  "insights.obsessionsSubtitle": "Plus fortes hausses sur 30 jours",
-  "insights.rediscoveries": "Redécouvertes",
-  "insights.rediscoveriesSubtitle":
-    "Aimés auparavant, plus écoutés depuis 90 jours",
-  "insights.noObsessions": "Aucun artiste en hausse pour l'instant.",
-  "insights.noRediscoveries": "Rien à redécouvrir.",
-  "insights.lastPlayed": "Dernière écoute {date}",
   "status.backups": "Sauvegardes",
   "status.backupsValue": "{count} fichier(s)",
   "msg.backupDone": "Sauvegarde créée : {file} ({kept} conservées).",

@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { unzipSync } from 'fflate'
+import { safeUnzip } from '../archive'
 import type { RawPlay } from './types'
 
 export type HistoryFile = { name: string; data: Uint8Array }
@@ -34,7 +34,7 @@ export function parseSpotifyHistoryFiles(files: HistoryFile[]): HistoryParseResu
     const lower = file.name.toLowerCase()
     if (lower.endsWith('.zip')) {
       try {
-        const entries = unzipSync(file.data)
+        const entries = safeUnzip(file.data)
         for (const [path, bytes] of Object.entries(entries)) {
           if (path.endsWith('/')) continue
           if (!path.toLowerCase().endsWith('.json')) continue
@@ -106,6 +106,7 @@ export function parseSpotifyHistory(text: string): RawPlay[] {
 
     plays.push({
       provider: 'spotify',
+      origin: 'import',
       externalTrackId,
       trackName,
       artistName,

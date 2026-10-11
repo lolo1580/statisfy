@@ -23,37 +23,45 @@ function elapsedDays(from: Date, timeZone: string, now: Date): number {
   return Math.max(1, Math.round((today.getTime() - from.getTime()) / DAY_MS) + 1);
 }
 
+/** Période sélectionnée par défaut : aujourd'hui. */
+export const DEFAULT_RANGE = "today";
+
 export function parseRange(
   value: string | undefined,
   timeZone?: string,
 ): ParsedRange {
-  if (!value || value === "all") return { days: null, key: "all" };
+  const key = value ?? DEFAULT_RANGE;
+  if (key === "all") return { days: null, key: "all" };
 
   if (timeZone) {
     const now = new Date();
-    if (value === "today") {
+    if (key === "today") {
       return { days: 1, key: "today", from: startOfLocalDay(timeZone, now) };
     }
-    if (value === "week") {
+    if (key === "week") {
       const from = startOfLocalWeek(timeZone, now);
       return { days: elapsedDays(from, timeZone, now), key: "week", from };
     }
-    if (value === "month") {
+    if (key === "month") {
       const from = startOfLocalMonth(timeZone, now);
       return { days: elapsedDays(from, timeZone, now), key: "month", from };
     }
-    if (value === "year") {
+    if (key === "year") {
       const from = startOfLocalYear(timeZone, now);
       return { days: elapsedDays(from, timeZone, now), key: "year", from };
     }
+  } else if (key === "today" || key === "week" || key === "month" || key === "year") {
+    // Sans fuseau : bornes approximatives (fenêtre glissante).
+    const fallback: Record<string, number> = {
+      today: 1,
+      week: 7,
+      month: 30,
+      year: 365,
+    };
+    return { days: fallback[key], key };
   }
 
-  const days = Number(value);
+  const days = Number(key);
   if (!Number.isFinite(days) || days <= 0) return { days: 30, key: "30" };
   return { days, key: String(days) };
-}
-
-export function parseSource(value: string | undefined): string | null {
-  if (!value || value === "all") return null;
-  return value;
 }

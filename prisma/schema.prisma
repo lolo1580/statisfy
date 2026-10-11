@@ -28,10 +28,26 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // Accès à l'API Spotify (validation par un admin — mode Development Spotify :
+  // chaque compte doit être autorisé dans le tableau de bord Spotify).
+  // none | pending | approved | rejected
+  spotifyAccessStatus String    @default("none")
+  spotifyAccount      String?
+  spotifyRequestedAt  DateTime?
+  spotifyDecidedAt    DateTime?
+
+  // Jeton de partage public du récapitulatif (`null` = partage désactivé).
+  wrappedShareToken String?
+
+  @@index([wrappedShareToken])
+
   sessions    Session[]
   connections SourceConnection[]
   plays       Play[]
   jobs        Job[]
+
+  createdInvitations Invitation[] @relation("InvitationCreatedBy")
+  usedInvitations    Invitation[] @relation("InvitationUsedBy")
 }
 
 model Session {
@@ -184,4 +200,24 @@ model AppSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+// Invitation à créer un compte, générée par un administrateur.
+model Invitation {
+  id    String  @id @default(cuid())
+  token String  @unique
+  // Si renseigné, l'inscription doit utiliser exactement cette adresse.
+  email String?
+  // Durée de validité + consommation.
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  createdById String?
+  usedById    String?
+
+  createdBy User? @relation("InvitationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  usedBy    User? @relation("InvitationUsedBy", fields: [usedById], references: [id], onDelete: SetNull)
+
+  @@index([email])
 }

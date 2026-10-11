@@ -2,6 +2,7 @@ import "server-only";
 
 import { prisma } from "../db";
 import { spotify } from "../env";
+import { spotifyFetch, spotifyErrorMessage } from "./spotify-http";
 
 /**
  * Enrichissement des pochettes et photos d'artistes manquantes.
@@ -35,7 +36,7 @@ async function getClientToken(): Promise<string> {
   const basic = Buffer.from(
     `${spotify.clientId}:${spotify.clientSecret}`,
   ).toString("base64");
-  const res = await fetch(`${ACCOUNTS}/api/token`, {
+  const res = await spotifyFetch(`${ACCOUNTS}/api/token`, {
     method: "POST",
     headers: {
       Authorization: `Basic ${basic}`,
@@ -44,7 +45,9 @@ async function getClientToken(): Promise<string> {
     body: new URLSearchParams({ grant_type: "client_credentials" }),
   });
   if (!res.ok) {
-    throw new Error(`Jeton Spotify refusé (${res.status}).`);
+    throw new Error(
+      `Jeton Spotify refusé : ${await spotifyErrorMessage(res)}.`,
+    );
   }
   const data = (await res.json()) as {
     access_token: string;
@@ -66,7 +69,7 @@ async function searchImage(
   url.searchParams.set("q", query);
   url.searchParams.set("type", type);
   url.searchParams.set("limit", "1");
-  const res = await fetch(url, {
+  const res = await spotifyFetch(url, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });

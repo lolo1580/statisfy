@@ -1,6 +1,6 @@
 {
   "name": "statisfy",
-  "version": "0.1.0",
+  "version": "0.11.0-preview.1",
   "private": true,
   "license": "GPL-3.0-only",
   "scripts": {
@@ -8,12 +8,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:seed": "node --conditions=react-server --import tsx prisma/seed.ts",
     "import:your-spotify": "node --conditions=react-server --import tsx scripts/import-your-spotify.ts",
     "import:spotify-history": "node --conditions=react-server --import tsx scripts/import-spotify-history.ts",
+    "db:backfill-source": "node --conditions=react-server --import tsx scripts/backfill-source.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -24,6 +27,7 @@
     "fflate": "^0.8.3",
     "jose": "^6.2.12",
     "next": "16.4.0",
+    "prisma": "^7.10.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "zod": "^4.6.5"
@@ -36,11 +40,11 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
     "mongodb": "^7.7.0",
-    "prisma": "^7.10.0",
     "server-only": "^0.0.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.3"
   },
   "packageManager": "pnpm@12.10.1"
 }

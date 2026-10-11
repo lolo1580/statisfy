@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { getTrackDetail, type StatsRange } from "@/lib/stats";
-import { RangeTabs, SourceFilter } from "@/components/range-tabs";
-import { parseRange, parseSource } from "@/lib/range";
+import { RangeTabs } from "@/components/range-tabs";
+import { parseRange } from "@/lib/range";
 import { AreaChart } from "@/components/charts";
 import {
   Badge,
@@ -36,14 +36,10 @@ export default async function TrackPage({
     typeof sp.range === "string" ? sp.range : undefined,
     user.timezone,
   );
-  const source = parseSource(
-    typeof sp.source === "string" ? sp.source : undefined,
-  );
   const filters: StatsRange = {
     days: parsed.days,
     from: parsed.from,
     to: parsed.to,
-    source,
   };
 
   const detail = await getTrackDetail(user.id, id, filters, user.timezone);
@@ -85,7 +81,7 @@ export default async function TrackPage({
             </p>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {track.durationMs ? (
-                <Badge>{formatDuration(track.durationMs)}</Badge>
+                <Badge>{formatDuration(track.durationMs, locale)}</Badge>
               ) : null}
               {track.genres.slice(0, 3).map((genre) => (
                 <Badge key={genre}>{genre}</Badge>
@@ -95,24 +91,15 @@ export default async function TrackPage({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <RangeTabs
-            basePath={`/track/${track.id}`}
-            current={parsed.key}
-            source={source}
-          />
-          <SourceFilter
-            basePath={`/track/${track.id}`}
-            current={source}
-            rangeKey={parsed.key}
-          />
+          <RangeTabs basePath={`/track/${track.id}`} current={parsed.key} />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <StatCard
           label={t("track.plays")}
           value={formatNumber(overview.totalPlays, locale)}
-          hint={formatDuration(overview.totalMs)}
+          hint={formatDuration(overview.totalMs, locale)}
         />
         <StatCard
           label={t("artist.firstPlay")}
@@ -121,15 +108,6 @@ export default async function TrackPage({
         <StatCard
           label={t("track.lastPlay")}
           value={overview.lastPlay ? dateFmt(overview.lastPlay) : "—"}
-        />
-        <StatCard
-          label={t("track.sources")}
-          value={String(detail.sources.length)}
-          hint={detail.sources
-            .map(
-              (s) => `${s.source} ${formatNumber(s.plays, locale)}`,
-            )
-            .join(" · ")}
         />
       </div>
 
@@ -157,7 +135,6 @@ export default async function TrackPage({
                     {play.artistName}
                     {play.albumName ? ` — ${play.albumName}` : ""}
                   </span>
-                  <Badge>{play.source}</Badge>
                   <span className="text-right text-xs text-muted">
                     {formatDateTime(play.playedAt, user.timezone, locale)}
                   </span>

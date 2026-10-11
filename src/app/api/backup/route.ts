@@ -7,13 +7,11 @@ export const dynamic = "force-dynamic";
 
 /**
  * Crée une sauvegarde de la base. Authentification : `Bearer <SYNC_TOKEN>`
- * ou session administrateur.
+ * ou session administrateur. POST uniquement.
  */
 async function handle(request: NextRequest) {
   const provided =
-    request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
-    new URL(request.url).searchParams.get("token") ??
-    "";
+    request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
 
   const admin = await getOptionalUser();
   const authorized =
@@ -26,18 +24,12 @@ async function handle(request: NextRequest) {
   try {
     const result = await runBackup();
     return NextResponse.json({ ok: true, ...result });
-  } catch (error) {
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Backup failed" },
-      { status: 500 },
-    );
+  } catch {
+    // On ne renvoie pas le message brut (chemins internes, etc.).
+    return NextResponse.json({ ok: false, error: "Backup failed" }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
-  return handle(request);
-}
-
-export async function GET(request: NextRequest) {
   return handle(request);
 }

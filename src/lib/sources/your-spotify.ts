@@ -1,5 +1,5 @@
 import { deserialize } from "bson";
-import { unzipSync } from "fflate";
+import { safeUnzip } from "../archive";
 import type { RawPlay } from "./types";
 
 /**
@@ -92,6 +92,7 @@ export function mapYourSpotifyData(data: YourSpotifyData): {
 
     plays.push({
       provider: "spotify",
+      origin: "import",
       externalTrackId: info.id,
       externalArtistId: info.primaryArtistId,
       externalAlbumId: info.albumId,
@@ -195,7 +196,7 @@ export function buildYourSpotifyData(files: UploadedFile[]): YourSpotifyImport {
   for (const file of files) {
     if (file.name.toLowerCase().endsWith(".zip")) {
       try {
-        const entries = unzipSync(file.data);
+        const entries = safeUnzip(file.data);
         for (const [path, bytes] of Object.entries(entries)) {
           if (!path.endsWith("/")) expanded.push({ name: path, data: bytes });
         }

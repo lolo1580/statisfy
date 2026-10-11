@@ -5,8 +5,8 @@ import {
   getTopTracks,
   type StatsRange,
 } from "@/lib/stats";
-import { RangeTabs, SourceFilter } from "@/components/range-tabs";
-import { parseRange, parseSource } from "@/lib/range";
+import { RangeTabs } from "@/components/range-tabs";
+import { parseRange } from "@/lib/range";
 import { Card } from "@/components/ui";
 import {
   TopAlbumsPanel,
@@ -25,16 +25,12 @@ export default async function TopPage({ searchParams }: PageProps<"/top">) {
     typeof params.range === "string" ? params.range : undefined,
     user.timezone,
   );
-  const source = parseSource(
-    typeof params.source === "string" ? params.source : undefined,
-  );
   const filters: StatsRange = {
     days: parsed.days,
     from: parsed.from,
     to: parsed.to,
-    source,
   };
-  const query = `range=${parsed.key}${source ? `&source=${source}` : ""}`;
+  const query = `range=${parsed.key}`;
 
   const [tracks, artists, albums] = await Promise.all([
     getTopTracks(user.id, filters, 25),
@@ -49,8 +45,7 @@ export default async function TopPage({ searchParams }: PageProps<"/top">) {
           {t("top.title")}
         </h1>
         <div className="flex flex-wrap items-center gap-2">
-          <RangeTabs basePath="/top" current={parsed.key} source={source} />
-          <SourceFilter basePath="/top" current={source} rangeKey={parsed.key} />
+          <RangeTabs basePath="/top" current={parsed.key} />
         </div>
       </div>
 

@@ -5,7 +5,9 @@ import { redirect } from "next/navigation";
 import { prisma } from "../db";
 import { hashPassword, verifyPassword } from "../password";
 import { createSession, deleteSession } from "./session";
+import { clientIp, resetTokens, takeToken } from "./rate-limit";
 import { registrationAllowed } from "../settings";
+import { findUsableInvitation } from "../invitations";
 import { getI18n } from "@/i18n/server";
 
 export type AuthState =
@@ -25,11 +27,30 @@ function fieldErrors(error: z.ZodError): Record<string, string[]> {
   return out;
 }
 
+/** Invitation déjà consommée entre la vérification et la création. */
+class InvitationConsumedError extends Error {}
+
+/** Erreur de contrainte unique Prisma (adresse déjà prise). */
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === "P2002"
+  );
+}
+
 export async function register(
   _state: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
   const { t } = await getI18n();
+
+  // Anti-abus : limite la création de comptes par IP.
+  const ip = await clientIp();
+  if (!takeToken(`register:${ip}`, 5, 60 * 60 * 1000)) {
+    return { error: t("autherr.rateLimited", { minutes: 60 }) };
+  }
 
   const schema = z.object({
     name: z.string().trim().min(2, t("validation.nameMin")),
@@ -61,10 +82,27 @@ export async function register(
   }
 
   const { name, email, password } = parsed.data;
-  const userCount = await prisma.user.count();
 
-  if (userCount > 0 && !(await registrationAllowed())) {
-    return { error: t("autherr.disabled"), values };
+  // Invitation éventuelle (lien `/register?invite=…`).
+  const inviteToken = String(formData.get("invite") ?? "").trim();
+  const invitation = inviteToken
+    ? await findUsableInvitation(inviteToken)
+    : null;
+
+  const userCount = await prisma.user.count();
+  const open = userCount === 0 || (await registrationAllowed());
+
+  // Un jeton fourni mais invalide n'est bloquant que si les inscriptions sont
+  // fermées ; sinon on l'ignore simplement (lien expiré, etc.).
+  if (!open && !invitation) {
+    return {
+      error: t(inviteToken ? "autherr.inviteInvalid" : "autherr.disabled"),
+      values,
+    };
+  }
+
+  if (invitation?.email && invitation.email !== email) {
+    return { error: t("autherr.inviteEmail"), values };
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
@@ -72,14 +110,35 @@ export async function register(
     return { error: t("autherr.taken"), values };
   }
 
-  const user = await prisma.user.create({
-    data: {
-      name,
-      email,
-      passwordHash: await hashPassword(password),
-      isAdmin: userCount === 0,
-    },
-  });
+  const passwordHash = await hashPassword(password);
+
+  // Création du compte + consommation de l'invitation dans une même
+  // transaction : une invitation ne peut pas servir à deux inscriptions
+  // concurrentes (l'échec annule la création du compte).
+  let user: { id: string };
+  try {
+    user = await prisma.$transaction(async (tx) => {
+      const created = await tx.user.create({
+        data: { name, email, passwordHash, isAdmin: userCount === 0 },
+      });
+      if (invitation) {
+        const claimed = await tx.invitation.updateMany({
+          where: { id: invitation.id, usedAt: null },
+          data: { usedAt: new Date(), usedById: created.id },
+        });
+        if (claimed.count === 0) throw new InvitationConsumedError();
+      }
+      return created;
+    });
+  } catch (error) {
+    if (error instanceof InvitationConsumedError) {
+      return { error: t("autherr.inviteInvalid"), values };
+    }
+    if (isUniqueViolation(error)) {
+      return { error: t("autherr.taken"), values };
+    }
+    throw error;
+  }
 
   await createSession(user.id);
   redirect("/dashboard");
@@ -95,6 +154,17 @@ export async function login(
     .toLowerCase();
   const password = String(formData.get("password") ?? "");
 
+  // Anti force-brute : limite par couple (IP, email) et par IP.
+  const ip = await clientIp();
+  const userKey = `login:${ip}|${email}`;
+  const ipKey = `login-ip:${ip}`;
+  if (
+    !takeToken(userKey, 10, 15 * 60 * 1000) ||
+    !takeToken(ipKey, 30, 15 * 60 * 1000)
+  ) {
+    return { error: t("autherr.rateLimited", { minutes: 15 }), values: { email } };
+  }
+
   if (!email || !password) {
     return { error: t("autherr.required"), values: { email } };
   }
@@ -104,6 +174,8 @@ export async function login(
     return { error: t("autherr.credentials"), values: { email } };
   }
 
+  resetTokens(userKey);
+  resetTokens(ipKey);
   await createSession(user.id);
   redirect("/dashboard");
 }

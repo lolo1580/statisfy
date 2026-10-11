@@ -4,17 +4,30 @@ import { RegisterForm } from "@/components/auth-forms";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { readSession } from "@/lib/auth/session";
 import { registrationAllowed } from "@/lib/settings";
+import { findUsableInvitation } from "@/lib/invitations";
 import { prisma } from "@/lib/db";
 import { getI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: PageProps<"/register">) {
   if (await readSession()) redirect("/dashboard");
 
+  const params = await searchParams;
+  const rawInvite = params.invite;
+  const inviteToken =
+    typeof rawInvite === "string" ? rawInvite.trim() : undefined;
+  const invitation = inviteToken
+    ? await findUsableInvitation(inviteToken)
+    : null;
+
   const userCount = await prisma.user.count();
-  // Le premier compte est toujours autorisé (bootstrap de l'instance).
-  if (userCount > 0 && !(await registrationAllowed())) {
+  const canRegister = userCount === 0 || (await registrationAllowed());
+  // Le premier compte est toujours autorisé ; sinon il faut une invitation
+  // valide pour contourner la fermeture des inscriptions.
+  if (!canRegister && !invitation) {
     redirect("/login");
   }
 
@@ -31,11 +44,18 @@ export default async function RegisterPage() {
           {t("auth.signUpTitle")}
         </h1>
         <p className="mt-1 text-sm text-muted">
-          {userCount === 0 ? t("auth.firstUser") : t("auth.join")}
+          {invitation
+            ? t("auth.invited")
+            : userCount === 0
+              ? t("auth.firstUser")
+              : t("auth.join")}
         </p>
       </div>
       <div className="rounded-2xl border border-border bg-surface/70 p-6 backdrop-blur">
-        <RegisterForm />
+        <RegisterForm
+          invite={invitation?.token}
+          lockedEmail={invitation?.email ?? undefined}
+        />
       </div>
       <p className="mt-4 text-center text-sm text-muted">
         {t("auth.alreadyAccount")}{" "}

@@ -74,7 +74,7 @@ function PanelHeader({
 function metricValue(metric: Metric, item: Ranked, locale: string): string {
   return metric === "plays"
     ? `${formatNumber(item.plays, locale)}×`
-    : formatDuration(item.msPlayed);
+    : formatDuration(item.msPlayed, locale);
 }
 
 /** Classement de titres avec bascule écoutes / temps. */
@@ -291,7 +291,7 @@ export function TopGenresPanel({
             display:
               metric === "plays"
                 ? formatNumber(genre.plays, locale)
-                : formatDuration(genre.msPlayed),
+                : formatDuration(genre.msPlayed, locale),
           }))}
         />
       )}

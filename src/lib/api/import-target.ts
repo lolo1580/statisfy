@@ -44,7 +44,6 @@ export type ImportTarget =
  *   - `Authorization: Bearer <SYNC_TOKEN>` (jeton global) ;
  *   - `Authorization: Basic <base64(email:mot de passe)>` (compte standard) ;
  *   - session admin (cookie).
- *
  * Avec le jeton ou une session admin, `?email=` permet de cibler un compte
  * (sinon le premier administrateur). Un compte standard ne peut importer que
  * dans son propre compte.
@@ -54,10 +53,7 @@ export async function resolveImportTarget(
 ): Promise<ImportTarget> {
   const url = new URL(request.url);
   const authorization = request.headers.get("authorization");
-  const tokenProvided =
-    authorization?.replace(/^Bearer\s+/i, "") ??
-    url.searchParams.get("token") ??
-    "";
+  const tokenProvided = authorization?.replace(/^Bearer\s+/i, "") ?? "";
 
   const [admin, basicUser] = await Promise.all([
     getOptionalUser(),

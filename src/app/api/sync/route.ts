@@ -8,16 +8,14 @@ export const dynamic = "force-dynamic";
 /**
  * Déclenche la synchronisation de toutes les sources dues.
  * Authentification : header `Authorization: Bearer <SYNC_TOKEN>`
- * ou paramètre `?token=`, ou session administrateur.
+ * ou session administrateur (le jeton en query string n'est plus accepté).
  *
  * Exemple de cron :
  *   curl -X POST -H "Authorization: Bearer $SYNC_TOKEN" https://.../api/sync
  */
 async function handle(request: NextRequest) {
   const provided =
-    request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
-    new URL(request.url).searchParams.get("token") ??
-    "";
+    request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
 
   const admin = await getOptionalUser();
   const authorized =

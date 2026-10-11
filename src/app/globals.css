@@ -32,18 +32,39 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-html,
-body {
+html {
   height: 100%;
+  background-color: var(--background);
 }
 
 body {
-  background:
-    radial-gradient(1200px 600px at 100% -10%, rgba(139, 124, 246, 0.12), transparent 60%),
-    radial-gradient(900px 500px at -10% 0%, rgba(25, 209, 138, 0.1), transparent 55%),
-    var(--background);
+  min-height: 100%;
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/*
+ * Halos décoratifs. Peints dans un calque fixé à la fenêtre : ils ne dépendent
+ * plus de la hauteur du <body> (autrefois limitée à 100 % = la fenêtre), donc
+ * plus de « cassure » horizontale quand la page dépasse l'écran et défile.
+ */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(
+      1200px 600px at 100% -10%,
+      rgba(139, 124, 246, 0.12),
+      rgba(139, 124, 246, 0)
+    ),
+    radial-gradient(
+      900px 500px at -10% 0%,
+      rgba(25, 209, 138, 0.1),
+      rgba(25, 209, 138, 0)
+    );
 }
 
 ::selection {

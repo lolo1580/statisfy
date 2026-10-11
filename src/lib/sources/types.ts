@@ -8,13 +8,13 @@
 
 export type SourceType = 'spotify' | 'import'
 
-export const SOURCE_LABELS: Record<string, string> = {
-  spotify: 'Spotify',
-  import: 'Import de fichiers',
-}
-
 export type RawPlay = {
   provider: SourceType
+  /**
+   * Origine réelle de l'écoute (sync live vs import de fichiers). Sert au
+   * classement par « source » ; par défaut on retombe sur `provider`.
+   */
+  origin?: SourceType
   /** Identifiants côté fournisseur (facultatif selon la source). */
   externalTrackId?: string
   externalArtistId?: string

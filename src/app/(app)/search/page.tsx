@@ -11,7 +11,7 @@ export default async function SearchPage({
   searchParams,
 }: PageProps<"/search">) {
   const user = await getCurrentUser();
-  const { t } = await getI18n();
+  const { locale, t } = await getI18n();
   const sp = await searchParams;
   const query = typeof sp.q === "string" ? sp.q.trim() : "";
   const results = query
@@ -75,7 +75,7 @@ export default async function SearchPage({
                       <span className="min-w-0 flex-1 truncate text-sm font-medium">
                         {artist.name}
                       </span>
-                      <Badge>{formatDuration(artist.msPlayed)}</Badge>
+                      <Badge>{formatDuration(artist.msPlayed, locale)}</Badge>
                     </Link>
                   </li>
                 ))}

@@ -22,11 +22,18 @@ COPY . .
 # au runtime par docker-compose.
 ENV DATABASE_URL="file:/tmp/statisfy-build.db"
 RUN pnpm build
+# Ne conserver que les dépendances de production (allège nettement l'image).
+RUN pnpm prune --prod \
+ && chmod +x docker-entrypoint.sh
 
 # --- Image finale ---
 FROM base AS runner
 ENV NODE_ENV=production
-COPY --from=build /app ./
-RUN chmod +x docker-entrypoint.sh
+# `--chown` évite une couche `chown -R` qui dupliquerait tout l'arbre.
+COPY --chown=node:node --from=build /app ./
+# Exécution sans privilèges (l'utilisateur `node` a l'UID/GID 1000, comme la
+# plupart des comptes hôtes ; les volumes ./prisma et ./backups lui sont
+# accessibles en écriture).
+USER node
 EXPOSE 3000
 CMD ["./docker-entrypoint.sh"]

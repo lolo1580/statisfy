@@ -1,6 +1,7 @@
 import "server-only";
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { prisma } from "./db";
 
@@ -14,6 +15,22 @@ function keepCount(): number {
 }
 
 export type BackupResult = { file: string; kept: number; directory: string };
+
+export type Snapshot = { file: string; dispose: () => void };
+
+/**
+ * Crée un instantané cohérent de la base dans un fichier temporaire (pour un
+ * téléchargement). `dispose()` supprime le fichier.
+ */
+export async function createTemporarySnapshot(): Promise<Snapshot> {
+  const file = path.join(
+    os.tmpdir(),
+    `statisfy-export-${Date.now()}-${Math.random().toString(36).slice(2)}.db`,
+  );
+  const escaped = file.replace(/'/g, "''");
+  await prisma.$executeRawUnsafe(`VACUUM INTO '${escaped}'`);
+  return { file, dispose: () => fs.rmSync(file, { force: true }) };
+}
 
 /** Liste les fichiers de sauvegarde (les plus récents en premier). */
 export function listBackups(): string[] {

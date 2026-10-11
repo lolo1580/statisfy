@@ -1,11 +1,15 @@
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth/dal";
+import { assertPublicHttpUrl } from "@/lib/net";
 import {
   getOverview,
   getTopArtists,
   getTopTracks,
+  type Overview,
   type StatsRange,
+  type TopArtist,
+  type TopTrack,
 } from "@/lib/stats";
 import { formatPeriodLabel, parseWrappedPeriod } from "@/lib/period";
 import { formatDuration, formatNumber } from "@/lib/format";
@@ -13,35 +17,344 @@ import { getI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
 
-/** Récupère une image distante et l'encode en data-URI (pas de souci CORS). */
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+/** Récupère une image distante publique et l'encode en data-URI. */
 async function toDataUri(url?: string | null): Promise<string | null> {
   if (!url) return null;
   try {
-    const res = await fetch(url, { cache: "no-store" });
+    // Anti-SSRF : refuse les schémas non http(s) et les hôtes privés/locaux.
+    const safe = await assertPublicHttpUrl(url);
+    const res = await fetch(safe, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
     if (!res.ok) return null;
-    const buffer = Buffer.from(await res.arrayBuffer());
     const type = res.headers.get("content-type") ?? "image/jpeg";
+    if (!type.startsWith("image/")) return null;
+    const declared = Number(res.headers.get("content-length") ?? "0");
+    if (declared > MAX_IMAGE_BYTES) return null;
+    const buffer = Buffer.from(await res.arrayBuffer());
+    if (buffer.length > MAX_IMAGE_BYTES) return null;
     return `data:${type};base64,${buffer.toString("base64")}`;
   } catch {
     return null;
   }
 }
 
+type StatLine = { plays: string; artists: string; tracks: string };
+
+type CardProps = {
+  user: string;
+  host: string;
+  locale: string;
+  periodLabel: string;
+  overview: Overview;
+  stats: StatLine;
+  artists: TopArtist[];
+  tracks: TopTrack[];
+  covers: (string | null)[];
+  labels: { listeningTime: string; plays: string; artists: string; tracks: string };
+  playCount: (count: number) => string;
+};
+
 function Stat({
   label,
   value,
+  size = 52,
 }: {
   label: string;
   value: string;
+  size?: number;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
-      <span style={{ fontSize: 52, fontWeight: 800, display: "flex" }}>
+      <span style={{ fontSize: size, fontWeight: 800, display: "flex" }}>
         {value}
       </span>
-      <span style={{ fontSize: 24, color: "#93a1b5", display: "flex" }}>
+      <span
+        style={{ fontSize: Math.round(size * 0.46), color: "#93a1b5", display: "flex" }}
+      >
         {label}
       </span>
+    </div>
+  );
+}
+
+function ArtistAvatar({
+  artist,
+  cover,
+  size,
+}: {
+  artist: TopArtist;
+  cover: string | null;
+  size: number;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        width: size + 50,
+      }}
+    >
+      {cover ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={cover}
+          width={size}
+          height={size}
+          alt=""
+          style={{ borderRadius: 999, objectFit: "cover" }}
+        />
+      ) : (
+        <div
+          style={{
+            width: size,
+            height: size,
+            borderRadius: 999,
+            background: "#1a222d",
+          }}
+        />
+      )}
+      <span
+        style={{
+          display: "flex",
+          marginTop: 14,
+          fontSize: Math.round(size * 0.16),
+          fontWeight: 600,
+        }}
+      >
+        {artist.name}
+      </span>
+    </div>
+  );
+}
+
+function TrackList({
+  tracks,
+  playCount,
+  fontSize,
+  max,
+}: {
+  tracks: TopTrack[];
+  playCount: (count: number) => string;
+  fontSize: number;
+  max: number;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+      {tracks.slice(0, max).map((track, index) => (
+        <div
+          key={track.id}
+          style={{
+            display: "flex",
+            width: "100%",
+            fontSize,
+            marginBottom: 14,
+            alignItems: "center",
+          }}
+        >
+          <span
+            style={{
+              display: "flex",
+              color: "#19d18a",
+              width: fontSize * 2,
+              flexShrink: 0,
+            }}
+          >
+            {index + 1}
+          </span>
+          <span
+            style={{
+              display: "flex",
+              flexGrow: 1,
+              flexShrink: 1,
+              marginRight: 24,
+            }}
+          >
+            {track.name} — {track.artistName}
+          </span>
+          <span
+            style={{
+              display: "flex",
+              color: "#93a1b5",
+              fontSize: Math.round(fontSize * 0.82),
+              flexShrink: 0,
+            }}
+          >
+            {playCount(track.plays)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Header({ periodLabel }: { periodLabel: string }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <span style={{ fontSize: 40, fontWeight: 800, display: "flex" }}>
+        Statisfy
+      </span>
+      <span style={{ fontSize: 34, color: "#19d18a", display: "flex" }}>
+        {periodLabel}
+      </span>
+    </div>
+  );
+}
+
+function Footer({ user, host }: { user: string; host: string }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        fontSize: 22,
+        color: "#93a1b5",
+      }}
+    >
+      <span style={{ display: "flex" }}>{user}</span>
+      <span style={{ display: "flex" }}>{host}</span>
+      <span style={{ display: "flex" }}>Spotify</span>
+    </div>
+  );
+}
+
+function Hero({
+  overview,
+  stats,
+  labels,
+  locale,
+  valueSize,
+  statSize,
+}: {
+  overview: Overview;
+  stats: StatLine;
+  labels: CardProps["labels"];
+  locale: string;
+  valueSize: number;
+  statSize: number;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <span style={{ fontSize: 28, color: "#93a1b5", display: "flex" }}>
+        {labels.listeningTime}
+      </span>
+      <span
+        style={{
+          fontSize: valueSize,
+          fontWeight: 800,
+          lineHeight: 1,
+          display: "flex",
+        }}
+      >
+        {formatDuration(overview.totalMs, locale)}
+      </span>
+      <div style={{ display: "flex", gap: 64, marginTop: 36 }}>
+        <Stat label={labels.plays} value={stats.plays} size={statSize} />
+        <Stat label={labels.artists} value={stats.artists} size={statSize} />
+        <Stat label={labels.tracks} value={stats.tracks} size={statSize} />
+      </div>
+    </div>
+  );
+}
+
+/** Carte carrée 1080×1080 (par défaut). */
+function SquareCard(props: CardProps) {
+  const { user, host, periodLabel, overview, stats, artists, tracks, covers, labels, locale, playCount } =
+    props;
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        width: "100%",
+        height: "100%",
+        padding: 64,
+        background: "linear-gradient(135deg, #0a0d12 0%, #0f2a20 100%)",
+        color: "#eef2f7",
+        fontFamily: "sans-serif",
+      }}
+    >
+      <Header periodLabel={periodLabel} />
+      <Hero
+        overview={overview}
+        stats={stats}
+        labels={labels}
+        locale={locale}
+        valueSize={110}
+        statSize={48}
+      />
+
+      <div style={{ display: "flex", justifyContent: "center", gap: 48 }}>
+        {artists.map((artist, index) => (
+          <ArtistAvatar
+            key={artist.id}
+            artist={artist}
+            cover={covers[index]}
+            size={150}
+          />
+        ))}
+      </div>
+
+      <TrackList tracks={tracks} playCount={playCount} fontSize={26} max={5} />
+
+      <Footer user={user} host={host} />
+    </div>
+  );
+}
+
+/** Carte verticale 1080×1920 (format « story »). */
+function StoryCard(props: CardProps) {
+  const { user, host, periodLabel, overview, stats, artists, tracks, covers, labels, locale, playCount } =
+    props;
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        width: "100%",
+        height: "100%",
+        padding: 80,
+        background: "linear-gradient(160deg, #0a0d12 0%, #0f2a20 60%, #160f2a 100%)",
+        color: "#eef2f7",
+        fontFamily: "sans-serif",
+      }}
+    >
+      <Header periodLabel={periodLabel} />
+      <Hero
+        overview={overview}
+        stats={stats}
+        labels={labels}
+        locale={locale}
+        valueSize={168}
+        statSize={64}
+      />
+
+      <div style={{ display: "flex", justifyContent: "center", gap: 40 }}>
+        {artists.map((artist, index) => (
+          <ArtistAvatar
+            key={artist.id}
+            artist={artist}
+            cover={covers[index]}
+            size={210}
+          />
+        ))}
+      </div>
+
+      <TrackList tracks={tracks} playCount={playCount} fontSize={32} max={6} />
+
+      <Footer user={user} host={host} />
     </div>
   );
 }
@@ -50,6 +363,7 @@ export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
   const { locale, t } = await getI18n();
   const params = new URL(request.url).searchParams;
+  const story = params.get("format") === "story";
   const period = parseWrappedPeriod(
     params.get("year") ?? undefined,
     params.get("month") ?? undefined,
@@ -64,7 +378,7 @@ export async function GET(request: NextRequest) {
   const [overview, artists, tracks] = await Promise.all([
     getOverview(user.id, filters),
     getTopArtists(user.id, filters, 3),
-    getTopTracks(user.id, filters, 5),
+    getTopTracks(user.id, filters, story ? 6 : 5),
   ]);
 
   const covers = await Promise.all(
@@ -76,149 +390,31 @@ export async function GET(request: NextRequest) {
   const playCount = (count: number) =>
     t("dash.playsCount", { count: formatNumber(count, locale) });
 
+  const cardProps: CardProps = {
+    user: user.name,
+    host,
+    locale,
+    periodLabel,
+    overview,
+    stats: {
+      plays: formatNumber(overview.totalPlays, locale),
+      artists: formatNumber(overview.distinctArtists, locale),
+      tracks: formatNumber(overview.distinctTracks, locale),
+    },
+    artists,
+    tracks,
+    covers,
+    labels: {
+      listeningTime: t("dash.listeningTime"),
+      plays: t("recap.plays"),
+      artists: t("recap.artists"),
+      tracks: t("recap.tracks"),
+    },
+    playCount,
+  };
+
   return new ImageResponse(
-    (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          width: "100%",
-          height: "100%",
-          padding: 64,
-          background: "linear-gradient(135deg, #0a0d12 0%, #0f2a20 100%)",
-          color: "#eef2f7",
-          fontFamily: "sans-serif",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <span style={{ fontSize: 40, fontWeight: 800, display: "flex" }}>
-            Statisfy
-          </span>
-          <span style={{ fontSize: 34, color: "#19d18a", display: "flex" }}>
-            {periodLabel}
-          </span>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <span style={{ fontSize: 26, color: "#93a1b5", display: "flex" }}>
-            {t("dash.listeningTime")}
-          </span>
-          <span
-            style={{
-              fontSize: 120,
-              fontWeight: 800,
-              lineHeight: 1,
-              display: "flex",
-            }}
-          >
-            {formatDuration(overview.totalMs)}
-          </span>
-          <div style={{ display: "flex", gap: 64, marginTop: 32 }}>
-            <Stat
-              label={t("recap.plays")}
-              value={formatNumber(overview.totalPlays, locale)}
-            />
-            <Stat
-              label={t("recap.artists")}
-              value={formatNumber(overview.distinctArtists, locale)}
-            />
-            <Stat
-              label={t("recap.tracks")}
-              value={formatNumber(overview.distinctTracks, locale)}
-            />
-          </div>
-        </div>
-
-        <div style={{ display: "flex", gap: 48 }}>
-          {artists.map((artist, index) => (
-            <div
-              key={artist.id}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                width: 200,
-              }}
-            >
-              {covers[index] ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={covers[index] as string}
-                  width={150}
-                  height={150}
-                  alt=""
-                  style={{ borderRadius: 999, objectFit: "cover" }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: 150,
-                    height: 150,
-                    borderRadius: 999,
-                    background: "#1a222d",
-                  }}
-                />
-              )}
-              <span
-                style={{
-                  display: "flex",
-                  marginTop: 12,
-                  fontSize: 24,
-                  fontWeight: 600,
-                }}
-              >
-                {artist.name}
-              </span>
-              <span style={{ display: "flex", fontSize: 18, color: "#93a1b5" }}>
-                {playCount(artist.plays)}
-              </span>
-            </div>
-          ))}
-
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              flex: 1,
-              justifyContent: "center",
-            }}
-          >
-            {tracks.map((track, index) => (
-              <div
-                key={track.id}
-                style={{ display: "flex", fontSize: 24, marginBottom: 10 }}
-              >
-                <span style={{ display: "flex", color: "#19d18a", width: 44 }}>
-                  {index + 1}
-                </span>
-                <span style={{ display: "flex" }}>
-                  {track.name} — {track.artistName}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: 22,
-            color: "#93a1b5",
-          }}
-        >
-          <span style={{ display: "flex" }}>{user.name}</span>
-          <span style={{ display: "flex" }}>{host}</span>
-        </div>
-      </div>
-    ),
-    { width: 1080, height: 1080 },
+    story ? <StoryCard {...cardProps} /> : <SquareCard {...cardProps} />,
+    story ? { width: 1080, height: 1920 } : { width: 1080, height: 1080 },
   );
 }

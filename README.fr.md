@@ -17,6 +17,10 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
 
 - **Source Spotify** : connexion OAuth (écoutes récentes + genres) et import de
   vos exports de données (privacy / extended streaming history).
+- **Multi-utilisateur** : chaque personne crée son compte et connecte **son**
+  propre compte Spotify ; les données sont isolées par compte. Les
+  **inscriptions publiques** se ferment d'un clic et un administrateur gère les
+  **comptes**, les **invitations** et valide les **demandes d'accès Spotify**.
 - **Pochettes automatiques** : les visuels manquants (surtout après un import)
   sont complétés via le **catalogue Spotify**.
 - **Statistiques riches** : temps d'écoute, top titres / artistes / albums,
@@ -31,18 +35,25 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
 - **Récapitulatif (« Wrapped »)** : synthèse par année ou par mois avec
   comparaison à la période précédente, jour/heure les plus actifs et artistes
   découverts.
-- **Export** : récapitulatif en **image PNG** (1080×1080) et **CSV** de tout
-  l'historique.
-- **Statut** : page de santé de l'instance (dernière synchro, écoutes du jour,
-  statut des sources, taille de la base, activité récente).
+- **Comparateur de périodes** : comparaison de deux périodes côte à côte, avec
+  temps d'écoute superposé, écarts par indicateur et classements (artistes,
+  titres, genres) en parallèle.
+- **Export** : récapitulatif en **image PNG** (carré 1080×1080 ou story
+  1080×1920) et **CSV** de tout l'historique. Le récapitulatif peut aussi être
+  partagé via un **lien public en lecture seule** (activation/désactivation
+  dans les Réglages).
+- **Statut** : santé de l'instance (totaux d'écoute, dernière synchro, uptime,
+  taille de la base, sauvegardes, activité récente) intégrée à la page
+  **Réglages**.
 - **Filtres** : par période (aujourd'hui, semaine, mois, année, tout — calendaire,
-  dans le fuseau du compte) et par source (Spotify, import).
+  dans le fuseau du compte ; **défaut : aujourd'hui**).
 - **Multilingue** : anglais (par défaut) et français, avec sélecteur de langue
   dans l'interface (dates et nombres localisés).
 - **Tendances & heatmap** : heatmap annuelle façon GitHub et comparaison entre
   deux périodes (artistes en hausse / en baisse).
-- **Découvertes** : page dédiée — obsessions du moment et artistes à
-  redécouvrir.
+- **Page Tendances** : vue dédiée (`/trends`) comparant deux fenêtres consécutives
+  (7/30/90 j, 1 an) pour les **artistes, titres et albums** en hausse et en
+  baisse.
 - **Sauvegardes** : copie automatique de la base (rotation configurable) +
   endpoint dédié.
 - **Déduplication robuste** : une écoute n'est jamais comptée deux fois.
@@ -60,6 +71,7 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
 | UI | Tailwind CSS v4, composants maison, graphiques SVG sans dépendance |
 | Auth | `jose` (JWT), `node:crypto` (scrypt, AES-GCM) |
 | Image | `next/og` (récapitulatif PNG) |
+| Tests | Vitest |
 
 ## 🚀 Démarrage rapide (local)
 
@@ -87,6 +99,14 @@ pnpm dev        # http://localhost:3000
 Le **premier compte créé devient administrateur**. En local, `pnpm db:seed`
 crée un compte de démo (`demo@statisfy.local` / `statisfy123`) — à ne pas
 conserver sur une instance publique.
+
+Statisfy est **multi-utilisateur** : chaque personne crée son compte et connecte
+son **propre** compte Spotify (Réglages → Connecter Spotify) ; les écoutes, les
+statistiques et les connexions sont isolées par compte. Depuis
+**Réglages → Utilisateurs**, un administrateur peut nommer d'autres admins,
+réinitialiser un mot de passe ou supprimer un compte, et générer des **liens
+d'invitation** (« Invitations ») — utile pour garder les inscriptions fermées
+tout en invitant au cas par cas.
 
 ### Production locale
 
@@ -166,12 +186,19 @@ Toutes les variables sont documentées dans [`.env.example`](.env.example).
    [tableau de bord développeur Spotify](https://developer.spotify.com/dashboard).
 2. Ajoutez une URL de redirection. Le chemin `/oauth/spotify/callback` est
    accepté (ainsi que `/api/sources/spotify/callback`), par exemple :
-   - en local : `http://localhost:3000/oauth/spotify/callback`
+   - en local : `http://127.0.0.1:3000/oauth/spotify/callback` (pas « localhost »)
    - en production : `https://statisfy.mondomaine.org/oauth/spotify/callback`
 3. Renseignez `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET` et
    `SPOTIFY_REDIRECT_URI`, puis redémarrez.
 4. Dans **Réglages → Connecter Spotify**, cliquez sur *Connecter mon compte*.
 5. Cliquez sur **Synchroniser** : écoutes récentes **et genres** sont récupérés.
+
+> **Mode Development Spotify (≤ 25 comptes)** : chaque utilisateur doit d'abord
+> **demander l'accès** (Réglages → Connecter Spotify, en indiquant son compte
+> Spotify). Un administrateur **approuve** la demande après avoir ajouté le
+> compte dans le tableau de bord Spotify, via la section **Demandes d'accès
+> Spotify** des Réglages. Les administrateurs sont autorisés d'office et
+> l'import d'historique reste possible en attendant la validation.
 
 > L'API Spotify ne renvoie que les 50 derniers morceaux. La synchronisation
 > automatique (cron) évite d'en perdre ; pour l'historique complet, utilisez
@@ -241,6 +268,7 @@ Dans les deux cas, l'import est **idempotent** (relancer ne crée pas de doublon
 | `POST /api/import/spotify-history` | Importe un export Spotify (`.zip` « Extended streaming history » ou `.json`). Auth : `Bearer $SYNC_TOKEN`, HTTP Basic ou session admin. |
 | `POST /api/import/your-spotify` | Importe un dump *Your Spotify* (archive `.zip`) depuis un serveur. Auth : `Bearer $SYNC_TOKEN`, HTTP Basic (`-u email:motdepasse`) ou session admin. |
 | `GET /api/export` | Export CSV de l'historique de l'utilisateur connecté. |
+| `GET /api/export/db` | Instantané complet de la base SQLite (`.db`). Auth : `Bearer $SYNC_TOKEN` ou session admin. |
 | `GET /api/wrapped/image` | Image PNG du récapitulatif (`?year=2026&month=10`). |
 | `GET /oauth/spotify/callback` | Retour OAuth Spotify (à déclarer côté Spotify). |
 | `GET /api/sources/spotify/start` | Démarre l'OAuth Spotify. |
@@ -277,7 +305,7 @@ prisma/
   schema.prisma        # Modèles (User, Play, Track, Artist, Album, Job, ...)
   seed.ts              # Données de démonstration
 src/
-  app/                 # Routes : login, dashboard, top, wrapped, insights,
+  app/                 # Routes : login, dashboard, top, compare, trends, wrapped,
                        # history, status, search, artist/[id], track/[id],
                        # settings, api
   components/          # UI (cartes, graphiques SVG, navigation, formulaires)
@@ -286,7 +314,7 @@ src/
     auth/              # Sessions, DAL, actions d'authentification
     sources/           # Adaptateur Spotify, import, enrichissement, état OAuth
     sync/              # Moteur d'ingestion idempotent + orchestration
-    stats.ts           # Requêtes d'agrégation (dont tendances/découvertes)
+    stats.ts           # Requêtes d'agrégation (dont tendances)
     backup.ts          # Sauvegardes SQLite (VACUUM INTO + rotation)
     period.ts          # Périodes du récapitulatif
     crypto.ts          # Chiffrement des identifiants
@@ -302,12 +330,15 @@ src/
 Le moteur (`src/lib/sync/`) gère le reste : déduplication, résolution des
 entités, métadonnées et genres.
 
-## 🗺️ Feuille de route
+## 🧪 Tests
 
-- Comparateur de deux périodes côte à côte.
-- Format d'image « story » (1080×1920) pour le récapitulatif.
-- Mode multi-utilisateurs avancé (partage de tableaux de bord).
-- Tests automatisés.
+Des tests unitaires couvrent les helpers purs (formats, périodes, plages,
+comparaison, hachage de mots de passe et chiffrement des identifiants) :
+
+```bash
+pnpm test        # exécution unique
+pnpm test:watch  # mode watch
+```
 
 ## ⚖️ Licence et note légale
 

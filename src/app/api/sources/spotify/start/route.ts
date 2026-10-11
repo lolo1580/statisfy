@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { buildSpotifyAuthUrl } from "@/lib/sources/spotify";
+import { canConnectSpotify } from "@/lib/spotify-access";
 import {
   normalizeOrigin,
   requestOrigin,
@@ -19,10 +20,17 @@ export async function GET() {
   const origin =
     normalizeOrigin(await requestOrigin()) ??
     normalizeOrigin(appUrl) ??
-    "http://localhost:3000";
+    "http://127.0.0.1:3000";
 
   if (!spotify.configured) {
     return NextResponse.redirect(`${origin}/settings?error=spotify_config`);
+  }
+
+  // L'accès à l'API Spotify doit avoir été validé par un administrateur.
+  if (!(await canConnectSpotify(user))) {
+    return NextResponse.redirect(
+      `${origin}/settings?error=spotify_not_approved`,
+    );
   }
 
   // État signé : contient l'utilisateur et l'URL de retour. Il est vérifiable

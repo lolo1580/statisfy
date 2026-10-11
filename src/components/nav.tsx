@@ -7,14 +7,14 @@ import { useI18n } from "@/components/i18n-provider";
 const LINKS = [
   { href: "/dashboard", key: "nav.overview" },
   { href: "/top", key: "nav.rankings" },
+  { href: "/compare", key: "nav.compare" },
+  { href: "/trends", key: "nav.trends" },
   { href: "/wrapped", key: "nav.recap" },
-  { href: "/insights", key: "nav.insights" },
   { href: "/history", key: "nav.history" },
-  { href: "/status", key: "nav.status" },
   { href: "/settings", key: "nav.settings" },
 ];
 
-export function Nav() {
+export function Nav({ pendingCount = 0 }: { pendingCount?: number }) {
   const pathname = usePathname();
   const { t } = useI18n();
   return (
@@ -25,13 +25,21 @@ export function Nav() {
           <Link
             key={link.href}
             href={link.href}
-            className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors ${
               active
                 ? "bg-accent-soft text-accent"
                 : "text-muted hover:bg-surface-2 hover:text-foreground"
             }`}
           >
             {t(link.key)}
+            {link.href === "/settings" && pendingCount > 0 ? (
+              <span
+                title={t("nav.pendingRequests", { count: pendingCount })}
+                className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white"
+              >
+                {pendingCount}
+              </span>
+            ) : null}
           </Link>
         );
       })}

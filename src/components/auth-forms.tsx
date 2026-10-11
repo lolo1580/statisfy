@@ -62,7 +62,13 @@ export function LoginForm() {
   );
 }
 
-export function RegisterForm() {
+export function RegisterForm({
+  invite,
+  lockedEmail,
+}: {
+  invite?: string;
+  lockedEmail?: string;
+} = {}) {
   const { t } = useI18n();
   const [state, action, pending] = useActionState<AuthState, FormData>(
     register,
@@ -71,6 +77,7 @@ export function RegisterForm() {
 
   return (
     <form action={action} className="space-y-4">
+      {invite ? <input type="hidden" name="invite" value={invite} /> : null}
       <div>
         <label htmlFor="name" className="mb-1 block text-sm text-muted">
           {t("auth.name")}
@@ -95,8 +102,9 @@ export function RegisterForm() {
           type="email"
           autoComplete="email"
           required
-          defaultValue={state?.values?.email}
-          className={inputClass}
+          readOnly={Boolean(lockedEmail)}
+          defaultValue={state?.values?.email ?? lockedEmail}
+          className={`${inputClass}${lockedEmail ? " opacity-70" : ""}`}
           placeholder={t("auth.emailPlaceholder")}
         />
         <FieldError messages={state?.fieldErrors?.email} />

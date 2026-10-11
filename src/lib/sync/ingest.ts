@@ -174,7 +174,7 @@ export async function ingestPlays(
       }
     }
 
-    const key = `${artistId}|${play.trackName}`
+    const key = `${artistId}|${albumId ?? ""}|${play.trackName}`
     const cached = trackByKey.get(key)
     if (cached) {
       if (ext) trackByExt.set(ext, cached)
@@ -182,7 +182,7 @@ export async function ingestPlays(
     }
 
     let record = await prisma.track.findFirst({
-      where: { artistId, name: play.trackName },
+      where: { artistId, name: play.trackName, albumId: albumId ?? null },
       select: { id: true },
     })
     if (!record) {
@@ -240,7 +240,7 @@ export async function ingestPlays(
       albumId,
       playedAt: play.playedAt,
       msPlayed: Math.max(0, Math.round(play.msPlayed ?? play.durationMs ?? 0)),
-      source: play.provider,
+      source: play.origin ?? play.provider,
       context: play.context ?? null,
       dedupKey,
     })

@@ -17,6 +17,10 @@ to be **easy to deploy**, **fast** and **pleasant to explore**.
 
 - **Spotify source**: OAuth connection (recent plays + genres) and import of
   your data exports (privacy / extended streaming history).
+- **Multi-user**: each person creates an account and connects their **own**
+  Spotify account; data is isolated per account. Public **registrations** can be
+  closed with one click, and an administrator manages **accounts**,
+  **invitations** and approves **Spotify access requests**.
 - **Automatic artwork**: missing visuals (especially after an import) are
   completed via the **Spotify catalog**.
 - **Rich statistics**: listening time, top tracks / artists / albums, weighted
@@ -29,18 +33,21 @@ to be **easy to deploy**, **fast** and **pleasant to explore**.
   library.
 - **Recap ("Wrapped")**: yearly or monthly summary with comparison to the
   previous period, busiest day/hour and discovered artists.
-- **Export**: recap as a **PNG image** (1080×1080) and **CSV** of the whole
-  history.
-- **Status**: instance health page (last sync, today's plays, source status,
-  database size, recent activity).
+- **Compare periods**: side-by-side two-period comparator with overlaid
+  listening time, metric deltas and parallel rankings (artists, tracks, genres).
+- **Export**: recap as a **PNG image** (square 1080×1080 or story 1080×1920) and
+  **CSV** of the whole history. The recap can also be shared through a **public
+  read-only link** (enable/disable in Settings).
+- **Status**: instance health (listening totals, last sync, uptime, database
+  size, backups, recent activity) built into the **Settings** page.
 - **Filters**: by period (today, week, month, year, all — calendar-based, in the
-  account's timezone) and by source (Spotify, import).
+  account's timezone; **default: today**).
 - **Multilingual**: English (default) and French, with a language switcher in
   the UI (localized dates and numbers).
 - **Trends & heatmap**: GitHub-style yearly heatmap and comparison between two
   periods (rising / falling artists).
-- **Discoveries**: dedicated page — current obsessions and artists to
-  rediscover.
+- **Trends page**: dedicated `/trends` view comparing two consecutive windows
+  (7/30/90 days, 1 year) for rising and falling **artists, tracks and albums**.
 - **Backups**: automatic database copy (configurable rotation) + dedicated
   endpoint.
 - **Robust deduplication**: a play is never counted twice.
@@ -58,6 +65,7 @@ to be **easy to deploy**, **fast** and **pleasant to explore**.
 | UI | Tailwind CSS v4, hand-rolled components, dependency-free SVG charts |
 | Auth | `jose` (JWT), `node:crypto` (scrypt, AES-GCM) |
 | Image | `next/og` (PNG recap) |
+| Tests | Vitest |
 
 ## 🚀 Quick start (local)
 
@@ -85,6 +93,13 @@ pnpm dev        # http://localhost:3000
 The **first account created becomes the administrator**. Locally, `pnpm db:seed`
 creates a demo account (`demo@statisfy.local` / `statisfy123`) — do not keep it
 on a public instance.
+
+Statisfy is **multi-user**: each person creates an account and connects their
+**own** Spotify account (Settings → Connect Spotify); listens, statistics and
+connections are isolated per account. From **Settings → Users**, an
+administrator can promote other admins, reset a password or delete an account,
+and generate **invitation links** (“Invitations”) — handy for keeping
+registrations closed while inviting people case by case.
 
 ### Local production
 
@@ -163,12 +178,19 @@ Every variable is documented in [`.env.example`](.env.example).
    [Spotify developer dashboard](https://developer.spotify.com/dashboard).
 2. Add a redirect URL. The path `/oauth/spotify/callback` is accepted (as is
    `/api/sources/spotify/callback`), for example:
-   - locally: `http://localhost:3000/oauth/spotify/callback`
+   - locally: `http://127.0.0.1:3000/oauth/spotify/callback` (not `localhost`)
    - in production: `https://statisfy.mydomain.org/oauth/spotify/callback`
 3. Fill in `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET` and
    `SPOTIFY_REDIRECT_URI`, then restart.
 4. In **Settings → Connect Spotify**, click *Connect my account*.
 5. Click **Sync**: recent plays **and genres** are fetched.
+
+> **Spotify Development mode (≤ 25 accounts)**: each user must first **request
+> access** (Settings → Connect Spotify, giving their Spotify account). An
+> administrator **approves** the request after adding the account in the Spotify
+> dashboard, from the **Spotify access requests** section in Settings.
+> Administrators are allowed by default, and history imports remain available
+> while waiting for approval.
 
 > The Spotify API only returns the last 50 tracks. Automatic syncing (cron)
 > avoids losing them; for the full history, use the import below.
@@ -236,6 +258,7 @@ In both cases, the import is **idempotent** (re-running creates no duplicate).
 | `POST /api/import/spotify-history` | Import a Spotify export (`.zip` "Extended streaming history" or `.json`). Auth: `Bearer $SYNC_TOKEN`, HTTP Basic or admin session. |
 | `POST /api/import/your-spotify` | Import a *Your Spotify* dump (`.zip` archive) from a server. Auth: `Bearer $SYNC_TOKEN`, HTTP Basic (`-u email:password`) or admin session. |
 | `GET /api/export` | CSV export of the logged-in user's history. |
+| `GET /api/export/db` | Full SQLite database snapshot (`.db`). Auth: `Bearer $SYNC_TOKEN` or admin session. |
 | `GET /api/wrapped/image` | PNG image of the recap (`?year=2026&month=10`). |
 | `GET /oauth/spotify/callback` | Spotify OAuth return (to declare on Spotify's side). |
 | `GET /api/sources/spotify/start` | Starts the Spotify OAuth flow. |
@@ -272,7 +295,7 @@ prisma/
   schema.prisma        # Models (User, Play, Track, Artist, Album, Job, ...)
   seed.ts              # Demo data
 src/
-  app/                 # Routes: login, dashboard, top, wrapped, insights,
+  app/                 # Routes: login, dashboard, top, compare, trends, wrapped,
                        # history, status, search, artist/[id], track/[id],
                        # settings, api
   components/          # UI (cards, SVG charts, navigation, forms)
@@ -281,7 +304,7 @@ src/
     auth/              # Sessions, DAL, auth actions
     sources/           # Spotify adapter, import, enrichment, OAuth state
     sync/              # Idempotent ingestion engine + orchestration
-    stats.ts           # Aggregation queries (including trends/discoveries)
+    stats.ts           # Aggregation queries (including trends)
     backup.ts          # SQLite backups (VACUUM INTO + rotation)
     period.ts          # Recap periods
     crypto.ts          # Credential encryption
@@ -297,12 +320,15 @@ src/
 The engine (`src/lib/sync/`) handles the rest: deduplication, entity resolution,
 metadata and genres.
 
-## 🗺️ Roadmap
+## 🧪 Tests
 
-- Side-by-side two-period comparator.
-- "Story" image format (1080×1920) for the recap.
-- Advanced multi-user mode (dashboard sharing).
-- Automated tests.
+Unit tests cover the pure helpers (formatting, periods, ranges, comparison,
+password hashing and credential encryption):
+
+```bash
+pnpm test        # single run
+pnpm test:watch  # watch mode
+```
 
 ## ⚖️ License and legal notice
 
