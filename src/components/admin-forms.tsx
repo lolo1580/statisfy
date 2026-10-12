@@ -7,6 +7,7 @@ import {
   resetUserPassword,
   type AdminState,
 } from "@/lib/actions/users";
+import { restoreBackup, type RestoreState } from "@/lib/actions/backup";
 import { INVITATION_TTL_CHOICES } from "@/lib/invitation-rules";
 import { useI18n } from "@/components/i18n-provider";
 import { Feedback, inputClass } from "@/components/form-ui";
@@ -190,6 +191,44 @@ export function ChangePasswordForm() {
         </button>
       </div>
       <Feedback state={state} />
+    </form>
+  );
+}
+
+/** Restauration d'une sauvegarde PostgreSQL (admin). */
+export function RestoreForm() {
+  const { t } = useI18n();
+  const [state, action, pending] = useActionState<RestoreState, FormData>(
+    restoreBackup,
+    undefined,
+  );
+
+  return (
+    <form
+      action={action}
+      className="space-y-3"
+      onSubmit={(event) => {
+        if (!window.confirm(t("settings.confirmRestore"))) {
+          event.preventDefault();
+        }
+      }}
+    >
+      <input
+        type="file"
+        name="file"
+        accept=".dump,application/octet-stream"
+        required
+        className="block w-full cursor-pointer rounded-lg border border-dashed border-border bg-surface-2 px-3 py-6 text-sm text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent-soft file:px-3 file:py-1.5 file:text-accent"
+      />
+      <p className="text-xs text-muted">{t("settings.restoreHint")}</p>
+      <Feedback state={state} />
+      <button
+        type="submit"
+        disabled={pending}
+        className="rounded-lg border border-red-500/40 px-4 py-2 text-sm text-red-400 transition-colors hover:bg-red-500/10 disabled:opacity-50"
+      >
+        {pending ? t("settings.restoring") : t("settings.restoreCta")}
+      </button>
     </form>
   );
 }

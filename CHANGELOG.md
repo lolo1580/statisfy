@@ -11,6 +11,12 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Ajouté
 
+- **Restauration de sauvegarde** : import d'un dump `pg_dump` (`.dump`) depuis
+  les **Réglages** (admin), via `POST /api/restore` (admin ou `SYNC_TOKEN`) ou la
+  commande **`pnpm db:restore <fichier>`**. Un dump de sécurité de l'état courant
+  est créé avant l'opération, et la restauration se fait dans une **transaction
+  unique** (échec = aucun changement).
+
 - **Didacticiel de démarrage** : à la première visite du tableau de bord, une
   **modale d'accueil** en 4 étapes présente l'outil (connexion Spotify, import de
   l'historique, exploration) — affichée **une seule fois**. Une **checklist

@@ -127,3 +127,31 @@ export async function runBackup(): Promise<BackupResult> {
     directory: dir,
   };
 }
+
+/**
+ * Restaure un dump PostgreSQL (format `pg_dump` personnalisé) dans la base
+ * courante. Les objets présents sont supprimés puis recréés (`--clean`), le
+ * tout dans une **transaction unique** : en cas d'erreur, rien n'est modifié.
+ */
+export async function restoreDatabase(dumpFile: string): Promise<void> {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL est manquant.");
+  if (!fs.existsSync(/*turbopackIgnore: true*/ dumpFile)) {
+    throw new Error("Fichier de sauvegarde introuvable.");
+  }
+  await execFileAsync(
+    "pg_restore",
+    [
+      "--dbname",
+      url,
+      "--clean",
+      "--if-exists",
+      "--no-owner",
+      "--no-privileges",
+      // Transaction unique (implique l'arrêt à la première erreur).
+      "--single-transaction",
+      dumpFile,
+    ],
+    { maxBuffer: 32 * 1024 * 1024 },
+  );
+}

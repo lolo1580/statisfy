@@ -421,4 +421,15 @@ export const en: Dictionary = {
   "checklist.import": "Import your history",
   "checklist.explore": "Explore your rankings",
   "checklist.hide": "Hide",
+
+  // Backup restore
+  "settings.restore": "Restore a backup",
+  "settings.restoreSubtitle": "Import a `.dump` file — replaces the current data",
+  "settings.restoreHint":
+    "A file created by “Database (.dump)” or found in the backups folder.",
+  "settings.restoreCta": "Restore",
+  "settings.restoring": "Restoring…",
+  "settings.confirmRestore": "This replaces all current data. Continue?",
+  "msg.restoreDone": "Backup restored.",
+  "err.restoreFailed": "Restore failed (invalid or incompatible dump?).",
 };

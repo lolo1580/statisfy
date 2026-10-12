@@ -417,4 +417,16 @@ export const fr: Dictionary = {
   "checklist.import": "Importer votre historique",
   "checklist.explore": "Explorer vos classements",
   "checklist.hide": "Masquer",
+
+  // Restauration de sauvegarde
+  "settings.restore": "Restaurer une sauvegarde",
+  "settings.restoreSubtitle":
+    "Importer un fichier `.dump` — remplace les données actuelles",
+  "settings.restoreHint":
+    "Un fichier produit par « Base de données (.dump) » ou présent dans le dossier des sauvegardes.",
+  "settings.restoreCta": "Restaurer",
+  "settings.restoring": "Restauration…",
+  "settings.confirmRestore": "Cela remplace toutes les données actuelles. Continuer ?",
+  "msg.restoreDone": "Sauvegarde restaurée.",
+  "err.restoreFailed": "Échec de la restauration (dump invalide ou incompatible ?).",
 };

@@ -15,6 +15,7 @@ import {
   CopyField,
   InviteForm,
   ResetPasswordButton,
+  RestoreForm,
 } from "@/components/admin-forms";
 import { listInvitations, purgeInvitations } from "@/lib/invitations";
 import { isInvitationUsable } from "@/lib/invitation-rules";
@@ -606,6 +607,16 @@ export default async function SettingsPage({
               </button>
             </form>
           </div>
+        </Card>
+      ) : null}
+
+      {user.isAdmin ? (
+        <Card>
+          <SectionTitle
+            title={t("settings.restore")}
+            subtitle={t("settings.restoreSubtitle")}
+          />
+          <RestoreForm />
         </Card>
       ) : null}
 

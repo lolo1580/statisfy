@@ -304,6 +304,7 @@ Dans les deux cas, l'import est **idempotent** (relancer ne crée pas de doublon
 | --- | --- |
 | `GET /api/sync` | Synchronise les connexions dues. Auth : `Bearer $SYNC_TOKEN` ou session admin. |
 | `POST /api/backup` | Sauvegarde la base PostgreSQL (`pg_dump`). Auth : `Bearer $SYNC_TOKEN` ou session admin. |
+| `POST /api/restore` | Restaure un dump PostgreSQL (`.dump`), en remplaçant les données actuelles. Auth : `Bearer $SYNC_TOKEN` ou session admin. CLI : `pnpm db:restore <fichier>`. |
 | `POST /api/import/spotify-history` | Importe un export Spotify (`.zip` « Extended streaming history » ou `.json`). Auth : `Bearer $SYNC_TOKEN`, HTTP Basic ou session admin. |
 | `POST /api/import/your-spotify` | Importe un dump *Your Spotify* (archive `.zip`) depuis un serveur. Auth : `Bearer $SYNC_TOKEN`, HTTP Basic (`-u email:motdepasse`) ou session admin. |
 | `GET /api/export` | Export CSV de l'historique de l'utilisateur connecté. |

@@ -18,6 +18,7 @@
     "import:spotify-history": "node --conditions=react-server --import tsx scripts/import-spotify-history.ts",
     "db:backfill-source": "node --conditions=react-server --import tsx scripts/backfill-source.ts",
     "migrate:sqlite": "node --conditions=react-server --import tsx scripts/migrate-sqlite-to-postgres.ts",
+    "db:restore": "node --conditions=react-server --import tsx scripts/restore-dump.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
