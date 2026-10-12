@@ -179,7 +179,7 @@ docker compose -f docker-compose.prod.yml up -d
 ```
 
 Épinglez une autre version avec `STATISFY_IMAGE` (ex.
-`ghcr.io/lolo1580/statisfy:1.0.0`) et réglez `STATISFY_BIND` si votre proxy est
+`ghcr.io/lolo1580/statisfy:1.0.1`) et réglez `STATISFY_BIND` si votre proxy est
 sur un autre réseau.
 
 ## ⚙️ Configuration
