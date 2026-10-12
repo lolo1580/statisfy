@@ -7,6 +7,8 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-10-12
+
 ### Ajouté
 
 - **Didacticiel de démarrage** : à la première visite du tableau de bord, une
