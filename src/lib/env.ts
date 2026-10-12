@@ -43,7 +43,7 @@ export const appVersion: string = pkg.version
 export const appUrl = process.env.APP_URL || ''
 
 /**
- * Domaine partagé des cookies (ex. `.keller-laurent.org`) pour que la session
+ * Domaine partagé des cookies (ex. `.example.org`) pour que la session
  * et le cookie OAuth `state` soient lisibles sur plusieurs sous-domaines
  * (UI et endpoint de callback séparés).
  */
