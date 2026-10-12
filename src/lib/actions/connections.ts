@@ -47,11 +47,9 @@ export async function syncConnection(
     revalidatePath("/dashboard");
     return { ok: true, message: t("msg.syncDone", { count: result.inserted }) };
   } catch (error) {
+    console.error("[sync] échec de la synchronisation", error);
     revalidatePath("/settings");
-    return {
-      error:
-        error instanceof Error ? error.message : t("err.syncFailed"),
-    };
+    return { error: t("err.syncFailed") };
   }
 }
 
@@ -102,10 +100,8 @@ export async function importHistory(
         }) + (enriched ? t("msg.importDoneVisuals", { count: enriched }) : ""),
     };
   } catch (error) {
-    return {
-      error:
-        error instanceof Error ? error.message : t("err.importFailed"),
-    };
+    console.error("[import] échec de l'import", error);
+    return { error: t("err.importFailed") };
   }
 }
 
@@ -146,10 +142,8 @@ export async function importYourSpotify(
       }),
     };
   } catch (error) {
-    return {
-      error:
-        error instanceof Error ? error.message : t("err.importFailed"),
-    };
+    console.error("[import] échec de l'import", error);
+    return { error: t("err.importFailed") };
   }
 }
 
@@ -176,10 +170,8 @@ export async function enrichImages(
       }),
     };
   } catch (error) {
-    return {
-      error:
-        error instanceof Error ? error.message : t("err.enrichFailed"),
-    };
+    console.error("[enrich] échec de l'enrichissement", error);
+    return { error: t("err.enrichFailed") };
   }
 }
 

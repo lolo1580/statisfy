@@ -269,7 +269,7 @@ export default async function SettingsPage({
         </div>
       ) : null}
 
-      <div className="grid gap-6 3xl:grid-cols-2 3xl:items-start">
+      <div className="columns-1 gap-6 lg:columns-2 3xl:columns-3 [&>*]:mb-6 [&>*]:break-inside-avoid">
       <Card>
         <SectionTitle
           title={t("settings.account")}
@@ -474,35 +474,37 @@ export default async function SettingsPage({
         {jobs.length === 0 ? (
           <EmptyState>{t("settings.noActivity")}</EmptyState>
         ) : (
-          <ul className="divide-y divide-border text-sm">
-            {jobs.map((job) => (
-              <li key={job.id} className="flex items-center gap-3 py-2.5">
-                <Badge tone={job.type === "import" ? "neutral" : "violet"}>
-                  {jobType(job.type)}
-                </Badge>
-                <span className="min-w-0 flex-1 truncate text-muted">
-                  {job.connection?.displayName ?? t("status.importedHistory")}
-                </span>
-                <span className="text-xs text-muted">
-                  +{formatNumber(job.inserted, locale)}
-                </span>
-                <Badge
-                  tone={
-                    job.status === "done"
-                      ? "accent"
-                      : job.status === "error"
-                        ? "danger"
-                        : "neutral"
-                  }
-                >
-                  {job.status}
-                </Badge>
-                <span className="hidden w-40 text-right text-xs text-muted md:inline">
-                  {formatDateTime(job.createdAt, user.timezone, locale)}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="max-h-72 overflow-y-auto pr-1">
+            <ul className="divide-y divide-border text-sm">
+              {jobs.map((job) => (
+                <li key={job.id} className="flex items-center gap-3 py-2.5">
+                  <Badge tone={job.type === "import" ? "neutral" : "violet"}>
+                    {jobType(job.type)}
+                  </Badge>
+                  <span className="min-w-0 flex-1 truncate text-muted">
+                    {job.connection?.displayName ?? t("status.importedHistory")}
+                  </span>
+                  <span className="text-xs text-muted">
+                    +{formatNumber(job.inserted, locale)}
+                  </span>
+                  <Badge
+                    tone={
+                      job.status === "done"
+                        ? "accent"
+                        : job.status === "error"
+                          ? "danger"
+                          : "neutral"
+                    }
+                  >
+                    {job.status}
+                  </Badge>
+                  <span className="hidden w-40 text-right text-xs text-muted md:inline">
+                    {formatDateTime(job.createdAt, user.timezone, locale)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </Card>
 

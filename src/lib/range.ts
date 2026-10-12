@@ -16,6 +16,8 @@ export type ParsedRange = {
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+/** Borne haute du paramètre `?range=<jours>` (évite une boucle de pré-remplissage). */
+const MAX_DAYS = 3660;
 
 /** Nombre de jours locaux entiers entre `from` (minuit local) et aujourd'hui, inclus. */
 function elapsedDays(from: Date, timeZone: string, now: Date): number {
@@ -63,5 +65,6 @@ export function parseRange(
 
   const days = Number(key);
   if (!Number.isFinite(days) || days <= 0) return { days: 30, key: "30" };
-  return { days, key: String(days) };
+  const clamped = Math.min(Math.floor(days), MAX_DAYS);
+  return { days: clamped, key: String(clamped) };
 }

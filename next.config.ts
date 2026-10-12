@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // N'expose pas `X-Powered-By: Next.js`.
+  poweredByHeader: false,
   // Dashboard fortement dynamique (base de données + cookies) : on reste sur
   // le modèle de cache classique plutôt que Cache Components.
   cacheComponents: false,

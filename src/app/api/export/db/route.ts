@@ -3,7 +3,7 @@ import { Readable } from "node:stream";
 import { NextResponse, type NextRequest } from "next/server";
 import { getOptionalAdmin } from "@/lib/auth/dal";
 import { hasValidSyncToken } from "@/lib/auth/sync-token";
-import { createTemporarySnapshot } from "@/lib/backup";
+import { createTemporarySnapshot, type Snapshot } from "@/lib/backup";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const snapshot = await createTemporarySnapshot();
+  let snapshot: Snapshot;
+  try {
+    snapshot = await createTemporarySnapshot();
+  } catch {
+    // Ne pas exposer le message brut (chemins internes, binaire pg_dump…).
+    return NextResponse.json({ error: "Export failed" }, { status: 500 });
+  }
   const nodeStream = fs.createReadStream(snapshot.file);
   const cleanup = () => snapshot.dispose();
   nodeStream.once("close", cleanup);

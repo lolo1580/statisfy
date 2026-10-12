@@ -17,10 +17,50 @@ import { Badge, Card, Cover, EmptyState, SectionTitle, StatCard } from "@/compon
 import { TopArtistsPanel, TopGenresPanel, TopTracksPanel } from "@/components/ranking-panels";
 import { formatDuration, formatNumber } from "@/lib/format";
 import { getI18n } from "@/i18n/server";
+import { prisma } from "@/lib/db";
+import { dismissChecklist } from "@/lib/actions/onboarding";
+import { WelcomeModal } from "@/components/welcome-modal";
 
 export const dynamic = "force-dynamic";
 
 const dayLabel = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(2, 4)}`;
+
+/** Ligne de la checklist « Bien démarrer ». */
+function ChecklistItem({
+  done,
+  href,
+  label,
+}: {
+  done: boolean;
+  href: string;
+  label: string;
+}) {
+  return (
+    <li>
+      <Link
+        href={href}
+        className="flex items-center gap-3 rounded-xl border border-border px-3 py-2 text-sm transition-colors hover:border-accent/40"
+      >
+        <span
+          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] ${
+            done
+              ? "border-accent bg-accent-soft text-accent"
+              : "border-border text-transparent"
+          }`}
+          aria-hidden
+        >
+          ✓
+        </span>
+        <span className={done ? "text-muted line-through" : ""}>{label}</span>
+        {!done ? (
+          <span className="ml-auto text-muted" aria-hidden>
+            →
+          </span>
+        ) : null}
+      </Link>
+    </li>
+  );
+}
 
 export default async function DashboardPage({
   searchParams,
@@ -43,16 +83,45 @@ export default async function DashboardPage({
   };
   const query = `range=${parsed.key}`;
 
-  const [overview, timeline, topTracks, topArtists, topGenres, trends, anyPlays] =
-    await Promise.all([
-      getOverview(user.id, filters),
-      getTimelineStats(user.id, user.timezone, filters),
-      getTopTracks(user.id, filters, 10),
-      getTopArtists(user.id, filters, 10),
-      getTopGenres(user.id, filters, 10),
-      getArtistTrends(user.id, filters, 4),
-      hasAnyPlays(user.id),
-    ]);
+  const [
+    overview,
+    timeline,
+    topTracks,
+    topArtists,
+    topGenres,
+    trends,
+    anyPlays,
+    spotifyConnection,
+    importedPlay,
+    onboarding,
+  ] = await Promise.all([
+    getOverview(user.id, filters),
+    getTimelineStats(user.id, user.timezone, filters),
+    getTopTracks(user.id, filters, 10),
+    getTopArtists(user.id, filters, 10),
+    getTopGenres(user.id, filters, 10),
+    getArtistTrends(user.id, filters, 4),
+    hasAnyPlays(user.id),
+    prisma.sourceConnection.findFirst({
+      where: { userId: user.id, type: "spotify" },
+      select: { id: true },
+    }),
+    prisma.play.findFirst({
+      where: { userId: user.id, source: "import" },
+      select: { id: true },
+    }),
+    prisma.user.findUnique({
+      where: { id: user.id },
+      select: { onboardedAt: true, checklistHiddenAt: true },
+    }),
+  ]);
+
+  // Didacticiel : accueil une seule fois + checklist tant que rien n'est démarré.
+  const hasSpotify = spotifyConnection !== null;
+  const hasImport = importedPlay !== null;
+  const showChecklist =
+    !onboarding?.checklistHiddenAt && !(hasSpotify && hasImport);
+  const showWelcome = !onboarding?.onboardedAt;
 
   const isEmpty = overview.totalPlays === 0;
   // Période d'un seul jour (« aujourd'hui ») : le graphe « Écoute dans le temps »
@@ -93,6 +162,44 @@ export default async function DashboardPage({
           <RangeTabs basePath="/dashboard" current={parsed.key} />
         </div>
       </div>
+
+      <WelcomeModal initialOpen={showWelcome} />
+
+      {showChecklist ? (
+        <Card>
+          <SectionTitle
+            title={t("checklist.title")}
+            subtitle={t("checklist.subtitle")}
+            action={
+              <form action={dismissChecklist}>
+                <button
+                  type="submit"
+                  className="text-xs text-muted transition-colors hover:text-foreground"
+                >
+                  {t("checklist.hide")}
+                </button>
+              </form>
+            }
+          />
+          <ul className="space-y-2">
+            <ChecklistItem
+              done={hasSpotify}
+              href="/settings"
+              label={t("checklist.connect")}
+            />
+            <ChecklistItem
+              done={hasImport}
+              href="/settings"
+              label={t("checklist.import")}
+            />
+            <ChecklistItem
+              done={false}
+              href="/top"
+              label={t("checklist.explore")}
+            />
+          </ul>
+        </Card>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard

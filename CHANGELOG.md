@@ -9,6 +9,14 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Ajouté
 
+- **Didacticiel de démarrage** : à la première visite du tableau de bord, une
+  **modale d'accueil** en 4 étapes présente l'outil (connexion Spotify, import de
+  l'historique, exploration) — affichée **une seule fois**. Une **checklist
+  « Bien démarrer »** reste ensuite sur le tableau de bord tant que la source
+  n'est pas connectée et l'historique importé (auto-complétion selon l'état réel,
+  masquable). Bilingue, sans dépendance. Nouveaux champs `User.onboardedAt` et
+  `User.checklistHiddenAt`.
+
 - **Validation des accès Spotify** : en mode *Development*, Spotify limite
   l'application à une liste de comptes. Chaque utilisateur doit donc **demander
   l'accès** (Réglages → Connecter Spotify, en indiquant son compte Spotify) ;
@@ -74,6 +82,10 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   identifiants (idempotente ; options `--sqlite <chemin>` et `--dry-run`).
 
 ### Modifié
+
+- **Page Réglages** : disposition en **colonnes (masonry)** — 2 colonnes dès
+  1024 px, 3 dès 1920 px — et carte « Activité récente » à hauteur bornée
+  (défilement).
 
 - **Base de données : passage de SQLite à PostgreSQL 18.** Le projet s'appuie
   désormais sur Prisma 7 avec le driver adapter `@prisma/adapter-pg` (au lieu de
@@ -181,6 +193,25 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   `STATISFY_IMAGE` est commentée dans `.env`/`.env.example`.
 
 ### Sécurité
+
+- **Anti-SSRF renforcé** : les visuels distants sont récupérés par une requête
+  **épinglée sur l'IP déjà validée** (plus de re-résolution DNS entre la
+  validation et la connexion → fin du rebinding), avec SNI/`Host` d'origine. La
+  détection des adresses privées couvre désormais NAT64, multicast, `100::/64`,
+  `2001:db8::/32` et la forme canonique des IPv4-mappées.
+- **Anti force-brute de l'auth Basic** des imports (`/api/import/*`) : même
+  limiteur que la connexion. Et `X-Forwarded-For` est lu côté **proxy** (dernier
+  saut) ; `TRUST_PROXY_HEADERS=false` pour l'ignorer si l'app est exposée
+  directement.
+- **Énumération d'emails** au login neutralisée (hash scrypt factice exécuté
+  même si le compte n'existe pas → temps de réponse constant).
+- **Sessions** : la ligne en base est désormais liée au `uid` du JWT.
+- **Courses** : première inscription (« premier compte = admin ») et retrait du
+  dernier admin passent en transaction **SERIALIZABLE**.
+- **Divers** : `?range=` borné, `?email=` normalisé, messages d'erreur d'import
+  génériques (loggés côté serveur), `/api/export/db` gère l'échec de `pg_dump`,
+  `/api/wrapped/image` renvoie **401** au lieu d'une redirection, et
+  `X-Powered-By` est désactivé.
 
 - **Comparaison du `SYNC_TOKEN` en temps constant** partout où il est vérifié
   (`/api/sync`, `/api/backup`, `/api/export/db`, imports) via un helper commun

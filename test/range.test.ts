@@ -31,6 +31,10 @@ describe("parseRange", () => {
     expect(parseRange("-5")).toEqual({ days: 30, key: "30" });
   });
 
+  it("borne le paramètre ?range=<jours>", () => {
+    expect(parseRange("999999")).toEqual({ days: 3660, key: "3660" });
+  });
+
   it("calcule les bornes calendaires (semaine/mois/année)", () => {
     for (const key of ["week", "month", "year"]) {
       const p = parseRange(key, "UTC");

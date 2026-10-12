@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getOptionalAdmin, type CurrentUser } from "@/lib/auth/dal";
 import { prisma } from "@/lib/db";
 import { hasValidSyncToken } from "@/lib/auth/sync-token";
+import { clientIp, resetTokens, takeToken } from "@/lib/auth/rate-limit";
 import { verifyPassword } from "@/lib/password";
 
 /** Vérifie un en-tête `Authorization: Basic <email:mot de passe>`. */
@@ -16,11 +17,26 @@ async function userFromBasic(header: string | null): Promise<CurrentUser | null>
     ).toString("utf8");
     const sep = decoded.indexOf(":");
     if (sep < 0) return null;
-    const email = decoded.slice(0, sep).trim();
+    const email = decoded.slice(0, sep).trim().toLowerCase();
     const password = decoded.slice(sep + 1);
+
+    // Anti force-brute : même limiteur que la connexion (l'auth Basic ne doit
+    // pas offrir un contournement du throttle du formulaire de login).
+    const ip = await clientIp();
+    const userKey = `import-basic:${ip}|${email}`;
+    const ipKey = `import-basic-ip:${ip}`;
+    if (
+      !takeToken(userKey, 10, 15 * 60 * 1000) ||
+      !takeToken(ipKey, 30, 15 * 60 * 1000)
+    ) {
+      return null;
+    }
+
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return null;
-    if (!(await verifyPassword(password, user.passwordHash))) return null;
+    if (!user || !(await verifyPassword(password, user.passwordHash))) return null;
+
+    resetTokens(userKey);
+    resetTokens(ipKey);
     return {
       id: user.id,
       email: user.email,
@@ -71,7 +87,7 @@ export async function resolveImportTarget(
     };
   }
 
-  const email = url.searchParams.get("email");
+  const email = url.searchParams.get("email")?.trim().toLowerCase() ?? null;
   let user: CurrentUser | null = null;
   if (email) {
     if (!tokenOk && !isAdmin && basicUser?.email !== email) {

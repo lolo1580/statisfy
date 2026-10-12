@@ -21,10 +21,6 @@ export type AdminState =
     }
   | undefined;
 
-async function countAdmins(): Promise<number> {
-  return prisma.user.count({ where: { isAdmin: true } });
-}
-
 /** Active/désactive le rôle administrateur d'un autre compte. */
 export async function setUserAdmin(formData: FormData): Promise<void> {
   const admin = await getAdminUser();
@@ -35,15 +31,28 @@ export async function setUserAdmin(formData: FormData): Promise<void> {
   // On ne modifie pas son propre rôle : évite de se verrouiller par erreur.
   if (!userId || userId === admin.id) return;
 
-  const target = await prisma.user.findUnique({ where: { id: userId } });
-  if (!target) return;
-  // Toujours conserver au moins un administrateur actif.
-  if (!makeAdmin && target.isAdmin && (await countAdmins()) <= 1) return;
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: { isAdmin: makeAdmin },
-  });
+  try {
+    // Isolation SERIALIZABLE : deux admins ne peuvent pas se rétrograder
+    // concurremment jusqu'à n'en laisser aucun.
+    await prisma.$transaction(
+      async (tx) => {
+        const target = await tx.user.findUnique({ where: { id: userId } });
+        if (!target) return;
+        // Toujours conserver au moins un administrateur actif.
+        if (!makeAdmin && target.isAdmin) {
+          const count = await tx.user.count({ where: { isAdmin: true } });
+          if (count <= 1) return;
+        }
+        await tx.user.update({
+          where: { id: userId },
+          data: { isAdmin: makeAdmin },
+        });
+      },
+      { isolationLevel: "Serializable" },
+    );
+  } catch {
+    // Course rare (échec de sérialisation) : on ne change rien.
+  }
   revalidatePath("/settings");
 }
 
@@ -55,11 +64,22 @@ export async function deleteUser(formData: FormData): Promise<void> {
   const userId = String(formData.get("userId") ?? "");
   if (!userId || userId === admin.id) return;
 
-  const target = await prisma.user.findUnique({ where: { id: userId } });
-  if (!target) return;
-  if (target.isAdmin && (await countAdmins()) <= 1) return;
-
-  await prisma.user.delete({ where: { id: userId } });
+  try {
+    await prisma.$transaction(
+      async (tx) => {
+        const target = await tx.user.findUnique({ where: { id: userId } });
+        if (!target) return;
+        if (target.isAdmin) {
+          const count = await tx.user.count({ where: { isAdmin: true } });
+          if (count <= 1) return;
+        }
+        await tx.user.delete({ where: { id: userId } });
+      },
+      { isolationLevel: "Serializable" },
+    );
+  } catch {
+    // Course rare (échec de sérialisation) : on ne supprime rien.
+  }
   revalidatePath("/settings");
 }
 
