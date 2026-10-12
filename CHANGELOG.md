@@ -83,6 +83,10 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Modifié
 
+- **Mobile** : menu de navigation **repliable** (bouton hamburger sous `md`),
+  infobulle du graphique **en barres** au **toucher** (pointer events), et
+  **cibles tactiles** agrandies (nav, onglets de période, en-tête).
+
 - **Page Réglages** : disposition en **colonnes (masonry)** — 2 colonnes dès
   1024 px, 3 dès 1920 px — et carte « Activité récente » à hauteur bornée
   (défilement).

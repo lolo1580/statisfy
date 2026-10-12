@@ -13,6 +13,7 @@ export const en: Dictionary = {
   "nav.recap": "Recap",
   "nav.history": "History",
   "nav.settings": "Settings",
+  "nav.menu": "Menu",
   "nav.logout": "Sign out",
   "nav.pendingRequests": "{count} pending Spotify request(s)",
   "shell.searchPlaceholder": "Search…",
