@@ -7,7 +7,7 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
-## [1.0.0] — 2026-10-12
+## [1.0.1] — 2026-10-12
 
 ### Ajouté
 
@@ -16,6 +16,16 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   commande **`pnpm db:restore <fichier>`**. Un dump de sécurité de l'état courant
   est créé avant l'opération, et la restauration se fait dans une **transaction
   unique** (échec = aucun changement).
+
+### Modifié
+
+- **Docker** : nouveau fichier **`docker-compose.prod.yml`** pour un déploiement
+  sans build (image GHCR épinglée, base non exposée, application liée à
+  `localhost` pour un reverse proxy, rotation des logs).
+
+## [1.0.0] — 2026-10-12
+
+### Ajouté
 
 - **Didacticiel de démarrage** : à la première visite du tableau de bord, une
   **modale d'accueil** en 4 étapes présente l'outil (connexion Spotify, import de
