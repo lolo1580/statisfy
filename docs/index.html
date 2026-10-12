@@ -1,269 +1,347 @@
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Statisfy — maquette (données fictives)</title>
-    <meta
-      name="description"
-      content="Maquette statique de Statisfy, un tableau de bord auto-hébergé pour explorer ses statistiques d'écoute Spotify. Données fictives."
-    />
-    <meta name="robots" content="index,follow" />
-    <style>
-      :root {
-        --background: #0a0d12;
-        --surface: #121821;
-        --surface-2: #1a222d;
-        --border: #253040;
-        --foreground: #eef2f7;
-        --muted: #93a1b5;
-        --accent: #19d18a;
-        --accent-soft: #0f3d2e;
-        --violet: #8b7cf6;
-      }
-      * { box-sizing: border-box; }
-      html { background: var(--background); }
-      body {
-        margin: 0;
-        min-height: 100vh;
-        color: var(--foreground);
-        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-        background:
-          radial-gradient(1200px 600px at 100% -10%, rgba(139, 124, 246, 0.12), rgba(139, 124, 246, 0)),
-          radial-gradient(900px 500px at -10% 0%, rgba(25, 209, 138, 0.1), rgba(25, 209, 138, 0)),
-          var(--background);
-      }
-      a { color: inherit; text-decoration: none; }
-      .wrap { max-width: 1100px; margin: 0 auto; padding: 20px 20px 48px; }
-      .banner {
-        display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center;
-        background: var(--accent-soft); color: var(--accent);
-        border-bottom: 1px solid rgba(25, 209, 138, 0.3);
-        padding: 8px 16px; font-size: 13px; text-align: center;
-      }
-      .banner strong { font-weight: 600; }
-      header {
-        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-        gap: 16px; margin: 22px 0 26px;
-      }
-      .logo { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
-      nav { display: flex; flex-wrap: wrap; gap: 4px; }
-      nav button {
-        appearance: none; border: 1px solid transparent; cursor: pointer;
-        background: transparent; color: var(--muted); font: inherit; font-size: 14px;
-        padding: 8px 12px; border-radius: 10px; transition: background .15s, color .15s;
-      }
-      nav button:hover { background: var(--surface-2); color: var(--foreground); }
-      nav button[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
-      .tag {
-        border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px;
-        font-size: 12px; color: var(--muted);
-      }
-      h1 { font-size: 26px; letter-spacing: -0.02em; margin: 0; }
-      .sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
-      .pagehead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
-      .ranges { display: inline-flex; flex-wrap: wrap; gap: 2px; border: 1px solid var(--border); background: rgba(18,24,33,.7); border-radius: 12px; padding: 4px; }
-      .ranges span { font-size: 12px; font-weight: 500; padding: 8px 12px; border-radius: 8px; color: var(--muted); }
-      .ranges span.on { background: var(--accent); color: #04140d; }
-      .grid { display: grid; gap: 16px; }
-      .stats { grid-template-columns: repeat(2, 1fr); }
-      @media (min-width: 720px) { .stats { grid-template-columns: repeat(4, 1fr); } }
-      .cols3 { grid-template-columns: 1fr; }
-      @media (min-width: 900px) { .cols3 { grid-template-columns: repeat(3, 1fr); } }
-      .cols2 { grid-template-columns: 1fr; }
-      @media (min-width: 900px) { .cols2 { grid-template-columns: repeat(2, 1fr); } }
-      .card {
-        background: rgba(18, 24, 33, 0.7); border: 1px solid var(--border);
-        border-radius: 16px; padding: 20px; backdrop-filter: blur(6px);
-      }
-      .card h2 { font-size: 18px; margin: 0; letter-spacing: -0.01em; }
-      .card .stitle { margin-bottom: 16px; }
-      .muted { color: var(--muted); }
-      .stat .label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
-      .stat .value { font-size: 26px; font-weight: 600; margin-top: 6px; letter-spacing: -0.02em; }
-      .stat .hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
-      ul.list { list-style: none; margin: 0; padding: 0; }
-      ul.list li { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--border); }
-      ul.list li:first-child { border-top: 0; }
-      .rank { width: 22px; color: var(--muted); font-size: 13px; text-align: right; }
-      .name { min-width: 0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
-      .count { color: var(--muted); font-size: 13px; }
-      .dot { width: 30px; height: 30px; border-radius: 999px; flex: 0 0 auto; }
-      .bar { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin-top: 6px; }
-      .bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--violet), var(--accent)); }
-      .genre { padding: 8px 0; border-top: 1px solid var(--border); font-size: 14px; }
-      .genre:first-child { border-top: 0; }
-      .genre .row { display: flex; justify-content: space-between; }
-      .chart { width: 100%; height: 200px; display: block; }
-      .big { font-size: 44px; font-weight: 700; letter-spacing: -0.03em; }
-      .kpi { display: flex; flex-wrap: wrap; gap: 40px; margin-top: 20px; }
-      .kpi .k .v { font-size: 26px; font-weight: 600; }
-      .kpi .k .l { font-size: 12px; color: var(--muted); }
-      footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
-      .hidden { display: none; }
-      .avatars { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
-      .avatars .a { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 96px; text-align: center; font-size: 12px; }
-    </style>
-  </head>
-  <body>
-    <div class="banner">
-      <strong>Maquette statique</strong> — données fictives, non interactive. Le vrai Statisfy se connecte à votre compte Spotify.
-    </div>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Statisfy — maquette (données fictives)</title>
+<meta name="description" content="Maquette statique de Statisfy, tableau de bord auto-hébergé pour explorer ses statistiques Spotify. Données fictives." />
+<style>
+  :root{
+    --background:#0a0d12; --surface:#121821; --surface-2:#1a222d; --border:#253040;
+    --foreground:#eef2f7; --muted:#93a1b5; --accent:#19d18a; --accent-soft:#0f3d2e; --violet:#8b7cf6;
+  }
+  *{box-sizing:border-box}
+  html{height:100%;background:var(--background)}
+  body{
+    margin:0;min-height:100%;color:var(--foreground);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:
+      radial-gradient(1200px 600px at 100% -10%, rgba(139,124,246,.12), rgba(139,124,246,0)),
+      radial-gradient(900px 500px at -10% 0%, rgba(25,209,138,.1), rgba(25,209,138,0)),
+      var(--background);
+  }
+  a{color:inherit;text-decoration:none}
+  .banner{background:var(--accent-soft);color:var(--accent);border-bottom:1px solid rgba(25,209,138,.3);padding:8px 16px;font-size:13px;text-align:center}
+  .banner strong{font-weight:600}
+  .wrap{max-width:1280px;margin:0 auto;padding:20px 24px 48px}
+  header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin:20px 0 26px}
+  header .brand{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:600}
+  nav.topnav{display:flex;flex-wrap:wrap;gap:4px;order:3;width:100%}
+  @media (min-width:1040px){nav.topnav{order:0;width:auto}}
+  nav.topnav button,.ghost{
+    appearance:none;border:1px solid transparent;background:transparent;color:var(--muted);font:inherit;font-size:14px;
+    padding:8px 12px;border-radius:10px;cursor:pointer;transition:background .15s,color .15s;
+  }
+  nav.topnav button:hover,.ghost:hover{background:var(--surface-2);color:var(--foreground)}
+  nav.topnav button[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
+  .search{display:none;width:220px}
+  @media (min-width:1040px){.search{display:block}}
+  .search input{width:100%;border:1px solid var(--border);background:var(--surface-2);color:var(--foreground);
+    border-radius:10px;padding:8px 12px;font:inherit;font-size:14px;outline:none}
+  .accountrow{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--muted)}
+  .accountrow select{border:1px solid var(--border);background:var(--surface-2);color:var(--muted);border-radius:10px;padding:8px 10px;font:inherit;font-size:14px}
+  .pagehead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
+  h1{font-size:26px;letter-spacing:-.02em;margin:0}
+  .sub{color:var(--muted);font-size:14px;margin-top:4px}
+  .ranges{display:inline-flex;flex-wrap:wrap;gap:2px;border:1px solid var(--border);background:rgba(18,24,33,.7);border-radius:12px;padding:4px}
+  .ranges button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:500;padding:8px 12px;border-radius:8px;cursor:pointer}
+  .ranges button.on{background:var(--accent);color:#04140d}
+  .grid{display:grid;gap:16px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  @media (min-width:760px){.stats{grid-template-columns:repeat(4,1fr)}}
+  .cols3{grid-template-columns:1fr}
+  @media (min-width:980px){.cols3{grid-template-columns:repeat(3,1fr)}}
+  .cols2{grid-template-columns:1fr}
+  @media (min-width:980px){.cols2{grid-template-columns:repeat(2,1fr)}}
+  .card{background:rgba(18,24,33,.7);border:1px solid var(--border);border-radius:16px;padding:20px;backdrop-filter:blur(6px)}
+  .stitle{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .stitle h2{font-size:18px;margin:0;letter-spacing:-.01em}
+  .toggle{display:inline-flex;gap:2px;border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:3px}
+  .toggle button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:12px;padding:5px 10px;border-radius:7px;cursor:pointer}
+  .toggle button.on{background:var(--accent);color:#04140d}
+  .card[data-metric="plays"] .m-time,.card[data-metric="time"] .m-plays{display:none}
+  .muted{color:var(--muted)}
+  .stat .label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .stat .value{font-size:26px;font-weight:600;margin-top:6px;letter-spacing:-.02em}
+  .stat .hint{font-size:12px;color:var(--muted);margin-top:2px}
+  ul.list{list-style:none;margin:0;padding:0}
+  ul.list li{display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid var(--border)}
+  ul.list li:first-child{border-top:0}
+  .rank{width:20px;text-align:right;color:var(--muted);font-size:13px}
+  .cover{width:38px;height:38px;border-radius:8px;flex:0 0 auto}
+  .avatar{width:38px;height:38px;border-radius:999px;flex:0 0 auto}
+  .main{min-width:0;flex:1}
+  .title{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .byline{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .count{color:var(--muted);font-size:13px;white-space:nowrap}
+  .chartwrap{display:flex;gap:8px}
+  .ylabels{display:flex;flex-direction:column;justify-content:space-between;font-size:10px;color:var(--muted);text-align:right;padding:2px 0}
+  .plot{position:relative;flex:1}
+  .plot svg{display:block;width:100%;height:200px}
+  .xlabels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:8px}
+  .genre{padding:9px 0;border-top:1px solid var(--border)}
+  .genre:first-child{border-top:0}
+  .genre .row{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+  .bar{height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden;margin-top:6px}
+  .bar>span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--violet),var(--accent))}
+  .big{font-size:46px;font-weight:700;letter-spacing:-.03em;margin-top:6px}
+  .kpis{display:flex;flex-wrap:wrap;gap:40px;margin-top:22px}
+  .kpis .v{font-size:26px;font-weight:600}
+  .kpis .l{font-size:12px;color:var(--muted)}
+  table.compare{width:100%;border-collapse:collapse;font-size:14px}
+  table.compare th,table.compare td{text-align:left;padding:9px 8px;border-top:1px solid var(--border)}
+  table.compare th{color:var(--muted);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+  table.compare td.num{text-align:right}
+  .delta.up{color:var(--accent)} .delta.down{color:#f87171}
+  footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+  <div class="banner"><strong>Maquette statique</strong> — données fictives, non interactive. Le vrai Statisfy se connecte à votre compte Spotify.</div>
 
-    <div class="wrap">
-      <header>
-        <div class="logo"><span aria-hidden="true">🎧</span> Statisfy <span class="tag">Démo</span></div>
-        <nav aria-label="Navigation">
-          <button type="button" data-view="dashboard" aria-current="page">Tableau de bord</button>
-          <button type="button" data-view="rankings">Classements</button>
-          <button type="button" data-view="recap">Récapitulatif</button>
-        </nav>
-      </header>
+  <div class="wrap">
+    <header>
+      <a class="brand" href="#"><span aria-hidden="true">🎧</span> Statisfy</a>
+      <nav class="topnav" aria-label="Navigation">
+        <button data-view="overview" aria-current="page">Vue d'ensemble</button>
+        <button data-view="rankings">Classements</button>
+        <button data-view="compare">Comparateur</button>
+        <button data-view="trends">Tendances</button>
+        <button data-view="recap">Récapitulatif</button>
+        <button data-view="history">Historique</button>
+        <button data-view="settings">Réglages</button>
+      </nav>
+      <form class="search" onsubmit="return false"><input type="search" placeholder="Rechercher…" aria-label="Rechercher" /></form>
+      <div class="accountrow">
+        <select aria-label="Langue"><option>Français</option><option>English</option></select>
+        <span>Camille</span>
+        <button class="ghost" type="button">Déconnexion</button>
+      </div>
+    </header>
 
-      <!-- ─────────── Tableau de bord ─────────── -->
-      <section id="view-dashboard">
-        <div class="pagehead">
-          <div>
-            <h1>Tableau de bord</h1>
-            <p class="sub">Dernière écoute : aujourd'hui à 14:32</p>
-          </div>
-          <div class="ranges" role="group" aria-label="Période">
-            <span>Aujourd'hui</span><span>Semaine</span><span>Mois</span><span class="on">Année</span><span>Tout</span>
-          </div>
+    <!-- ═══════════ Vue d'ensemble ═══════════ -->
+    <section class="view" id="view-overview">
+      <div class="pagehead">
+        <div><h1>Vue d'ensemble</h1><p class="sub">Dernière écoute : 12 oct. 2026, 09:31</p></div>
+        <div class="ranges" role="group" aria-label="Période">
+          <button>Auj.</button><button>Sem.</button><button class="on">Mois</button><button>Année</button><button>Tout</button>
         </div>
+      </div>
 
-        <div class="grid stats">
-          <div class="card stat"><div class="label">Temps d'écoute</div><div class="value">30 j 9 h</div><div class="hint">11 944 écoutes</div></div>
-          <div class="card stat"><div class="label">Titres</div><div class="value">2 926</div></div>
-          <div class="card stat"><div class="label">Artistes</div><div class="value">1 138</div></div>
-          <div class="card stat"><div class="label">Albums</div><div class="value">2 031</div></div>
-        </div>
+      <div class="grid stats">
+        <div class="card stat"><div class="label">Temps d'écoute</div><div class="value">26 h 12</div><div class="hint">512 écoutes</div></div>
+        <div class="card stat"><div class="label">Artistes</div><div class="value">84</div></div>
+        <div class="card stat"><div class="label">Titres</div><div class="value">312</div></div>
+        <div class="card stat"><div class="label">Albums</div><div class="value">197</div></div>
+      </div>
 
-        <div class="grid" style="margin-top:16px">
-          <div class="card">
-            <div class="stitle"><h2>Écoute dans le temps</h2><p class="sub">Temps d'écoute par jour</p></div>
-            <svg class="chart" viewBox="0 0 800 200" preserveAspectRatio="none" role="img" aria-label="Évolution de l'écoute">
-              <defs>
-                <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="rgba(25,209,138,0.35)"/>
-                  <stop offset="100%" stop-color="rgba(25,209,138,0)"/>
-                </linearGradient>
-              </defs>
-              <path d="M0,150 C40,140 60,110 100,120 C140,130 160,80 200,90 C240,100 260,60 300,70 C340,80 360,120 400,110 C440,100 460,50 500,60 C540,70 560,40 600,55 C640,70 660,30 700,45 C740,60 760,80 800,70 L800,200 L0,200 Z" fill="url(#g)"/>
-              <path d="M0,150 C40,140 60,110 100,120 C140,130 160,80 200,90 C240,100 260,60 300,70 C340,80 360,120 400,110 C440,100 460,50 500,60 C540,70 560,40 600,55 C640,70 660,30 700,45 C740,60 760,80 800,70" fill="none" stroke="#19d18a" stroke-width="2.5"/>
-            </svg>
-          </div>
-        </div>
-
-        <div class="grid cols3" style="margin-top:16px">
-          <div class="card">
-            <div class="stitle"><h2>Top titres</h2></div>
-            <ul class="list">
-              <li><span class="rank">1</span><span class="name">Neon Skyline — Aurora Lane</span><span class="count">312</span></li>
-              <li><span class="rank">2</span><span class="name">Paper Planes — The Slow Hours</span><span class="count">287</span></li>
-              <li><span class="rank">3</span><span class="name">Midnight Rivers — Kaya Bloom</span><span class="count">243</span></li>
-              <li><span class="rank">4</span><span class="name">Static Bloom — Neon Tide</span><span class="count">198</span></li>
-              <li><span class="rank">5</span><span class="name">Golden Hour — Sofia Reyes</span><span class="count">176</span></li>
-            </ul>
-          </div>
-          <div class="card">
-            <div class="stitle"><h2>Top artistes</h2></div>
-            <ul class="list">
-              <li><span class="rank">1</span><span class="name">Aurora Lane</span><span class="count">1 204</span></li>
-              <li><span class="rank">2</span><span class="name">Neon Tide</span><span class="count">987</span></li>
-              <li><span class="rank">3</span><span class="name">Kaya Bloom</span><span class="count">742</span></li>
-              <li><span class="rank">4</span><span class="name">The Slow Hours</span><span class="count">610</span></li>
-              <li><span class="rank">5</span><span class="name">Sofia Reyes</span><span class="count">521</span></li>
-            </ul>
-          </div>
-          <div class="card">
-            <div class="stitle"><h2>Genres</h2><p class="sub">Pondérés par le temps d'écoute</p></div>
-            <div class="genre"><div class="row"><span>indie pop</span><span class="muted">28 %</span></div><div class="bar"><span style="width:28%"></span></div></div>
-            <div class="genre"><div class="row"><span>synthwave</span><span class="muted">22 %</span></div><div class="bar"><span style="width:22%"></span></div></div>
-            <div class="genre"><div class="row"><span>alt rock</span><span class="muted">17 %</span></div><div class="bar"><span style="width:17%"></span></div></div>
-            <div class="genre"><div class="row"><span>electronic</span><span class="muted">12 %</span></div><div class="bar"><span style="width:12%"></span></div></div>
-            <div class="genre"><div class="row"><span>jazz</span><span class="muted">9 %</span></div><div class="bar"><span style="width:9%"></span></div></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ─────────── Classements ─────────── -->
-      <section id="view-rankings" class="hidden">
-        <div class="pagehead">
-          <div><h1>Classements</h1><p class="sub">Vos titres et artistes les plus écoutés</p></div>
-          <div class="ranges"><span>Aujourd'hui</span><span>Semaine</span><span>Mois</span><span class="on">Année</span><span>Tout</span></div>
-        </div>
-        <div class="grid cols2">
-          <div class="card">
-            <div class="stitle"><h2>Top titres</h2></div>
-            <ul class="list">
-              <li><span class="rank">1</span><span class="name">Neon Skyline — Aurora Lane</span><span class="count">312</span></li>
-              <li><span class="rank">2</span><span class="name">Paper Planes — The Slow Hours</span><span class="count">287</span></li>
-              <li><span class="rank">3</span><span class="name">Midnight Rivers — Kaya Bloom</span><span class="count">243</span></li>
-              <li><span class="rank">4</span><span class="name">Static Bloom — Neon Tide</span><span class="count">198</span></li>
-              <li><span class="rank">5</span><span class="name">Golden Hour — Sofia Reyes</span><span class="count">176</span></li>
-              <li><span class="rank">6</span><span class="name">Cassette Dreams — Neon Tide</span><span class="count">164</span></li>
-              <li><span class="rank">7</span><span class="name">Harbour Lights — Kaya Bloom</span><span class="count">151</span></li>
-            </ul>
-          </div>
-          <div class="card">
-            <div class="stitle"><h2>Top artistes</h2></div>
-            <ul class="list">
-              <li><span class="rank">1</span><span class="name">Aurora Lane</span><span class="count">1 204</span></li>
-              <li><span class="rank">2</span><span class="name">Neon Tide</span><span class="count">987</span></li>
-              <li><span class="rank">3</span><span class="name">Kaya Bloom</span><span class="count">742</span></li>
-              <li><span class="rank">4</span><span class="name">The Slow Hours</span><span class="count">610</span></li>
-              <li><span class="rank">5</span><span class="name">Sofia Reyes</span><span class="count">521</span></li>
-              <li><span class="rank">6</span><span class="name">Hollow Coast</span><span class="count">438</span></li>
-              <li><span class="rank">7</span><span class="name">Marble Skies</span><span class="count">399</span></li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <!-- ─────────── Récapitulatif ─────────── -->
-      <section id="view-recap" class="hidden">
-        <div class="pagehead">
-          <div><h1>Récapitulatif</h1><p class="sub">Votre année en musique</p></div>
-        </div>
+      <div class="grid" style="margin-top:16px">
         <div class="card">
-          <div class="muted" style="font-size:13px;text-transform:uppercase;letter-spacing:.08em">Temps d'écoute</div>
-          <div class="big">30 j 9 h</div>
-          <div class="kpi">
-            <div class="k"><div class="v">11 944</div><div class="l">écoutes</div></div>
-            <div class="k"><div class="v">2 926</div><div class="l">titres</div></div>
-            <div class="k"><div class="v">1 138</div><div class="l">artistes</div></div>
-          </div>
-          <div class="avatars" style="margin-top:28px">
-            <div class="a"><div class="dot" style="background:linear-gradient(135deg,#19d18a,#0f3d2e)"></div>Aurora Lane</div>
-            <div class="a"><div class="dot" style="background:linear-gradient(135deg,#8b7cf6,#2a2350)"></div>Neon Tide</div>
-            <div class="a"><div class="dot" style="background:linear-gradient(135deg,#f6b73c,#5a3d0f)"></div>Kaya Bloom</div>
+          <div class="stitle"><div><h2>Écoute dans le temps</h2><p class="sub">Temps d'écoute quotidien</p></div></div>
+          <div class="chartwrap">
+            <div class="ylabels"><span>4 h</span><span>3 h</span><span>2 h</span><span>1 h</span><span>0</span></div>
+            <div class="plot">
+              <svg viewBox="0 0 800 200" preserveAspectRatio="none" role="img" aria-label="Évolution">
+                <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(25,209,138,.35)"/><stop offset="100%" stop-color="rgba(25,209,138,0)"/>
+                </linearGradient></defs>
+                <path d="M0,175 C60,172 90,150 140,150 C190,150 210,90 260,95 C310,100 340,150 390,140 C440,130 470,60 520,55 C570,50 600,120 650,120 C700,120 730,150 800,150 L800,200 L0,200 Z" fill="url(#g)"/>
+                <path d="M0,175 C60,172 90,150 140,150 C190,150 210,90 260,95 C310,100 340,150 390,140 C440,130 470,60 520,55 C570,50 600,120 650,120 C700,120 730,150 800,150" fill="none" stroke="#19d18a" stroke-width="2.5"/>
+              </svg>
+              <div class="xlabels"><span>01/10/26</span><span>04/10/26</span><span>07/10/26</span><span>09/10/26</span><span>12/10/26</span></div>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
 
-      <footer>
-        <span>Statisfy — maquette de démonstration · données fictives. Non affilié à Spotify.</span>
-        <span>v1.0.0</span>
-      </footer>
-    </div>
+      <div class="grid cols3" style="margin-top:16px">
+        <div class="card" data-metric="time">
+          <div class="stitle"><h2>Top titres</h2>
+            <div class="toggle" data-toggle><button data-metric="plays">Écoutes</button><button data-metric="time" class="on">Temps</button></div>
+          </div>
+          <ul class="list">
+            <li><span class="rank">1</span><span class="cover" style="background:linear-gradient(135deg,#3b82f6,#1e3a8a)"></span><span class="main"><div class="title">Neon Skyline</div><div class="byline">Aurora Lane</div></span><span class="count"><span class="m-plays">26</span><span class="m-time">58 min</span></span></li>
+            <li><span class="rank">2</span><span class="cover" style="background:linear-gradient(135deg,#f59e0b,#7c2d12)"></span><span class="main"><div class="title">Harbour Lights</div><div class="byline">Kaya Bloom</div></span><span class="count"><span class="m-plays">23</span><span class="m-time">51 min</span></span></li>
+            <li><span class="rank">3</span><span class="cover" style="background:linear-gradient(135deg,#8b5cf6,#312e81)"></span><span class="main"><div class="title">Paper Planes</div><div class="byline">The Slow Hours</div></span><span class="count"><span class="m-plays">21</span><span class="m-time">47 min</span></span></li>
+            <li><span class="rank">4</span><span class="cover" style="background:linear-gradient(135deg,#10b981,#064e3b)"></span><span class="main"><div class="title">Static Bloom</div><div class="byline">Neon Tide</div></span><span class="count"><span class="m-plays">19</span><span class="m-time">44 min</span></span></li>
+            <li><span class="rank">5</span><span class="cover" style="background:linear-gradient(135deg,#ec4899,#831843)"></span><span class="main"><div class="title">Golden Hour</div><div class="byline">Sofia Reyes</div></span><span class="count"><span class="m-plays">18</span><span class="m-time">41 min</span></span></li>
+            <li><span class="rank">6</span><span class="cover" style="background:linear-gradient(135deg,#14b8a6,#134e4a)"></span><span class="main"><div class="title">Cassette Dreams</div><div class="byline">Neon Tide</div></span><span class="count"><span class="m-plays">17</span><span class="m-time">38 min</span></span></li>
+            <li><span class="rank">7</span><span class="cover" style="background:linear-gradient(135deg,#6366f1,#312e81)"></span><span class="main"><div class="title">Midnight Rivers</div><div class="byline">Kaya Bloom</div></span><span class="count"><span class="m-plays">15</span><span class="m-time">35 min</span></span></li>
+            <li><span class="rank">8</span><span class="cover" style="background:linear-gradient(135deg,#64748b,#1e293b)"></span><span class="main"><div class="title">Marble Skies</div><div class="byline">Hollow Coast</div></span><span class="count"><span class="m-plays">14</span><span class="m-time">32 min</span></span></li>
+          </ul>
+        </div>
 
-    <script>
-      const buttons = Array.from(document.querySelectorAll("nav button"));
-      const views = {
-        dashboard: document.getElementById("view-dashboard"),
-        rankings: document.getElementById("view-rankings"),
-        recap: document.getElementById("view-recap"),
-      };
-      for (const button of buttons) {
+        <div class="card" data-metric="time">
+          <div class="stitle"><h2>Top artistes</h2>
+            <div class="toggle" data-toggle><button data-metric="plays">Écoutes</button><button data-metric="time" class="on">Temps</button></div>
+          </div>
+          <ul class="list">
+            <li><span class="rank">1</span><span class="avatar" style="background:linear-gradient(135deg,#22d3ee,#0e7490)"></span><span class="main"><div class="title">Aurora Lane</div><div class="byline">indie pop, dream pop</div></span><span class="count"><span class="m-plays">94</span><span class="m-time">5 h 27</span></span></li>
+            <li><span class="rank">2</span><span class="avatar" style="background:linear-gradient(135deg,#a78bfa,#4c1d95)"></span><span class="main"><div class="title">Neon Tide</div><div class="byline">synthwave, electronic</div></span><span class="count"><span class="m-plays">81</span><span class="m-time">4 h 48</span></span></li>
+            <li><span class="rank">3</span><span class="avatar" style="background:linear-gradient(135deg,#fbbf24,#92400e)"></span><span class="main"><div class="title">Kaya Bloom</div><div class="byline">indie folk</div></span><span class="count"><span class="m-plays">66</span><span class="m-time">3 h 59</span></span></li>
+            <li><span class="rank">4</span><span class="avatar" style="background:linear-gradient(135deg,#34d399,#065f46)"></span><span class="main"><div class="title">The Slow Hours</div><div class="byline">alt rock</div></span><span class="count"><span class="m-plays">52</span><span class="m-time">3 h 12</span></span></li>
+            <li><span class="rank">5</span><span class="avatar" style="background:linear-gradient(135deg,#f472b6,#9d174d)"></span><span class="main"><div class="title">Sofia Reyes</div><div class="byline">pop</div></span><span class="count"><span class="m-plays">47</span><span class="m-time">2 h 51</span></span></li>
+            <li><span class="rank">6</span><span class="avatar" style="background:linear-gradient(135deg,#94a3b8,#334155)"></span><span class="main"><div class="title">Hollow Coast</div><div class="byline">post-rock</div></span><span class="count"><span class="m-plays">38</span><span class="m-time">2 h 24</span></span></li>
+            <li><span class="rank">7</span><span class="avatar" style="background:linear-gradient(135deg,#60a5fa,#1e40af)"></span><span class="main"><div class="title">Marble Skies</div><div class="byline">shoegaze</div></span><span class="count"><span class="m-plays">31</span><span class="m-time">1 h 58</span></span></li>
+            <li><span class="rank">8</span><span class="avatar" style="background:linear-gradient(135deg,#2dd4bf,#115e59)"></span><span class="main"><div class="title">Low Season</div><div class="byline">ambient</div></span><span class="count"><span class="m-plays">27</span><span class="m-time">1 h 44</span></span></li>
+          </ul>
+        </div>
+
+        <div class="card" data-metric="time">
+          <div class="stitle"><div><h2>Genres</h2><p class="sub">Pondérés par le temps d'écoute</p></div>
+            <div class="toggle" data-toggle><button data-metric="plays">Écoutes</button><button data-metric="time" class="on">Temps</button></div>
+          </div>
+          <div class="genre"><div class="row"><span>synthwave</span><span class="muted"><span class="m-plays">96</span><span class="m-time">3 h 42</span></span></div><div class="bar"><span style="width:100%"></span></div></div>
+          <div class="genre"><div class="row"><span>indie pop</span><span class="muted"><span class="m-plays">84</span><span class="m-time">3 h 05</span></span></div><div class="bar"><span style="width:83%"></span></div></div>
+          <div class="genre"><div class="row"><span>dream pop</span><span class="muted"><span class="m-plays">71</span><span class="m-time">2 h 41</span></span></div><div class="bar"><span style="width:72%"></span></div></div>
+          <div class="genre"><div class="row"><span>alt rock</span><span class="muted"><span class="m-plays">58</span><span class="m-time">2 h 12</span></span></div><div class="bar"><span style="width:59%"></span></div></div>
+          <div class="genre"><div class="row"><span>electronic</span><span class="muted"><span class="m-plays">52</span><span class="m-time">1 h 58</span></span></div><div class="bar"><span style="width:53%"></span></div></div>
+          <div class="genre"><div class="row"><span>shoegaze</span><span class="muted"><span class="m-plays">41</span><span class="m-time">1 h 30</span></span></div><div class="bar"><span style="width:40%"></span></div></div>
+          <div class="genre"><div class="row"><span>ambient</span><span class="muted"><span class="m-plays">33</span><span class="m-time">1 h 12</span></span></div><div class="bar"><span style="width:32%"></span></div></div>
+          <div class="genre"><div class="row"><span>post-rock</span><span class="muted"><span class="m-plays">26</span><span class="m-time">0 h 58</span></span></div><div class="bar"><span style="width:26%"></span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ Classements ═══════════ -->
+    <section class="view hidden" id="view-rankings">
+      <div class="pagehead">
+        <div><h1>Classements</h1><p class="sub">Vos titres, artistes et albums les plus écoutés</p></div>
+        <div class="ranges"><button>Auj.</button><button>Sem.</button><button class="on">Mois</button><button>Année</button><button>Tout</button></div>
+      </div>
+      <div class="grid cols2">
+        <div class="card" data-metric="time">
+          <div class="stitle"><h2>Top titres</h2><div class="toggle" data-toggle><button data-metric="plays">Écoutes</button><button data-metric="time" class="on">Temps</button></div></div>
+          <ul class="list">
+            <li><span class="rank">1</span><span class="cover" style="background:linear-gradient(135deg,#3b82f6,#1e3a8a)"></span><span class="main"><div class="title">Neon Skyline</div><div class="byline">Aurora Lane</div></span><span class="count"><span class="m-plays">26</span><span class="m-time">58 min</span></span></li>
+            <li><span class="rank">2</span><span class="cover" style="background:linear-gradient(135deg,#f59e0b,#7c2d12)"></span><span class="main"><div class="title">Harbour Lights</div><div class="byline">Kaya Bloom</div></span><span class="count"><span class="m-plays">23</span><span class="m-time">51 min</span></span></li>
+            <li><span class="rank">3</span><span class="cover" style="background:linear-gradient(135deg,#8b5cf6,#312e81)"></span><span class="main"><div class="title">Paper Planes</div><div class="byline">The Slow Hours</div></span><span class="count"><span class="m-plays">21</span><span class="m-time">47 min</span></span></li>
+            <li><span class="rank">4</span><span class="cover" style="background:linear-gradient(135deg,#10b981,#064e3b)"></span><span class="main"><div class="title">Static Bloom</div><div class="byline">Neon Tide</div></span><span class="count"><span class="m-plays">19</span><span class="m-time">44 min</span></span></li>
+            <li><span class="rank">5</span><span class="cover" style="background:linear-gradient(135deg,#ec4899,#831843)"></span><span class="main"><div class="title">Golden Hour</div><div class="byline">Sofia Reyes</div></span><span class="count"><span class="m-plays">18</span><span class="m-time">41 min</span></span></li>
+          </ul>
+        </div>
+        <div class="card" data-metric="time">
+          <div class="stitle"><h2>Top artistes</h2><div class="toggle" data-toggle><button data-metric="plays">Écoutes</button><button data-metric="time" class="on">Temps</button></div></div>
+          <ul class="list">
+            <li><span class="rank">1</span><span class="avatar" style="background:linear-gradient(135deg,#22d3ee,#0e7490)"></span><span class="main"><div class="title">Aurora Lane</div><div class="byline">indie pop, dream pop</div></span><span class="count"><span class="m-plays">94</span><span class="m-time">5 h 27</span></span></li>
+            <li><span class="rank">2</span><span class="avatar" style="background:linear-gradient(135deg,#a78bfa,#4c1d95)"></span><span class="main"><div class="title">Neon Tide</div><div class="byline">synthwave, electronic</div></span><span class="count"><span class="m-plays">81</span><span class="m-time">4 h 48</span></span></li>
+            <li><span class="rank">3</span><span class="avatar" style="background:linear-gradient(135deg,#fbbf24,#92400e)"></span><span class="main"><div class="title">Kaya Bloom</div><div class="byline">indie folk</div></span><span class="count"><span class="m-plays">66</span><span class="m-time">3 h 59</span></span></li>
+            <li><span class="rank">4</span><span class="avatar" style="background:linear-gradient(135deg,#34d399,#065f46)"></span><span class="main"><div class="title">The Slow Hours</div><div class="byline">alt rock</div></span><span class="count"><span class="m-plays">52</span><span class="m-time">3 h 12</span></span></li>
+            <li><span class="rank">5</span><span class="avatar" style="background:linear-gradient(135deg,#f472b6,#9d174d)"></span><span class="main"><div class="title">Sofia Reyes</div><div class="byline">pop</div></span><span class="count"><span class="m-plays">47</span><span class="m-time">2 h 51</span></span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ Comparateur ═══════════ -->
+    <section class="view hidden" id="view-compare">
+      <div class="pagehead"><div><h1>Comparateur</h1><p class="sub">Deux périodes côte à côte</p></div></div>
+      <div class="card">
+        <table class="compare">
+          <thead><tr><th>Métrique</th><th class="num">Septembre</th><th class="num">Octobre</th><th class="num">Écart</th></tr></thead>
+          <tbody>
+            <tr><td>Temps d'écoute</td><td class="num">21 h 40</td><td class="num">26 h 12</td><td class="num delta up">+21 %</td></tr>
+            <tr><td>Écoutes</td><td class="num">438</td><td class="num">512</td><td class="num delta up">+17 %</td></tr>
+            <tr><td>Artistes</td><td class="num">72</td><td class="num">84</td><td class="num delta up">+17 %</td></tr>
+            <tr><td>Titres</td><td class="num">264</td><td class="num">312</td><td class="num delta up">+18 %</td></tr>
+            <tr><td>Albums</td><td class="num">171</td><td class="num">197</td><td class="num delta up">+15 %</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════ Tendances ═══════════ -->
+    <section class="view hidden" id="view-trends">
+      <div class="pagehead"><div><h1>Tendances</h1><p class="sub">Artistes en hausse et en baisse</p></div></div>
+      <div class="grid cols2">
+        <div class="card"><div class="stitle"><h2>En hausse</h2></div>
+          <ul class="list">
+            <li><span class="avatar" style="background:linear-gradient(135deg,#22d3ee,#0e7490)"></span><span class="main"><div class="title">Aurora Lane</div></span><span class="count delta up">+42 %</span></li>
+            <li><span class="avatar" style="background:linear-gradient(135deg,#34d399,#065f46)"></span><span class="main"><div class="title">The Slow Hours</div></span><span class="count delta up">+28 %</span></li>
+            <li><span class="avatar" style="background:linear-gradient(135deg,#94a3b8,#334155)"></span><span class="main"><div class="title">Hollow Coast</div></span><span class="count delta up">+19 %</span></li>
+          </ul>
+        </div>
+        <div class="card"><div class="stitle"><h2>En baisse</h2></div>
+          <ul class="list">
+            <li><span class="avatar" style="background:linear-gradient(135deg,#f472b6,#9d174d)"></span><span class="main"><div class="title">Sofia Reyes</div></span><span class="count delta down">−23 %</span></li>
+            <li><span class="avatar" style="background:linear-gradient(135deg,#60a5fa,#1e40af)"></span><span class="main"><div class="title">Marble Skies</div></span><span class="count delta down">−14 %</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ Récapitulatif ═══════════ -->
+    <section class="view hidden" id="view-recap">
+      <div class="pagehead"><div><h1>Récapitulatif</h1><p class="sub">Votre mois en musique</p></div></div>
+      <div class="card">
+        <div class="muted" style="font-size:13px;text-transform:uppercase;letter-spacing:.08em">Temps d'écoute</div>
+        <div class="big">26 h 12</div>
+        <div class="kpis">
+          <div><div class="v">512</div><div class="l">écoutes</div></div>
+          <div><div class="v">312</div><div class="l">titres</div></div>
+          <div><div class="v">84</div><div class="l">artistes</div></div>
+          <div><div class="v">+21 %</div><div class="l">vs septembre</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ Historique ═══════════ -->
+    <section class="view hidden" id="view-history">
+      <div class="pagehead"><div><h1>Historique</h1><p class="sub">Vos dernières écoutes</p></div></div>
+      <div class="card" data-metric="time">
+        <div class="stitle"><h2>Écoutes récentes</h2><div class="toggle" data-toggle><button data-metric="plays">Écoutes</button><button data-metric="time" class="on">Temps</button></div></div>
+        <ul class="list">
+          <li><span class="cover" style="background:linear-gradient(135deg,#3b82f6,#1e3a8a)"></span><span class="main"><div class="title">Neon Skyline</div><div class="byline">Aurora Lane · 12 oct. 2026, 09:31</div></span><span class="count"><span class="m-plays">—</span><span class="m-time">3 min</span></span></li>
+          <li><span class="cover" style="background:linear-gradient(135deg,#10b981,#064e3b)"></span><span class="main"><div class="title">Static Bloom</div><div class="byline">Neon Tide · 12 oct. 2026, 09:27</div></span><span class="count"><span class="m-plays">—</span><span class="m-time">4 min</span></span></li>
+          <li><span class="cover" style="background:linear-gradient(135deg,#ec4899,#831843)"></span><span class="main"><div class="title">Golden Hour</div><div class="byline">Sofia Reyes · 12 oct. 2026, 09:22</div></span><span class="count"><span class="m-plays">—</span><span class="m-time">3 min</span></span></li>
+          <li><span class="cover" style="background:linear-gradient(135deg,#8b5cf6,#312e81)"></span><span class="main"><div class="title">Paper Planes</div><div class="byline">The Slow Hours · 12 oct. 2026, 09:15</div></span><span class="count"><span class="m-plays">—</span><span class="m-time">5 min</span></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ═══════════ Réglages ═══════════ -->
+    <section class="view hidden" id="view-settings">
+      <div class="pagehead"><div><h1>Réglages</h1></div></div>
+      <div class="grid cols2">
+        <div class="card"><div class="stitle"><h2>Compte</h2><p class="sub">Camille · camille@example.org</p></div>
+          <p class="muted" style="font-size:14px">Fuseau horaire : Europe/Zurich</p></div>
+        <div class="card"><div class="stitle"><h2>Connecter Spotify</h2><p class="sub">Synchronisation des écoutes récentes et des genres</p></div>
+          <span style="display:inline-block;background:var(--accent);color:#04140d;border-radius:10px;padding:8px 16px;font-size:14px;font-weight:600">Connecter mon compte Spotify</span></div>
+      </div>
+    </section>
+
+    <footer>
+      <span>Statisfy — maquette de démonstration · données fictives. Non affilié à Spotify.</span>
+      <span>v1.0.0</span>
+    </footer>
+  </div>
+
+  <script>
+    // Navigation entre les vues
+    const navButtons = Array.from(document.querySelectorAll("nav.topnav button"));
+    const views = Object.fromEntries(
+      Array.from(document.querySelectorAll("section.view")).map((s) => [s.id.replace("view-", ""), s]),
+    );
+    for (const button of navButtons) {
+      button.addEventListener("click", () => {
+        for (const other of navButtons) other.removeAttribute("aria-current");
+        button.setAttribute("aria-current", "page");
+        for (const [key, el] of Object.entries(views)) el.classList.toggle("hidden", key !== button.dataset.view);
+        window.scrollTo({ top: 0 });
+      });
+    }
+    // Bascule « Écoutes / Temps » par carte
+    for (const toggle of document.querySelectorAll("[data-toggle]")) {
+      const card = toggle.closest(".card");
+      for (const button of toggle.querySelectorAll("button")) {
         button.addEventListener("click", () => {
-          for (const other of buttons) other.removeAttribute("aria-current");
-          button.setAttribute("aria-current", "page");
-          for (const [key, el] of Object.entries(views)) {
-            el.classList.toggle("hidden", key !== button.dataset.view);
-          }
+          for (const other of toggle.querySelectorAll("button")) other.classList.remove("on");
+          button.classList.add("on");
+          card.dataset.metric = button.dataset.metric;
         });
       }
-    </script>
-  </body>
+    }
+  </script>
+</body>
 </html>
