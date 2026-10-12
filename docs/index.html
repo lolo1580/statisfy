@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Statisfy — maquette (données fictives)</title>
-<meta name="description" content="Maquette statique de Statisfy, tableau de bord auto-hébergé pour explorer ses statistiques Spotify. Données fictives." />
+<title>Statisfy — demo (fake data)</title>
+<meta name="description" content="Static mock-up of Statisfy, a self-hosted dashboard to explore your Spotify listening stats. Fake data." />
 <style>
   :root{
     --background:#0a0d12; --surface:#121821; --surface-2:#1a222d; --border:#253040;
@@ -98,58 +98,58 @@
 </style>
 </head>
 <body>
-  <div class="banner"><strong>Maquette statique</strong> — données fictives, non interactive. Le vrai Statisfy se connecte à votre compte Spotify.</div>
+  <div class="banner"><strong>Static mock-up</strong> — fake data, non-interactive. The real Statisfy connects to your Spotify account.</div>
 
   <div class="wrap">
     <header>
       <a class="brand" href="#"><span aria-hidden="true">🎧</span> Statisfy</a>
       <nav class="topnav" aria-label="Navigation">
-        <button data-view="overview" aria-current="page">Vue d'ensemble</button>
-        <button data-view="rankings">Classements</button>
-        <button data-view="compare">Comparateur</button>
-        <button data-view="trends">Tendances</button>
-        <button data-view="recap">Récapitulatif</button>
-        <button data-view="history">Historique</button>
-        <button data-view="settings">Réglages</button>
+        <button data-view="overview" aria-current="page">Overview</button>
+        <button data-view="rankings">Rankings</button>
+        <button data-view="compare">Compare</button>
+        <button data-view="trends">Trends</button>
+        <button data-view="recap">Recap</button>
+        <button data-view="history">History</button>
+        <button data-view="settings">Settings</button>
       </nav>
-      <form class="search" onsubmit="return false"><input type="search" placeholder="Rechercher…" aria-label="Rechercher" /></form>
+      <form class="search" onsubmit="return false"><input type="search" placeholder="Search…" aria-label="Search" /></form>
       <div class="accountrow">
-        <select aria-label="Langue"><option>Français</option><option>English</option></select>
+        <select aria-label="Language"><option>English</option><option>Français</option></select>
         <span>Camille</span>
-        <button class="ghost" type="button">Déconnexion</button>
+        <button class="ghost" type="button">Sign out</button>
       </div>
     </header>
 
-    <!-- ═══════════ Vue d'ensemble ═══════════ -->
+    <!-- ═══════════ Overview ═══════════ -->
     <section class="view" id="view-overview">
       <div class="pagehead">
-        <div><h1>Vue d'ensemble</h1><p class="sub">Dernière écoute : 12 oct. 2026, 09:31</p></div>
-        <div class="ranges" role="group" aria-label="Période">
-          <button>Auj.</button><button>Sem.</button><button class="on">Mois</button><button>Année</button><button>Tout</button>
+        <div><h1>Overview</h1><p class="sub">Last play: Oct 12, 2026, 9:31 AM</p></div>
+        <div class="ranges" role="group" aria-label="Period">
+          <button>Today</button><button>Week</button><button class="on">Month</button><button>Year</button><button>All</button>
         </div>
       </div>
 
       <div class="grid stats">
-        <div class="card stat"><div class="label">Temps d'écoute</div><div class="value">26 h 12</div><div class="hint">512 écoutes</div></div>
-        <div class="card stat"><div class="label">Artistes</div><div class="value">84</div></div>
-        <div class="card stat"><div class="label">Titres</div><div class="value">312</div></div>
+        <div class="card stat"><div class="label">Listening time</div><div class="value">26h 12m</div><div class="hint">512 plays</div></div>
+        <div class="card stat"><div class="label">Artists</div><div class="value">84</div></div>
+        <div class="card stat"><div class="label">Tracks</div><div class="value">312</div></div>
         <div class="card stat"><div class="label">Albums</div><div class="value">197</div></div>
       </div>
 
       <div class="grid" style="margin-top:16px">
         <div class="card">
-          <div class="stitle"><div><h2>Écoute dans le temps</h2><p class="sub">Temps d'écoute quotidien</p></div></div>
+          <div class="stitle"><div><h2>Listening over time</h2><p class="sub">Daily listening time</p></div></div>
           <div class="chartwrap">
-            <div class="ylabels"><span>4 h</span><span>3 h</span><span>2 h</span><span>1 h</span><span>0</span></div>
+            <div class="ylabels"><span>4h</span><span>3h</span><span>2h</span><span>1h</span><span>0</span></div>
             <div class="plot">
-              <svg viewBox="0 0 800 200" preserveAspectRatio="none" role="img" aria-label="Évolution">
+              <svg viewBox="0 0 800 200" preserveAspectRatio="none" role="img" aria-label="Listening evolution">
                 <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stop-color="rgba(25,209,138,.35)"/><stop offset="100%" stop-color="rgba(25,209,138,0)"/>
                 </linearGradient></defs>
                 <path d="M0,175 C60,172 90,150 140,150 C190,150 210,90 260,95 C310,100 340,150 390,140 C440,130 470,60 520,55 C570,50 600,120 650,120 C700,120 730,150 800,150 L800,200 L0,200 Z" fill="url(#g)"/>
                 <path d="M0,175 C60,172 90,150 140,150 C190,150 210,90 260,95 C310,100 340,150 390,140 C440,130 470,60 520,55 C570,50 600,120 650,120 C700,120 730,150 800,150" fill="none" stroke="#19d18a" stroke-width="2.5"/>
               </svg>
-              <div class="xlabels"><span>01/10/26</span><span>04/10/26</span><span>07/10/26</span><span>09/10/26</span><span>12/10/26</span></div>
+              <div class="xlabels"><span>Oct 1</span><span>Oct 4</span><span>Oct 7</span><span>Oct 9</span><span>Oct 12</span></div>
             </div>
           </div>
         </div>
@@ -157,8 +157,8 @@
 
       <div class="grid cols3" style="margin-top:16px">
         <div class="card" data-metric="time">
-          <div class="stitle"><h2>Top titres</h2>
-            <div class="toggle" data-toggle><button data-metric="plays">Écoutes</button><button data-metric="time" class="on">Temps</button></div>
+          <div class="stitle"><h2>Top tracks</h2>
+            <div class="toggle" data-toggle><button data-metric="plays">Plays</button><button data-metric="time" class="on">Time</button></div>
           </div>
           <ul class="list">
             <li><span class="rank">1</span><span class="cover" style="background:linear-gradient(135deg,#3b82f6,#1e3a8a)"></span><span class="main"><div class="title">Neon Skyline</div><div class="byline">Aurora Lane</div></span><span class="count"><span class="m-plays">26</span><span class="m-time">58 min</span></span></li>
@@ -173,46 +173,46 @@
         </div>
 
         <div class="card" data-metric="time">
-          <div class="stitle"><h2>Top artistes</h2>
-            <div class="toggle" data-toggle><button data-metric="plays">Écoutes</button><button data-metric="time" class="on">Temps</button></div>
+          <div class="stitle"><h2>Top artists</h2>
+            <div class="toggle" data-toggle><button data-metric="plays">Plays</button><button data-metric="time" class="on">Time</button></div>
           </div>
           <ul class="list">
-            <li><span class="rank">1</span><span class="avatar" style="background:linear-gradient(135deg,#22d3ee,#0e7490)"></span><span class="main"><div class="title">Aurora Lane</div><div class="byline">indie pop, dream pop</div></span><span class="count"><span class="m-plays">94</span><span class="m-time">5 h 27</span></span></li>
-            <li><span class="rank">2</span><span class="avatar" style="background:linear-gradient(135deg,#a78bfa,#4c1d95)"></span><span class="main"><div class="title">Neon Tide</div><div class="byline">synthwave, electronic</div></span><span class="count"><span class="m-plays">81</span><span class="m-time">4 h 48</span></span></li>
-            <li><span class="rank">3</span><span class="avatar" style="background:linear-gradient(135deg,#fbbf24,#92400e)"></span><span class="main"><div class="title">Kaya Bloom</div><div class="byline">indie folk</div></span><span class="count"><span class="m-plays">66</span><span class="m-time">3 h 59</span></span></li>
-            <li><span class="rank">4</span><span class="avatar" style="background:linear-gradient(135deg,#34d399,#065f46)"></span><span class="main"><div class="title">The Slow Hours</div><div class="byline">alt rock</div></span><span class="count"><span class="m-plays">52</span><span class="m-time">3 h 12</span></span></li>
-            <li><span class="rank">5</span><span class="avatar" style="background:linear-gradient(135deg,#f472b6,#9d174d)"></span><span class="main"><div class="title">Sofia Reyes</div><div class="byline">pop</div></span><span class="count"><span class="m-plays">47</span><span class="m-time">2 h 51</span></span></li>
-            <li><span class="rank">6</span><span class="avatar" style="background:linear-gradient(135deg,#94a3b8,#334155)"></span><span class="main"><div class="title">Hollow Coast</div><div class="byline">post-rock</div></span><span class="count"><span class="m-plays">38</span><span class="m-time">2 h 24</span></span></li>
-            <li><span class="rank">7</span><span class="avatar" style="background:linear-gradient(135deg,#60a5fa,#1e40af)"></span><span class="main"><div class="title">Marble Skies</div><div class="byline">shoegaze</div></span><span class="count"><span class="m-plays">31</span><span class="m-time">1 h 58</span></span></li>
-            <li><span class="rank">8</span><span class="avatar" style="background:linear-gradient(135deg,#2dd4bf,#115e59)"></span><span class="main"><div class="title">Low Season</div><div class="byline">ambient</div></span><span class="count"><span class="m-plays">27</span><span class="m-time">1 h 44</span></span></li>
+            <li><span class="rank">1</span><span class="avatar" style="background:linear-gradient(135deg,#22d3ee,#0e7490)"></span><span class="main"><div class="title">Aurora Lane</div><div class="byline">indie pop, dream pop</div></span><span class="count"><span class="m-plays">94</span><span class="m-time">5h 27m</span></span></li>
+            <li><span class="rank">2</span><span class="avatar" style="background:linear-gradient(135deg,#a78bfa,#4c1d95)"></span><span class="main"><div class="title">Neon Tide</div><div class="byline">synthwave, electronic</div></span><span class="count"><span class="m-plays">81</span><span class="m-time">4h 48m</span></span></li>
+            <li><span class="rank">3</span><span class="avatar" style="background:linear-gradient(135deg,#fbbf24,#92400e)"></span><span class="main"><div class="title">Kaya Bloom</div><div class="byline">indie folk</div></span><span class="count"><span class="m-plays">66</span><span class="m-time">3h 59m</span></span></li>
+            <li><span class="rank">4</span><span class="avatar" style="background:linear-gradient(135deg,#34d399,#065f46)"></span><span class="main"><div class="title">The Slow Hours</div><div class="byline">alt rock</div></span><span class="count"><span class="m-plays">52</span><span class="m-time">3h 12m</span></span></li>
+            <li><span class="rank">5</span><span class="avatar" style="background:linear-gradient(135deg,#f472b6,#9d174d)"></span><span class="main"><div class="title">Sofia Reyes</div><div class="byline">pop</div></span><span class="count"><span class="m-plays">47</span><span class="m-time">2h 51m</span></span></li>
+            <li><span class="rank">6</span><span class="avatar" style="background:linear-gradient(135deg,#94a3b8,#334155)"></span><span class="main"><div class="title">Hollow Coast</div><div class="byline">post-rock</div></span><span class="count"><span class="m-plays">38</span><span class="m-time">2h 24m</span></span></li>
+            <li><span class="rank">7</span><span class="avatar" style="background:linear-gradient(135deg,#60a5fa,#1e40af)"></span><span class="main"><div class="title">Marble Skies</div><div class="byline">shoegaze</div></span><span class="count"><span class="m-plays">31</span><span class="m-time">1h 58m</span></span></li>
+            <li><span class="rank">8</span><span class="avatar" style="background:linear-gradient(135deg,#2dd4bf,#115e59)"></span><span class="main"><div class="title">Low Season</div><div class="byline">ambient</div></span><span class="count"><span class="m-plays">27</span><span class="m-time">1h 44m</span></span></li>
           </ul>
         </div>
 
         <div class="card" data-metric="time">
-          <div class="stitle"><div><h2>Genres</h2><p class="sub">Pondérés par le temps d'écoute</p></div>
-            <div class="toggle" data-toggle><button data-metric="plays">Écoutes</button><button data-metric="time" class="on">Temps</button></div>
+          <div class="stitle"><div><h2>Genres</h2><p class="sub">Weighted by listening time</p></div>
+            <div class="toggle" data-toggle><button data-metric="plays">Plays</button><button data-metric="time" class="on">Time</button></div>
           </div>
-          <div class="genre"><div class="row"><span>synthwave</span><span class="muted"><span class="m-plays">96</span><span class="m-time">3 h 42</span></span></div><div class="bar"><span style="width:100%"></span></div></div>
-          <div class="genre"><div class="row"><span>indie pop</span><span class="muted"><span class="m-plays">84</span><span class="m-time">3 h 05</span></span></div><div class="bar"><span style="width:83%"></span></div></div>
-          <div class="genre"><div class="row"><span>dream pop</span><span class="muted"><span class="m-plays">71</span><span class="m-time">2 h 41</span></span></div><div class="bar"><span style="width:72%"></span></div></div>
-          <div class="genre"><div class="row"><span>alt rock</span><span class="muted"><span class="m-plays">58</span><span class="m-time">2 h 12</span></span></div><div class="bar"><span style="width:59%"></span></div></div>
-          <div class="genre"><div class="row"><span>electronic</span><span class="muted"><span class="m-plays">52</span><span class="m-time">1 h 58</span></span></div><div class="bar"><span style="width:53%"></span></div></div>
-          <div class="genre"><div class="row"><span>shoegaze</span><span class="muted"><span class="m-plays">41</span><span class="m-time">1 h 30</span></span></div><div class="bar"><span style="width:40%"></span></div></div>
-          <div class="genre"><div class="row"><span>ambient</span><span class="muted"><span class="m-plays">33</span><span class="m-time">1 h 12</span></span></div><div class="bar"><span style="width:32%"></span></div></div>
-          <div class="genre"><div class="row"><span>post-rock</span><span class="muted"><span class="m-plays">26</span><span class="m-time">0 h 58</span></span></div><div class="bar"><span style="width:26%"></span></div></div>
+          <div class="genre"><div class="row"><span>synthwave</span><span class="muted"><span class="m-plays">96</span><span class="m-time">3h 42m</span></span></div><div class="bar"><span style="width:100%"></span></div></div>
+          <div class="genre"><div class="row"><span>indie pop</span><span class="muted"><span class="m-plays">84</span><span class="m-time">3h 05m</span></span></div><div class="bar"><span style="width:83%"></span></div></div>
+          <div class="genre"><div class="row"><span>dream pop</span><span class="muted"><span class="m-plays">71</span><span class="m-time">2h 41m</span></span></div><div class="bar"><span style="width:72%"></span></div></div>
+          <div class="genre"><div class="row"><span>alt rock</span><span class="muted"><span class="m-plays">58</span><span class="m-time">2h 12m</span></span></div><div class="bar"><span style="width:59%"></span></div></div>
+          <div class="genre"><div class="row"><span>electronic</span><span class="muted"><span class="m-plays">52</span><span class="m-time">1h 58m</span></span></div><div class="bar"><span style="width:53%"></span></div></div>
+          <div class="genre"><div class="row"><span>shoegaze</span><span class="muted"><span class="m-plays">41</span><span class="m-time">1h 30m</span></span></div><div class="bar"><span style="width:40%"></span></div></div>
+          <div class="genre"><div class="row"><span>ambient</span><span class="muted"><span class="m-plays">33</span><span class="m-time">1h 12m</span></span></div><div class="bar"><span style="width:32%"></span></div></div>
+          <div class="genre"><div class="row"><span>post-rock</span><span class="muted"><span class="m-plays">26</span><span class="m-time">0h 58m</span></span></div><div class="bar"><span style="width:26%"></span></div></div>
         </div>
       </div>
     </section>
 
-    <!-- ═══════════ Classements ═══════════ -->
+    <!-- ═══════════ Rankings ═══════════ -->
     <section class="view hidden" id="view-rankings">
       <div class="pagehead">
-        <div><h1>Classements</h1><p class="sub">Vos titres, artistes et albums les plus écoutés</p></div>
-        <div class="ranges"><button>Auj.</button><button>Sem.</button><button class="on">Mois</button><button>Année</button><button>Tout</button></div>
+        <div><h1>Rankings</h1><p class="sub">Your most listened tracks, artists and albums</p></div>
+        <div class="ranges"><button>Today</button><button>Week</button><button class="on">Month</button><button>Year</button><button>All</button></div>
       </div>
       <div class="grid cols2">
         <div class="card" data-metric="time">
-          <div class="stitle"><h2>Top titres</h2><div class="toggle" data-toggle><button data-metric="plays">Écoutes</button><button data-metric="time" class="on">Temps</button></div></div>
+          <div class="stitle"><h2>Top tracks</h2><div class="toggle" data-toggle><button data-metric="plays">Plays</button><button data-metric="time" class="on">Time</button></div></div>
           <ul class="list">
             <li><span class="rank">1</span><span class="cover" style="background:linear-gradient(135deg,#3b82f6,#1e3a8a)"></span><span class="main"><div class="title">Neon Skyline</div><div class="byline">Aurora Lane</div></span><span class="count"><span class="m-plays">26</span><span class="m-time">58 min</span></span></li>
             <li><span class="rank">2</span><span class="cover" style="background:linear-gradient(135deg,#f59e0b,#7c2d12)"></span><span class="main"><div class="title">Harbour Lights</div><div class="byline">Kaya Bloom</div></span><span class="count"><span class="m-plays">23</span><span class="m-time">51 min</span></span></li>
@@ -222,47 +222,47 @@
           </ul>
         </div>
         <div class="card" data-metric="time">
-          <div class="stitle"><h2>Top artistes</h2><div class="toggle" data-toggle><button data-metric="plays">Écoutes</button><button data-metric="time" class="on">Temps</button></div></div>
+          <div class="stitle"><h2>Top artists</h2><div class="toggle" data-toggle><button data-metric="plays">Plays</button><button data-metric="time" class="on">Time</button></div></div>
           <ul class="list">
-            <li><span class="rank">1</span><span class="avatar" style="background:linear-gradient(135deg,#22d3ee,#0e7490)"></span><span class="main"><div class="title">Aurora Lane</div><div class="byline">indie pop, dream pop</div></span><span class="count"><span class="m-plays">94</span><span class="m-time">5 h 27</span></span></li>
-            <li><span class="rank">2</span><span class="avatar" style="background:linear-gradient(135deg,#a78bfa,#4c1d95)"></span><span class="main"><div class="title">Neon Tide</div><div class="byline">synthwave, electronic</div></span><span class="count"><span class="m-plays">81</span><span class="m-time">4 h 48</span></span></li>
-            <li><span class="rank">3</span><span class="avatar" style="background:linear-gradient(135deg,#fbbf24,#92400e)"></span><span class="main"><div class="title">Kaya Bloom</div><div class="byline">indie folk</div></span><span class="count"><span class="m-plays">66</span><span class="m-time">3 h 59</span></span></li>
-            <li><span class="rank">4</span><span class="avatar" style="background:linear-gradient(135deg,#34d399,#065f46)"></span><span class="main"><div class="title">The Slow Hours</div><div class="byline">alt rock</div></span><span class="count"><span class="m-plays">52</span><span class="m-time">3 h 12</span></span></li>
-            <li><span class="rank">5</span><span class="avatar" style="background:linear-gradient(135deg,#f472b6,#9d174d)"></span><span class="main"><div class="title">Sofia Reyes</div><div class="byline">pop</div></span><span class="count"><span class="m-plays">47</span><span class="m-time">2 h 51</span></span></li>
+            <li><span class="rank">1</span><span class="avatar" style="background:linear-gradient(135deg,#22d3ee,#0e7490)"></span><span class="main"><div class="title">Aurora Lane</div><div class="byline">indie pop, dream pop</div></span><span class="count"><span class="m-plays">94</span><span class="m-time">5h 27m</span></span></li>
+            <li><span class="rank">2</span><span class="avatar" style="background:linear-gradient(135deg,#a78bfa,#4c1d95)"></span><span class="main"><div class="title">Neon Tide</div><div class="byline">synthwave, electronic</div></span><span class="count"><span class="m-plays">81</span><span class="m-time">4h 48m</span></span></li>
+            <li><span class="rank">3</span><span class="avatar" style="background:linear-gradient(135deg,#fbbf24,#92400e)"></span><span class="main"><div class="title">Kaya Bloom</div><div class="byline">indie folk</div></span><span class="count"><span class="m-plays">66</span><span class="m-time">3h 59m</span></span></li>
+            <li><span class="rank">4</span><span class="avatar" style="background:linear-gradient(135deg,#34d399,#065f46)"></span><span class="main"><div class="title">The Slow Hours</div><div class="byline">alt rock</div></span><span class="count"><span class="m-plays">52</span><span class="m-time">3h 12m</span></span></li>
+            <li><span class="rank">5</span><span class="avatar" style="background:linear-gradient(135deg,#f472b6,#9d174d)"></span><span class="main"><div class="title">Sofia Reyes</div><div class="byline">pop</div></span><span class="count"><span class="m-plays">47</span><span class="m-time">2h 51m</span></span></li>
           </ul>
         </div>
       </div>
     </section>
 
-    <!-- ═══════════ Comparateur ═══════════ -->
+    <!-- ═══════════ Compare ═══════════ -->
     <section class="view hidden" id="view-compare">
-      <div class="pagehead"><div><h1>Comparateur</h1><p class="sub">Deux périodes côte à côte</p></div></div>
+      <div class="pagehead"><div><h1>Compare</h1><p class="sub">Two periods side by side</p></div></div>
       <div class="card">
         <table class="compare">
-          <thead><tr><th>Métrique</th><th class="num">Septembre</th><th class="num">Octobre</th><th class="num">Écart</th></tr></thead>
+          <thead><tr><th>Metric</th><th class="num">September</th><th class="num">October</th><th class="num">Change</th></tr></thead>
           <tbody>
-            <tr><td>Temps d'écoute</td><td class="num">21 h 40</td><td class="num">26 h 12</td><td class="num delta up">+21 %</td></tr>
-            <tr><td>Écoutes</td><td class="num">438</td><td class="num">512</td><td class="num delta up">+17 %</td></tr>
-            <tr><td>Artistes</td><td class="num">72</td><td class="num">84</td><td class="num delta up">+17 %</td></tr>
-            <tr><td>Titres</td><td class="num">264</td><td class="num">312</td><td class="num delta up">+18 %</td></tr>
+            <tr><td>Listening time</td><td class="num">21h 40m</td><td class="num">26h 12m</td><td class="num delta up">+21 %</td></tr>
+            <tr><td>Plays</td><td class="num">438</td><td class="num">512</td><td class="num delta up">+17 %</td></tr>
+            <tr><td>Artists</td><td class="num">72</td><td class="num">84</td><td class="num delta up">+17 %</td></tr>
+            <tr><td>Tracks</td><td class="num">264</td><td class="num">312</td><td class="num delta up">+18 %</td></tr>
             <tr><td>Albums</td><td class="num">171</td><td class="num">197</td><td class="num delta up">+15 %</td></tr>
           </tbody>
         </table>
       </div>
     </section>
 
-    <!-- ═══════════ Tendances ═══════════ -->
+    <!-- ═══════════ Trends ═══════════ -->
     <section class="view hidden" id="view-trends">
-      <div class="pagehead"><div><h1>Tendances</h1><p class="sub">Artistes en hausse et en baisse</p></div></div>
+      <div class="pagehead"><div><h1>Trends</h1><p class="sub">Rising and falling artists</p></div></div>
       <div class="grid cols2">
-        <div class="card"><div class="stitle"><h2>En hausse</h2></div>
+        <div class="card"><div class="stitle"><h2>Rising</h2></div>
           <ul class="list">
             <li><span class="avatar" style="background:linear-gradient(135deg,#22d3ee,#0e7490)"></span><span class="main"><div class="title">Aurora Lane</div></span><span class="count delta up">+42 %</span></li>
             <li><span class="avatar" style="background:linear-gradient(135deg,#34d399,#065f46)"></span><span class="main"><div class="title">The Slow Hours</div></span><span class="count delta up">+28 %</span></li>
             <li><span class="avatar" style="background:linear-gradient(135deg,#94a3b8,#334155)"></span><span class="main"><div class="title">Hollow Coast</div></span><span class="count delta up">+19 %</span></li>
           </ul>
         </div>
-        <div class="card"><div class="stitle"><h2>En baisse</h2></div>
+        <div class="card"><div class="stitle"><h2>Falling</h2></div>
           <ul class="list">
             <li><span class="avatar" style="background:linear-gradient(135deg,#f472b6,#9d174d)"></span><span class="main"><div class="title">Sofia Reyes</div></span><span class="count delta down">−23 %</span></li>
             <li><span class="avatar" style="background:linear-gradient(135deg,#60a5fa,#1e40af)"></span><span class="main"><div class="title">Marble Skies</div></span><span class="count delta down">−14 %</span></li>
@@ -271,54 +271,54 @@
       </div>
     </section>
 
-    <!-- ═══════════ Récapitulatif ═══════════ -->
+    <!-- ═══════════ Recap ═══════════ -->
     <section class="view hidden" id="view-recap">
-      <div class="pagehead"><div><h1>Récapitulatif</h1><p class="sub">Votre mois en musique</p></div></div>
+      <div class="pagehead"><div><h1>Recap</h1><p class="sub">Your month in music</p></div></div>
       <div class="card">
-        <div class="muted" style="font-size:13px;text-transform:uppercase;letter-spacing:.08em">Temps d'écoute</div>
-        <div class="big">26 h 12</div>
+        <div class="muted" style="font-size:13px;text-transform:uppercase;letter-spacing:.08em">Listening time</div>
+        <div class="big">26h 12m</div>
         <div class="kpis">
-          <div><div class="v">512</div><div class="l">écoutes</div></div>
-          <div><div class="v">312</div><div class="l">titres</div></div>
-          <div><div class="v">84</div><div class="l">artistes</div></div>
-          <div><div class="v">+21 %</div><div class="l">vs septembre</div></div>
+          <div><div class="v">512</div><div class="l">plays</div></div>
+          <div><div class="v">312</div><div class="l">tracks</div></div>
+          <div><div class="v">84</div><div class="l">artists</div></div>
+          <div><div class="v">+21 %</div><div class="l">vs September</div></div>
         </div>
       </div>
     </section>
 
-    <!-- ═══════════ Historique ═══════════ -->
+    <!-- ═══════════ History ═══════════ -->
     <section class="view hidden" id="view-history">
-      <div class="pagehead"><div><h1>Historique</h1><p class="sub">Vos dernières écoutes</p></div></div>
+      <div class="pagehead"><div><h1>History</h1><p class="sub">Your recent plays</p></div></div>
       <div class="card" data-metric="time">
-        <div class="stitle"><h2>Écoutes récentes</h2><div class="toggle" data-toggle><button data-metric="plays">Écoutes</button><button data-metric="time" class="on">Temps</button></div></div>
+        <div class="stitle"><h2>Recent plays</h2><div class="toggle" data-toggle><button data-metric="plays">Plays</button><button data-metric="time" class="on">Time</button></div></div>
         <ul class="list">
-          <li><span class="cover" style="background:linear-gradient(135deg,#3b82f6,#1e3a8a)"></span><span class="main"><div class="title">Neon Skyline</div><div class="byline">Aurora Lane · 12 oct. 2026, 09:31</div></span><span class="count"><span class="m-plays">—</span><span class="m-time">3 min</span></span></li>
-          <li><span class="cover" style="background:linear-gradient(135deg,#10b981,#064e3b)"></span><span class="main"><div class="title">Static Bloom</div><div class="byline">Neon Tide · 12 oct. 2026, 09:27</div></span><span class="count"><span class="m-plays">—</span><span class="m-time">4 min</span></span></li>
-          <li><span class="cover" style="background:linear-gradient(135deg,#ec4899,#831843)"></span><span class="main"><div class="title">Golden Hour</div><div class="byline">Sofia Reyes · 12 oct. 2026, 09:22</div></span><span class="count"><span class="m-plays">—</span><span class="m-time">3 min</span></span></li>
-          <li><span class="cover" style="background:linear-gradient(135deg,#8b5cf6,#312e81)"></span><span class="main"><div class="title">Paper Planes</div><div class="byline">The Slow Hours · 12 oct. 2026, 09:15</div></span><span class="count"><span class="m-plays">—</span><span class="m-time">5 min</span></span></li>
+          <li><span class="cover" style="background:linear-gradient(135deg,#3b82f6,#1e3a8a)"></span><span class="main"><div class="title">Neon Skyline</div><div class="byline">Aurora Lane · Oct 12, 2026, 9:31 AM</div></span><span class="count"><span class="m-plays">—</span><span class="m-time">3 min</span></span></li>
+          <li><span class="cover" style="background:linear-gradient(135deg,#10b981,#064e3b)"></span><span class="main"><div class="title">Static Bloom</div><div class="byline">Neon Tide · Oct 12, 2026, 9:27 AM</div></span><span class="count"><span class="m-plays">—</span><span class="m-time">4 min</span></span></li>
+          <li><span class="cover" style="background:linear-gradient(135deg,#ec4899,#831843)"></span><span class="main"><div class="title">Golden Hour</div><div class="byline">Sofia Reyes · Oct 12, 2026, 9:22 AM</div></span><span class="count"><span class="m-plays">—</span><span class="m-time">3 min</span></span></li>
+          <li><span class="cover" style="background:linear-gradient(135deg,#8b5cf6,#312e81)"></span><span class="main"><div class="title">Paper Planes</div><div class="byline">The Slow Hours · Oct 12, 2026, 9:15 AM</div></span><span class="count"><span class="m-plays">—</span><span class="m-time">5 min</span></span></li>
         </ul>
       </div>
     </section>
 
-    <!-- ═══════════ Réglages ═══════════ -->
+    <!-- ═══════════ Settings ═══════════ -->
     <section class="view hidden" id="view-settings">
-      <div class="pagehead"><div><h1>Réglages</h1></div></div>
+      <div class="pagehead"><div><h1>Settings</h1></div></div>
       <div class="grid cols2">
-        <div class="card"><div class="stitle"><h2>Compte</h2><p class="sub">Camille · camille@example.org</p></div>
-          <p class="muted" style="font-size:14px">Fuseau horaire : Europe/Zurich</p></div>
-        <div class="card"><div class="stitle"><h2>Connecter Spotify</h2><p class="sub">Synchronisation des écoutes récentes et des genres</p></div>
-          <span style="display:inline-block;background:var(--accent);color:#04140d;border-radius:10px;padding:8px 16px;font-size:14px;font-weight:600">Connecter mon compte Spotify</span></div>
+        <div class="card"><div class="stitle"><h2>Account</h2><p class="sub">Camille · camille@example.org</p></div>
+          <p class="muted" style="font-size:14px">Time zone: Europe/Zurich</p></div>
+        <div class="card"><div class="stitle"><h2>Connect Spotify</h2><p class="sub">Sync recent plays and genres</p></div>
+          <span style="display:inline-block;background:var(--accent);color:#04140d;border-radius:10px;padding:8px 16px;font-size:14px;font-weight:600">Connect my Spotify account</span></div>
       </div>
     </section>
 
     <footer>
-      <span>Statisfy — maquette de démonstration · données fictives. Non affilié à Spotify.</span>
+      <span>Statisfy — demo mock-up · fake data. Not affiliated with Spotify.</span>
       <span>v1.0.0</span>
     </footer>
   </div>
 
   <script>
-    // Navigation entre les vues
+    // View switching
     const navButtons = Array.from(document.querySelectorAll("nav.topnav button"));
     const views = Object.fromEntries(
       Array.from(document.querySelectorAll("section.view")).map((s) => [s.id.replace("view-", ""), s]),
@@ -331,7 +331,7 @@
         window.scrollTo({ top: 0 });
       });
     }
-    // Bascule « Écoutes / Temps » par carte
+    // Per-card "Plays / Time" toggle
     for (const toggle of document.querySelectorAll("[data-toggle]")) {
       const card = toggle.closest(".card");
       for (const button of toggle.querySelectorAll("button")) {
