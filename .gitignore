@@ -36,8 +36,7 @@ yarn-error.log*
 
 # generated / local data
 /src/generated
-/prisma/dev.db
-/prisma/dev.db-journal
+/prisma/dev.db*
 /backups
 
 # vercel

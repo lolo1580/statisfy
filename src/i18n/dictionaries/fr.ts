@@ -221,7 +221,7 @@ export const fr: Dictionary = {
   "settings.export": "Export",
   "settings.exportHint": "Télécharger vos données",
   "settings.exportCsv": "Historique (CSV)",
-  "settings.exportDb": "Base de données (.db)",
+  "settings.exportDb": "Base de données (.dump)",
 
   // Settings / gestion des utilisateurs (admin)
   "settings.users": "Utilisateurs",

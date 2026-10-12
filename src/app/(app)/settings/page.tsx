@@ -186,12 +186,12 @@ export default async function SettingsPage({
   let backupCount = 0;
   let backupLatest: string | null = null;
   if (user.isAdmin) {
-    const dbUrl = process.env.DATABASE_URL ?? "";
-    const dbPath = dbUrl.startsWith("file:") ? dbUrl.slice("file:".length) : "";
     try {
-      if (dbPath) {
-        dbBytes = (await fs.promises.stat(/*turbopackIgnore: true*/ dbPath)).size;
-      }
+      const rows = await prisma.$queryRaw<
+        Array<{ size: bigint | number | null }>
+      >`SELECT pg_database_size(current_database()) AS size`;
+      const value = rows[0]?.size;
+      dbBytes = value === null || value === undefined ? null : Number(value);
     } catch {
       dbBytes = null;
     }
@@ -200,7 +200,7 @@ export default async function SettingsPage({
       process.env.BACKUP_DIR || path.join(process.cwd(), "backups");
     try {
       const files = (await fs.promises.readdir(/*turbopackIgnore: true*/ backupDir))
-        .filter((name) => name.startsWith("statisfy-") && name.endsWith(".db"))
+        .filter((name) => name.startsWith("statisfy-") && name.endsWith(".dump"))
         .sort();
       backupCount = files.length;
       if (files.length > 0) {

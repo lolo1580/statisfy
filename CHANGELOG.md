@@ -48,11 +48,10 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   propre mot de passe** depuis **Réglages → Compte**.
 
 - **Export de la base** : nouvelle section « Export » dans les **Réglages** —
-  téléchargement de l'historique en CSV et de la **base SQLite complète** (`.db`)
-  via `GET /api/export/db`. L'instantané est produit par `VACUUM INTO` (cohérent
-  même base en cours d'utilisation) et le téléchargement est réservé aux
-  administrateurs (la base contient tous les comptes et les identifiants
-  chiffrés).
+  téléchargement de l'historique en CSV et de la **base complète** (dump
+  PostgreSQL `.dump`) via `GET /api/export/db`. Le dump est produit par
+  `pg_dump` et le téléchargement est réservé aux administrateurs (la base
+  contient tous les comptes et les identifiants chiffrés).
 
 - **Comparateur de deux périodes** : nouvelle page « Comparateur » (`/compare`)
   pour opposer deux périodes (année entière ou mois précis) côte à côte —
@@ -69,6 +68,22 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   hausse et en baisse, avec un lien « toutes les tendances » depuis le tableau de
   bord. Le calcul (`computeTrends`) est un helper pur testé
   (`src/lib/trends.ts`).
+
+- **Migration SQLite → PostgreSQL** : nouvelle commande **`pnpm migrate:sqlite`**
+  qui copie une base SQLite existante vers PostgreSQL en conservant les
+  identifiants (idempotente ; options `--sqlite <chemin>` et `--dry-run`).
+
+### Modifié
+
+- **Base de données : passage de SQLite à PostgreSQL 18.** Le projet s'appuie
+  désormais sur Prisma 7 avec le driver adapter `@prisma/adapter-pg` (au lieu de
+  `better-sqlite3`). Le déploiement Docker ajoute un service **`db`**
+  (`postgres:18-alpine`, volume `pgdata`) : `DATABASE_URL` devient une chaîne de
+  connexion PostgreSQL et `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB`
+  sont configurables. Les **sauvegardes** (rotation + endpoint `/api/backup`) et
+  l'**export** (`/api/export/db`) produisent des dumps `pg_dump`
+  (`postgresql-client-18` est installé dans l'image). Les agrégations temporelles
+  utilisent `EXTRACT(EPOCH ...)` au lieu de `strftime`.
 
 ### Retiré
 

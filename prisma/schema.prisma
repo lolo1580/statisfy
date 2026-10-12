@@ -1,5 +1,5 @@
 // Statisfy — schéma de données
-// Prisma 7 (provider "prisma-client", SQLite + driver adapter)
+// Prisma 7 (provider "prisma-client", PostgreSQL + driver adapter)
 //
 // Choix de conception :
 // - Les "Play" dénormalisent artistId/albumId/trackId pour rendre les
@@ -15,7 +15,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model User {

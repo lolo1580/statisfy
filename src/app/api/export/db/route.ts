@@ -8,7 +8,8 @@ import { createTemporarySnapshot } from "@/lib/backup";
 export const dynamic = "force-dynamic";
 
 /**
- * Télécharge un instantané complet de la base SQLite (`.db`).
+ * Télécharge un dump PostgreSQL complet de la base (`.dump`, format `pg_dump`
+ * personnalisé, restaurable avec `pg_restore`).
  *
  * Réservé aux administrateurs (session) ou à `Bearer <SYNC_TOKEN>` : la base
  * contient les données de tous les comptes et les identifiants chiffrés.
@@ -33,8 +34,8 @@ export async function GET(request: NextRequest) {
   const stamp = new Date().toISOString().slice(0, 10);
   return new Response(Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>, {
     headers: {
-      "Content-Type": "application/vnd.sqlite3",
-      "Content-Disposition": `attachment; filename="statisfy-${stamp}.db"`,
+      "Content-Type": "application/octet-stream",
+      "Content-Disposition": `attachment; filename="statisfy-${stamp}.dump"`,
       "Cache-Control": "no-store",
     },
   });

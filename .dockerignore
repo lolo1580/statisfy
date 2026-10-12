@@ -4,9 +4,13 @@ node_modules
 out
 build
 
-# donnees locales
+# donnees locales (les motifs `*.db` ne couvrent PAS les sous-dossiers :
+# `prisma/dev.db` serait sinon embarqué dans l'image)
 *.db
+**/*.db
 *.db-journal
+**/*.db-journal
+prisma/dev.db*
 backups
 
 # secrets
