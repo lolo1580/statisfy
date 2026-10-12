@@ -159,6 +159,20 @@ docker compose up -d
 > echo "$CR_PAT" | docker login ghcr.io -u <user> --password-stdin
 > ```
 
+### Production (build-free)
+
+For a real deployment, a dedicated compose file uses the **published image**
+(no build), keeps the database **unexposed**, binds the app to **localhost**
+(behind your reverse proxy) and caps log size:
+
+```bash
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Pin another version with `STATISFY_IMAGE` (e.g. `ghcr.io/lolo1580/statisfy:1.0.0`)
+and set `STATISFY_BIND` if your proxy runs on another network.
+
 ## ⚙️ Configuration
 
 Every variable is documented in [`.env.example`](.env.example).
