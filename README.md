@@ -5,6 +5,8 @@
 
 **English** · [Français](README.fr.md)
 
+> 🎨 **Static preview (mock-up, fake data)**: <https://lolo1580.github.io/statisfy/>
+
 A **self-hosted** dashboard to explore your Spotify listening stats. An
 independent, modern rewrite inspired by the idea of *Your Spotify*, but designed
 to be **easy to deploy**, **fast** and **pleasant to explore**.

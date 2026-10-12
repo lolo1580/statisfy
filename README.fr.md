@@ -5,6 +5,8 @@
 
 [English](README.md) · **Français**
 
+> 🎨 **Aperçu statique (maquette, données fictives)** : <https://lolo1580.github.io/statisfy/>
+
 Tableau de bord **auto-hébergé** pour explorer vos statistiques d'écoute Spotify.
 Réécriture libre et moderne, inspirée de l'idée de *Your Spotify*, mais pensée
 pour être **simple à déployer**, **rapide** et **agréable à explorer**.

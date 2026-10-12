@@ -23,3 +23,6 @@ backups
 .github
 .DS_Store
 *.log
+
+# maquette statique GitHub Pages (inutile dans l'image)
+docs
