@@ -13,6 +13,7 @@ export const en: Dictionary = {
   "nav.recap": "Recap",
   "nav.history": "History",
   "nav.settings": "Settings",
+  "nav.menu": "Menu",
   "nav.logout": "Sign out",
   "nav.pendingRequests": "{count} pending Spotify request(s)",
   "shell.searchPlaceholder": "Search…",
@@ -224,7 +225,7 @@ export const en: Dictionary = {
   "settings.export": "Export",
   "settings.exportHint": "Download your data",
   "settings.exportCsv": "History (CSV)",
-  "settings.exportDb": "Database (.db)",
+  "settings.exportDb": "Database (.dump)",
 
   // Settings / user management (admin)
   "settings.users": "Users",
@@ -395,4 +396,29 @@ export const en: Dictionary = {
   "uptime.days": "{d}d {h}h",
   "uptime.hours": "{h}h {m}m",
   "uptime.minutes": "{m}m",
+
+  // Onboarding (welcome modal + getting-started checklist)
+  "onboard.subtitle": "Quick tour · {total} steps",
+  "onboard.next": "Next",
+  "onboard.prev": "Back",
+  "onboard.finish": "Get started",
+  "onboard.skip": "Skip",
+  "onboard.step1.title": "Welcome 👋",
+  "onboard.step1.body":
+    "Statisfy turns your Spotify listening into clear, private statistics. Everything stays on your own instance.",
+  "onboard.step2.title": "Connect Spotify",
+  "onboard.step2.body":
+    "In Settings, connect your Spotify account to sync your recent plays and genres automatically.",
+  "onboard.step3.title": "Import your history",
+  "onboard.step3.body":
+    "For your full history, import your Spotify data export (Privacy). The import is idempotent — re-running it creates no duplicates.",
+  "onboard.step4.title": "Explore",
+  "onboard.step4.body":
+    "Browse Rankings, Compare periods, Trends and your Recap. Have fun!",
+  "checklist.title": "Getting started",
+  "checklist.subtitle": "A few steps to get the most out of Statisfy",
+  "checklist.connect": "Connect Spotify",
+  "checklist.import": "Import your history",
+  "checklist.explore": "Explore your rankings",
+  "checklist.hide": "Hide",
 };

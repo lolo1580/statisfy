@@ -2,7 +2,7 @@ import 'server-only'
 
 import { SignJWT, jwtVerify } from 'jose'
 import { headers } from 'next/headers'
-import { getSessionSecret } from '../env'
+import { appUrl, getSessionSecret } from '../env'
 
 /**
  * État OAuth signé.
@@ -51,10 +51,15 @@ export async function verifyOAuthState(
 
 /** Origine publique de la requête (derrière un proxy si en-têtes transmis). */
 export async function requestOrigin(): Promise<string | null> {
+  // Priorité à l'URL publique configurée : ne dépend pas d'en-têtes `Host` /
+  // `X-Forwarded-*` (forgables si l'app est joignable directement).
+  if (appUrl) return normalizeOrigin(appUrl)
   const headerList = await headers()
   const host = headerList.get('x-forwarded-host') ?? headerList.get('host')
   if (!host) return null
-  const proto = headerList.get('x-forwarded-proto') ?? 'http'
+  // Refuse un hôte inattendu (injection / redirection ouverte).
+  if (!/^[a-z0-9.-]+(?::\d{1,5})?$/i.test(host)) return null
+  const proto = headerList.get('x-forwarded-proto') === 'https' ? 'https' : 'http'
   return `${proto}://${host}`
 }
 

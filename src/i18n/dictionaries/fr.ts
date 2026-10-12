@@ -10,6 +10,7 @@ export const fr: Dictionary = {
   "nav.recap": "Récapitulatif",
   "nav.history": "Historique",
   "nav.settings": "Réglages",
+  "nav.menu": "Menu",
   "nav.logout": "Déconnexion",
   "nav.pendingRequests": "{count} demande(s) Spotify en attente",
   "shell.searchPlaceholder": "Rechercher…",
@@ -221,7 +222,7 @@ export const fr: Dictionary = {
   "settings.export": "Export",
   "settings.exportHint": "Télécharger vos données",
   "settings.exportCsv": "Historique (CSV)",
-  "settings.exportDb": "Base de données (.db)",
+  "settings.exportDb": "Base de données (.dump)",
 
   // Settings / gestion des utilisateurs (admin)
   "settings.users": "Utilisateurs",
@@ -391,4 +392,29 @@ export const fr: Dictionary = {
   "uptime.days": "{d} j {h} h",
   "uptime.hours": "{h} h {m} min",
   "uptime.minutes": "{m} min",
+
+  // Didacticiel (accueil + checklist de démarrage)
+  "onboard.subtitle": "Visite rapide · {total} étapes",
+  "onboard.next": "Suivant",
+  "onboard.prev": "Précédent",
+  "onboard.finish": "C'est parti",
+  "onboard.skip": "Passer",
+  "onboard.step1.title": "Bienvenue 👋",
+  "onboard.step1.body":
+    "Statisfy transforme vos écoutes Spotify en statistiques claires et privées. Tout reste sur votre propre instance.",
+  "onboard.step2.title": "Connecter Spotify",
+  "onboard.step2.body":
+    "Dans les Réglages, connectez votre compte Spotify pour synchroniser automatiquement vos écoutes récentes et vos genres.",
+  "onboard.step3.title": "Importer votre historique",
+  "onboard.step3.body":
+    "Pour l'historique complet, importez votre export de données Spotify (Confidentialité). L'import est idempotent : le relancer ne crée pas de doublon.",
+  "onboard.step4.title": "Explorer",
+  "onboard.step4.body":
+    "Parcourez les Classements, le Comparateur, les Tendances et votre Récapitulatif. Bonne exploration !",
+  "checklist.title": "Bien démarrer",
+  "checklist.subtitle": "Quelques étapes pour profiter de Statisfy",
+  "checklist.connect": "Connecter Spotify",
+  "checklist.import": "Importer votre historique",
+  "checklist.explore": "Explorer vos classements",
+  "checklist.hide": "Masquer",
 };

@@ -345,26 +345,30 @@ async function getTimeBuckets(
   userId: string,
   range: StatsRange,
 ): Promise<TimeBucket[]> {
-  const conditions: Prisma.Sql[] = [Prisma.sql`userId = ${userId}`]
-  if (range.from) conditions.push(Prisma.sql`playedAt >= ${range.from}`)
-  if (range.to) conditions.push(Prisma.sql`playedAt < ${range.to}`)
+  const conditions: Prisma.Sql[] = [Prisma.sql`"userId" = ${userId}`]
+  if (range.from) conditions.push(Prisma.sql`"playedAt" >= ${range.from}`)
+  if (range.to) conditions.push(Prisma.sql`"playedAt" < ${range.to}`)
   if (!range.from && !range.to && range.days) {
     conditions.push(
-      Prisma.sql`playedAt >= ${new Date(Date.now() - range.days * DAY_MS)}`,
+      Prisma.sql`"playedAt" >= ${new Date(Date.now() - range.days * DAY_MS)}`,
     )
   }
-  if (range.artistId) conditions.push(Prisma.sql`artistId = ${range.artistId}`)
-  if (range.trackId) conditions.push(Prisma.sql`trackId = ${range.trackId}`)
-  if (range.albumId) conditions.push(Prisma.sql`albumId = ${range.albumId}`)
+  if (range.artistId) conditions.push(Prisma.sql`"artistId" = ${range.artistId}`)
+  if (range.trackId) conditions.push(Prisma.sql`"trackId" = ${range.trackId}`)
+  if (range.albumId) conditions.push(Prisma.sql`"albumId" = ${range.albumId}`)
 
+  // `EXTRACT(EPOCH FROM "playedAt")` renvoie les secondes depuis l'époque Unix.
+  // Le timestamp (sans fuseau) est interprété en UTC : c'est l'équivalent de
+  // `strftime('%s', playedAt)` en SQLite. Le cast `::bigint` tronque les
+  // secondes comme le faisait `CAST(... AS INTEGER)`.
   const rows = await prisma.$queryRaw<
     Array<{ bucket: number | bigint; plays: number | bigint; msPlayed: number | bigint }>
   >(
     Prisma.sql`
-      SELECT CAST(strftime('%s', playedAt) AS INTEGER) / ${BUCKET_SECONDS} AS bucket,
+      SELECT (EXTRACT(EPOCH FROM "playedAt")::bigint / ${BUCKET_SECONDS}) AS bucket,
              COUNT(*) AS plays,
-             CAST(COALESCE(SUM(msPlayed), 0) AS INTEGER) AS msPlayed
-      FROM Play
+             COALESCE(SUM("msPlayed"), 0)::bigint AS "msPlayed"
+      FROM "Play"
       WHERE ${Prisma.join(conditions, " AND ")}
       GROUP BY bucket
       ORDER BY bucket

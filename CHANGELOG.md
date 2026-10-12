@@ -9,6 +9,14 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Ajouté
 
+- **Didacticiel de démarrage** : à la première visite du tableau de bord, une
+  **modale d'accueil** en 4 étapes présente l'outil (connexion Spotify, import de
+  l'historique, exploration) — affichée **une seule fois**. Une **checklist
+  « Bien démarrer »** reste ensuite sur le tableau de bord tant que la source
+  n'est pas connectée et l'historique importé (auto-complétion selon l'état réel,
+  masquable). Bilingue, sans dépendance. Nouveaux champs `User.onboardedAt` et
+  `User.checklistHiddenAt`.
+
 - **Validation des accès Spotify** : en mode *Development*, Spotify limite
   l'application à une liste de comptes. Chaque utilisateur doit donc **demander
   l'accès** (Réglages → Connecter Spotify, en indiquant son compte Spotify) ;
@@ -48,11 +56,10 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   propre mot de passe** depuis **Réglages → Compte**.
 
 - **Export de la base** : nouvelle section « Export » dans les **Réglages** —
-  téléchargement de l'historique en CSV et de la **base SQLite complète** (`.db`)
-  via `GET /api/export/db`. L'instantané est produit par `VACUUM INTO` (cohérent
-  même base en cours d'utilisation) et le téléchargement est réservé aux
-  administrateurs (la base contient tous les comptes et les identifiants
-  chiffrés).
+  téléchargement de l'historique en CSV et de la **base complète** (dump
+  PostgreSQL `.dump`) via `GET /api/export/db`. Le dump est produit par
+  `pg_dump` et le téléchargement est réservé aux administrateurs (la base
+  contient tous les comptes et les identifiants chiffrés).
 
 - **Comparateur de deux périodes** : nouvelle page « Comparateur » (`/compare`)
   pour opposer deux périodes (année entière ou mois précis) côte à côte —
@@ -69,6 +76,30 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   hausse et en baisse, avec un lien « toutes les tendances » depuis le tableau de
   bord. Le calcul (`computeTrends`) est un helper pur testé
   (`src/lib/trends.ts`).
+
+- **Migration SQLite → PostgreSQL** : nouvelle commande **`pnpm migrate:sqlite`**
+  qui copie une base SQLite existante vers PostgreSQL en conservant les
+  identifiants (idempotente ; options `--sqlite <chemin>` et `--dry-run`).
+
+### Modifié
+
+- **Mobile** : menu de navigation **repliable** (bouton hamburger sous `md`),
+  infobulle du graphique **en barres** au **toucher** (pointer events), et
+  **cibles tactiles** agrandies (nav, onglets de période, en-tête).
+
+- **Page Réglages** : disposition en **colonnes (masonry)** — 2 colonnes dès
+  1024 px, 3 dès 1920 px — et carte « Activité récente » à hauteur bornée
+  (défilement).
+
+- **Base de données : passage de SQLite à PostgreSQL 18.** Le projet s'appuie
+  désormais sur Prisma 7 avec le driver adapter `@prisma/adapter-pg` (au lieu de
+  `better-sqlite3`). Le déploiement Docker ajoute un service **`db`**
+  (`postgres:18-alpine`, volume `pgdata`) : `DATABASE_URL` devient une chaîne de
+  connexion PostgreSQL et `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB`
+  sont configurables. Les **sauvegardes** (rotation + endpoint `/api/backup`) et
+  l'**export** (`/api/export/db`) produisent des dumps `pg_dump`
+  (`postgresql-client-18` est installé dans l'image). Les agrégations temporelles
+  utilisent `EXTRACT(EPOCH ...)` au lieu de `strftime`.
 
 ### Retiré
 
@@ -166,6 +197,37 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   `STATISFY_IMAGE` est commentée dans `.env`/`.env.example`.
 
 ### Sécurité
+
+- **Anti-SSRF renforcé** : les visuels distants sont récupérés par une requête
+  **épinglée sur l'IP déjà validée** (plus de re-résolution DNS entre la
+  validation et la connexion → fin du rebinding), avec SNI/`Host` d'origine. La
+  détection des adresses privées couvre désormais NAT64, multicast, `100::/64`,
+  `2001:db8::/32` et la forme canonique des IPv4-mappées.
+- **Anti force-brute de l'auth Basic** des imports (`/api/import/*`) : même
+  limiteur que la connexion. Et `X-Forwarded-For` est lu côté **proxy** (dernier
+  saut) ; `TRUST_PROXY_HEADERS=false` pour l'ignorer si l'app est exposée
+  directement.
+- **Énumération d'emails** au login neutralisée (hash scrypt factice exécuté
+  même si le compte n'existe pas → temps de réponse constant).
+- **Sessions** : la ligne en base est désormais liée au `uid` du JWT.
+- **Courses** : première inscription (« premier compte = admin ») et retrait du
+  dernier admin passent en transaction **SERIALIZABLE**.
+- **Divers** : `?range=` borné, `?email=` normalisé, messages d'erreur d'import
+  génériques (loggés côté serveur), `/api/export/db` gère l'échec de `pg_dump`,
+  `/api/wrapped/image` renvoie **401** au lieu d'une redirection, et
+  `X-Powered-By` est désactivé.
+
+- **Comparaison du `SYNC_TOKEN` en temps constant** partout où il est vérifié
+  (`/api/sync`, `/api/backup`, `/api/export/db`, imports) via un helper commun
+  (`src/lib/auth/sync-token.ts`) : lève l'incohérence qui subsistait avec
+  `/api/sync`.
+- **Contrôle du rôle administrateur centralisé** (`getAdminUser` /
+  `getOptionalAdmin`) : toutes les actions réservées à l'administration passent
+  par une seule vérification, ce qui évite tout oubli futur.
+- **Accès Spotify administré** : les actions `approve`/`reject`/`revoke`
+  n'agissent plus sur le compte de l'administrateur lui-même et **tolèrent un
+  identifiant inexistant** (`updateMany` au lieu de `update`), là où une erreur
+  `500` était possible.
 
 - **Anti-SSRF sur les visuels distants** : `GET /api/wrapped/image` n'accepte
   plus que les URLs http(s) vers un hôte public (résolution DNS incluse) et

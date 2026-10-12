@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
+import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../generated/prisma/client'
 
 const globalForPrisma = globalThis as unknown as {
@@ -14,7 +14,7 @@ function createPrismaClient(): PrismaClient {
       'DATABASE_URL est manquant. Copiez .env.example vers .env puis lancez pnpm db:push.',
     )
   }
-  const adapter = new PrismaBetterSqlite3({ url })
+  const adapter = new PrismaPg({ connectionString: url })
   return new PrismaClient({ adapter })
 }
 

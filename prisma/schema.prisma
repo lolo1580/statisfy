@@ -1,5 +1,5 @@
 // Statisfy — schéma de données
-// Prisma 7 (provider "prisma-client", SQLite + driver adapter)
+// Prisma 7 (provider "prisma-client", PostgreSQL + driver adapter)
 //
 // Choix de conception :
 // - Les "Play" dénormalisent artistId/albumId/trackId pour rendre les
@@ -15,7 +15,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model User {
@@ -38,6 +38,10 @@ model User {
 
   // Jeton de partage public du récapitulatif (`null` = partage désactivé).
   wrappedShareToken String?
+
+  // Didacticiel : accueil affiché une seule fois, checklist masquée manuellement.
+  onboardedAt       DateTime?
+  checklistHiddenAt DateTime?
 
   @@index([wrappedShareToken])
 

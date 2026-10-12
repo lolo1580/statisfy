@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "../db";
-import { getCurrentUser } from "../auth/dal";
+import { getAdminUser, getCurrentUser } from "../auth/dal";
 import {
   SPOTIFY_ACCESS_APPROVED,
   SPOTIFY_ACCESS_NONE,
@@ -62,13 +62,15 @@ export async function requestSpotifyAccess(
 
 /** Un administrateur approuve une demande d'accès Spotify. */
 export async function approveSpotifyAccess(formData: FormData): Promise<void> {
-  const admin = await getCurrentUser();
-  if (!admin.isAdmin) return;
+  const admin = await getAdminUser();
+  if (!admin) return;
 
   const userId = String(formData.get("userId") ?? "");
-  if (!userId) return;
+  // On n'agit pas sur son propre compte (cohérent avec les autres actions admin).
+  if (!userId || userId === admin.id) return;
 
-  await prisma.user.update({
+  // `updateMany` : ne lève pas d'erreur si l'identifiant n'existe pas.
+  await prisma.user.updateMany({
     where: { id: userId },
     data: {
       spotifyAccessStatus: SPOTIFY_ACCESS_APPROVED,
@@ -80,13 +82,13 @@ export async function approveSpotifyAccess(formData: FormData): Promise<void> {
 
 /** Un administrateur refuse une demande d'accès Spotify. */
 export async function rejectSpotifyAccess(formData: FormData): Promise<void> {
-  const admin = await getCurrentUser();
-  if (!admin.isAdmin) return;
+  const admin = await getAdminUser();
+  if (!admin) return;
 
   const userId = String(formData.get("userId") ?? "");
-  if (!userId) return;
+  if (!userId || userId === admin.id) return;
 
-  await prisma.user.update({
+  await prisma.user.updateMany({
     where: { id: userId },
     data: {
       spotifyAccessStatus: SPOTIFY_ACCESS_REJECTED,
@@ -101,13 +103,13 @@ export async function rejectSpotifyAccess(formData: FormData): Promise<void> {
  * (et ses jetons) est supprimée et l'utilisateur devra refaire une demande.
  */
 export async function revokeSpotifyAccess(formData: FormData): Promise<void> {
-  const admin = await getCurrentUser();
-  if (!admin.isAdmin) return;
+  const admin = await getAdminUser();
+  if (!admin) return;
 
   const userId = String(formData.get("userId") ?? "");
-  if (!userId) return;
+  if (!userId || userId === admin.id) return;
 
-  await prisma.user.update({
+  await prisma.user.updateMany({
     where: { id: userId },
     data: {
       spotifyAccessStatus: SPOTIFY_ACCESS_NONE,

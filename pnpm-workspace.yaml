@@ -3,5 +3,7 @@ allowBuilds:
   "@prisma/engines": true
   prisma: true
   esbuild: true
+  # Pair optionnel de `prisma`/`@prisma/client` : non utilisé (driver adapter-pg),
+  # mais présent dans le graphe de dépendances.
   better-sqlite3: true
   unrs-resolver: true

@@ -10,6 +10,13 @@ import { registrationAllowed } from "../settings";
 import { findUsableInvitation } from "../invitations";
 import { getI18n } from "@/i18n/server";
 
+/**
+ * Hash scrypt factice (coût de calcul identique) utilisé quand l'email est
+ * inconnu, afin de ne pas révéler l'existence d'un compte par le temps de
+ * réponse.
+ */
+const DUMMY_PASSWORD_HASH = `scrypt$${Buffer.alloc(16, 7).toString("base64")}$${Buffer.alloc(64, 3).toString("base64")}`;
+
 export type AuthState =
   | {
       error?: string
@@ -117,19 +124,25 @@ export async function register(
   // concurrentes (l'échec annule la création du compte).
   let user: { id: string };
   try {
-    user = await prisma.$transaction(async (tx) => {
-      const created = await tx.user.create({
-        data: { name, email, passwordHash, isAdmin: userCount === 0 },
-      });
-      if (invitation) {
-        const claimed = await tx.invitation.updateMany({
-          where: { id: invitation.id, usedAt: null },
-          data: { usedAt: new Date(), usedById: created.id },
+    // Isolation SERIALIZABLE : deux inscriptions concurrentes ne peuvent pas
+    // toutes deux obtenir le rôle administrateur du « premier compte ».
+    user = await prisma.$transaction(
+      async (tx) => {
+        const count = await tx.user.count();
+        const created = await tx.user.create({
+          data: { name, email, passwordHash, isAdmin: count === 0 },
         });
-        if (claimed.count === 0) throw new InvitationConsumedError();
-      }
-      return created;
-    });
+        if (invitation) {
+          const claimed = await tx.invitation.updateMany({
+            where: { id: invitation.id, usedAt: null },
+            data: { usedAt: new Date(), usedById: created.id },
+          });
+          if (claimed.count === 0) throw new InvitationConsumedError();
+        }
+        return created;
+      },
+      { isolationLevel: "Serializable" },
+    );
   } catch (error) {
     if (error instanceof InvitationConsumedError) {
       return { error: t("autherr.inviteInvalid"), values };
@@ -170,7 +183,13 @@ export async function login(
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user || !(await verifyPassword(password, user.passwordHash))) {
+  // Toujours exécuter scrypt (hash factice si le compte n'existe pas) : évite
+  // de révéler l'existence d'un email par le temps de réponse.
+  const passwordOk = await verifyPassword(
+    password,
+    user?.passwordHash ?? DUMMY_PASSWORD_HASH,
+  );
+  if (!user || !passwordOk) {
     return { error: t("autherr.credentials"), values: { email } };
   }
 

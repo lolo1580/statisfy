@@ -67,7 +67,7 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
 | --- | --- |
 | Framework | Next.js 16 (App Router, React 19, Server Actions) |
 | Langage | TypeScript |
-| Base de données | SQLite via Prisma 7 + driver adapter `better-sqlite3` |
+| Base de données | PostgreSQL 18 via Prisma 7 + driver adapter `@prisma/adapter-pg` |
 | UI | Tailwind CSS v4, composants maison, graphiques SVG sans dépendance |
 | Auth | `jose` (JWT), `node:crypto` (scrypt, AES-GCM) |
 | Image | `next/og` (récapitulatif PNG) |
@@ -75,7 +75,8 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
 
 ## 🚀 Démarrage rapide (local)
 
-Prérequis : **Node.js 22+** et **pnpm**.
+Prérequis : **Node.js 22+**, **pnpm** et un serveur **PostgreSQL 18** (le
+service Docker `db` ci-dessous convient aussi).
 
 ```bash
 # 1. Dépendances
@@ -85,14 +86,18 @@ pnpm install
 cp .env.example .env
 openssl rand -base64 32   # -> SESSION_SECRET
 openssl rand -base64 32   # -> CREDENTIALS_KEY
+# Renseignez POSTGRES_PASSWORD (et DATABASE_URL) dans .env — voir Configuration.
 
-# 3. Base de données
+# 3. Base de données : démarrez PostgreSQL (ou utilisez la vôtre)
+docker compose up -d db        # PostgreSQL sur localhost:$POSTGRES_PORT (5432 par défaut)
+
+# 4. Application du schéma
 pnpm db:push
 
-# 4. (optionnel) jeu de données de démonstration
+# 5. (optionnel) jeu de données de démonstration
 pnpm db:seed
 
-# 5. Développement
+# 6. Développement
 pnpm dev        # http://localhost:3000
 ```
 
@@ -119,13 +124,13 @@ pnpm start
 
 ```bash
 cp .env.example .env
-# Renseignez SESSION_SECRET et CREDENTIALS_KEY
+# Renseignez SESSION_SECRET, CREDENTIALS_KEY et POSTGRES_PASSWORD
 
 docker compose up -d --build
 ```
 
 - L'application est servie sur `http://localhost:3000`.
-- La base SQLite est persistée via le montage `./prisma:/data`.
+- La base PostgreSQL est persistée dans le volume **`pgdata`** (service `db`).
 - Le schéma Prisma est appliqué automatiquement au démarrage.
 - Un service **`cron`** appelle `POST /api/sync` **toutes les 2 minutes**
   (nécessite `SYNC_TOKEN`).
@@ -166,7 +171,8 @@ Toutes les variables sont documentées dans [`.env.example`](.env.example).
 
 | Variable | Description |
 | --- | --- |
-| `DATABASE_URL` | Chemin SQLite, ex. `file:./prisma/dev.db`. |
+| `DATABASE_URL` | Chaîne de connexion PostgreSQL. |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | Identifiants du service `db` ; servent à construire `DATABASE_URL` en Docker. |
 | `SESSION_SECRET` | Secret de signature des sessions (`openssl rand -base64 32`). |
 | `CREDENTIALS_KEY` | Clé AES-256 (32 octets base64) pour chiffrer les identifiants. |
 | `ALLOW_REGISTRATION` | `true`/`false` (surchargée depuis l'UI admin). |
@@ -177,6 +183,22 @@ Toutes les variables sont documentées dans [`.env.example`](.env.example).
 | `SYNC_TOKEN` | Jeton protégeant `POST /api/sync` (utilisé par le cron). |
 | `SYNC_MIN_INTERVAL_MS` | Intervalle minimal entre deux synchros déclenchées par l'API (défaut `120000`). |
 | `BACKUP_KEEP` | Nombre de sauvegardes de la base conservées (défaut `7`). |
+
+## ♻️ Migration depuis SQLite
+
+Les versions antérieures stockaient tout en SQLite (`prisma/dev.db`). Pour
+basculer une base existante vers PostgreSQL :
+
+```bash
+docker compose up -d db     # ou pointez DATABASE_URL vers votre PostgreSQL
+pnpm db:push                # crée le schéma
+pnpm migrate:sqlite         # copie utilisateurs, connexions, écoutes… (idempotent)
+```
+
+Options : `--sqlite <chemin>` pour un autre fichier, `--dry-run` pour
+prévisualiser. Les identifiants sont conservés, les identifiants de sources
+chiffrés copiés tels quels et les lignes déjà présentes ignorées : la commande
+peut être relancée sans risque.
 
 ## 🎵 Source Spotify
 
@@ -264,11 +286,11 @@ Dans les deux cas, l'import est **idempotent** (relancer ne crée pas de doublon
 | Route | Description |
 | --- | --- |
 | `GET /api/sync` | Synchronise les connexions dues. Auth : `Bearer $SYNC_TOKEN` ou session admin. |
-| `POST /api/backup` | Sauvegarde la base SQLite. Auth : `Bearer $SYNC_TOKEN` ou session admin. |
+| `POST /api/backup` | Sauvegarde la base PostgreSQL (`pg_dump`). Auth : `Bearer $SYNC_TOKEN` ou session admin. |
 | `POST /api/import/spotify-history` | Importe un export Spotify (`.zip` « Extended streaming history » ou `.json`). Auth : `Bearer $SYNC_TOKEN`, HTTP Basic ou session admin. |
 | `POST /api/import/your-spotify` | Importe un dump *Your Spotify* (archive `.zip`) depuis un serveur. Auth : `Bearer $SYNC_TOKEN`, HTTP Basic (`-u email:motdepasse`) ou session admin. |
 | `GET /api/export` | Export CSV de l'historique de l'utilisateur connecté. |
-| `GET /api/export/db` | Instantané complet de la base SQLite (`.db`). Auth : `Bearer $SYNC_TOKEN` ou session admin. |
+| `GET /api/export/db` | Dump complet de la base PostgreSQL (`.dump`). Auth : `Bearer $SYNC_TOKEN` ou session admin. |
 | `GET /api/wrapped/image` | Image PNG du récapitulatif (`?year=2026&month=10`). |
 | `GET /oauth/spotify/callback` | Retour OAuth Spotify (à déclarer côté Spotify). |
 | `GET /api/sources/spotify/start` | Démarre l'OAuth Spotify. |
@@ -315,7 +337,7 @@ src/
     sources/           # Adaptateur Spotify, import, enrichissement, état OAuth
     sync/              # Moteur d'ingestion idempotent + orchestration
     stats.ts           # Requêtes d'agrégation (dont tendances)
-    backup.ts          # Sauvegardes SQLite (VACUUM INTO + rotation)
+    backup.ts          # Sauvegardes PostgreSQL (pg_dump + rotation)
     period.ts          # Périodes du récapitulatif
     crypto.ts          # Chiffrement des identifiants
     db.ts              # Client Prisma

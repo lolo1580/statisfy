@@ -61,7 +61,9 @@ export async function readSession(): Promise<SessionPayload | null> {
   if (!payload) return null
 
   const row = await prisma.session.findUnique({ where: { id: payload.sid } })
-  if (!row || row.expiresAt < new Date()) return null
+  if (!row || row.expiresAt < new Date() || row.userId !== payload.uid) {
+    return null
+  }
 
   return payload
 }

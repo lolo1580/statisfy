@@ -555,8 +555,8 @@ export function BarsChart({
               <div
                 key={bar.label}
                 className="flex h-full items-end"
-                onMouseEnter={() => setHover(index)}
-                onMouseLeave={() => setHover(null)}
+                onPointerEnter={() => setHover(index)}
+                onPointerLeave={() => setHover(null)}
               >
                 <div
                   className="w-full rounded-t bg-gradient-to-t from-accent/30 to-accent transition-opacity"

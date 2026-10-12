@@ -35,6 +35,11 @@ describe("isPrivateIp", () => {
     expect(isPrivateIp("fe80::1")).toBe(true);
     expect(isPrivateIp("fd00::1")).toBe(true);
     expect(isPrivateIp("::ffff:127.0.0.1")).toBe(true);
+    expect(isPrivateIp("::ffff:7f00:1")).toBe(true); // forme canonique hexadécimale
+    expect(isPrivateIp("64:ff9b::7f00:1")).toBe(true); // NAT64
+    expect(isPrivateIp("100::1")).toBe(true); // discard-only
+    expect(isPrivateIp("ff02::1")).toBe(true); // multicast
+    expect(isPrivateIp("2001:db8::1")).toBe(true); // documentation
     expect(isPrivateIp("2001:4860:4860::8888")).toBe(false);
   });
 

@@ -17,11 +17,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      # Variables factices : le build n'ouvre pas la base, il faut juste que
-      # DATABASE_URL soit défini (le client Prisma est instancié à l'import).
-      DATABASE_URL: "file:./prisma/ci.db"
+      # Le build n'ouvre pas la base : il faut juste que DATABASE_URL soit
+      # défini (le client Prisma est instancié à l'import).
+      DATABASE_URL: "postgresql://statisfy:statisfy@localhost:5432/statisfy"
       SESSION_SECRET: "ci-session-secret"
       CREDENTIALS_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: statisfy
+          POSTGRES_PASSWORD: statisfy
+          POSTGRES_DB: statisfy
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U statisfy"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4

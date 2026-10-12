@@ -2,11 +2,14 @@
 set -e
 
 # Sauvegarde de sécurité avant `prisma db push` (qui peut modifier le schéma).
-# On conserve les 3 dernières copies.
-if [ -f /data/dev.db ] && [ -d /backups ]; then
+# Best-effort : on ignore l'échec (base pas encore joignable, etc.). On conserve
+# les 3 dernières copies.
+if [ -n "${DATABASE_URL:-}" ] && [ -d /backups ] && command -v pg_dump >/dev/null 2>&1; then
   stamp=$(date +%Y%m%dT%H%M%S)
-  cp /data/dev.db "/backups/statisfy-pre-push-$stamp.db" 2>/dev/null || true
-  ls -1t /backups/statisfy-pre-push-*.db 2>/dev/null | tail -n +4 | while read -r old; do
+  pg_dump --dbname "$DATABASE_URL" --format custom --no-owner --no-privileges \
+    --file "/backups/statisfy-pre-push-$stamp.dump" 2>/dev/null \
+    || rm -f "/backups/statisfy-pre-push-$stamp.dump"
+  ls -1t /backups/statisfy-pre-push-*.dump 2>/dev/null | tail -n +4 | while read -r old; do
     rm -f "$old"
   done
 fi

@@ -186,12 +186,12 @@ export default async function SettingsPage({
   let backupCount = 0;
   let backupLatest: string | null = null;
   if (user.isAdmin) {
-    const dbUrl = process.env.DATABASE_URL ?? "";
-    const dbPath = dbUrl.startsWith("file:") ? dbUrl.slice("file:".length) : "";
     try {
-      if (dbPath) {
-        dbBytes = (await fs.promises.stat(/*turbopackIgnore: true*/ dbPath)).size;
-      }
+      const rows = await prisma.$queryRaw<
+        Array<{ size: bigint | number | null }>
+      >`SELECT pg_database_size(current_database()) AS size`;
+      const value = rows[0]?.size;
+      dbBytes = value === null || value === undefined ? null : Number(value);
     } catch {
       dbBytes = null;
     }
@@ -200,7 +200,7 @@ export default async function SettingsPage({
       process.env.BACKUP_DIR || path.join(process.cwd(), "backups");
     try {
       const files = (await fs.promises.readdir(/*turbopackIgnore: true*/ backupDir))
-        .filter((name) => name.startsWith("statisfy-") && name.endsWith(".db"))
+        .filter((name) => name.startsWith("statisfy-") && name.endsWith(".dump"))
         .sort();
       backupCount = files.length;
       if (files.length > 0) {
@@ -269,7 +269,7 @@ export default async function SettingsPage({
         </div>
       ) : null}
 
-      <div className="grid gap-6 3xl:grid-cols-2 3xl:items-start">
+      <div className="columns-1 gap-6 lg:columns-2 3xl:columns-3 [&>*]:mb-6 [&>*]:break-inside-avoid">
       <Card>
         <SectionTitle
           title={t("settings.account")}
@@ -474,35 +474,37 @@ export default async function SettingsPage({
         {jobs.length === 0 ? (
           <EmptyState>{t("settings.noActivity")}</EmptyState>
         ) : (
-          <ul className="divide-y divide-border text-sm">
-            {jobs.map((job) => (
-              <li key={job.id} className="flex items-center gap-3 py-2.5">
-                <Badge tone={job.type === "import" ? "neutral" : "violet"}>
-                  {jobType(job.type)}
-                </Badge>
-                <span className="min-w-0 flex-1 truncate text-muted">
-                  {job.connection?.displayName ?? t("status.importedHistory")}
-                </span>
-                <span className="text-xs text-muted">
-                  +{formatNumber(job.inserted, locale)}
-                </span>
-                <Badge
-                  tone={
-                    job.status === "done"
-                      ? "accent"
-                      : job.status === "error"
-                        ? "danger"
-                        : "neutral"
-                  }
-                >
-                  {job.status}
-                </Badge>
-                <span className="hidden w-40 text-right text-xs text-muted md:inline">
-                  {formatDateTime(job.createdAt, user.timezone, locale)}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="max-h-72 overflow-y-auto pr-1">
+            <ul className="divide-y divide-border text-sm">
+              {jobs.map((job) => (
+                <li key={job.id} className="flex items-center gap-3 py-2.5">
+                  <Badge tone={job.type === "import" ? "neutral" : "violet"}>
+                    {jobType(job.type)}
+                  </Badge>
+                  <span className="min-w-0 flex-1 truncate text-muted">
+                    {job.connection?.displayName ?? t("status.importedHistory")}
+                  </span>
+                  <span className="text-xs text-muted">
+                    +{formatNumber(job.inserted, locale)}
+                  </span>
+                  <Badge
+                    tone={
+                      job.status === "done"
+                        ? "accent"
+                        : job.status === "error"
+                          ? "danger"
+                          : "neutral"
+                    }
+                  >
+                    {job.status}
+                  </Badge>
+                  <span className="hidden w-40 text-right text-xs text-muted md:inline">
+                    {formatDateTime(job.createdAt, user.timezone, locale)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </Card>
 

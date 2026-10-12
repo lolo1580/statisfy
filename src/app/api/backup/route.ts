@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getOptionalUser } from "@/lib/auth/dal";
-import { syncToken } from "@/lib/env";
+import { getOptionalAdmin } from "@/lib/auth/dal";
+import { hasValidSyncToken } from "@/lib/auth/sync-token";
 import { runBackup } from "@/lib/backup";
 
 export const dynamic = "force-dynamic";
@@ -10,12 +10,9 @@ export const dynamic = "force-dynamic";
  * ou session administrateur. POST uniquement.
  */
 async function handle(request: NextRequest) {
-  const provided =
-    request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-
-  const admin = await getOptionalUser();
+  const admin = await getOptionalAdmin();
   const authorized =
-    (syncToken.length > 0 && provided === syncToken) || Boolean(admin?.isAdmin);
+    admin !== null || hasValidSyncToken(request.headers.get("authorization"));
 
   if (!authorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

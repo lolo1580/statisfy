@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
-import { getCurrentUser } from "@/lib/auth/dal";
+import { getOptionalUser } from "@/lib/auth/dal";
 import { fetchPublicUrl } from "@/lib/net";
 import {
   getOverview,
@@ -26,8 +26,8 @@ async function toDataUri(url?: string | null): Promise<string | null> {
     // Anti-SSRF : refuse les schémas non http(s), les hôtes privés/locaux, et
     // revalide chaque redirection (un hôte public peut rediriger vers l'interne).
     const res = await fetchPublicUrl(url, {
-      cache: "no-store",
       signal: AbortSignal.timeout(5_000),
+      maxBytes: MAX_IMAGE_BYTES,
     });
     if (!res.ok) return null;
     const type = res.headers.get("content-type") ?? "image/jpeg";
@@ -358,7 +358,10 @@ function StoryCard(props: CardProps) {
 }
 
 export async function GET(request: NextRequest) {
-  const user = await getCurrentUser();
+  const user = await getOptionalUser();
+  if (!user) {
+    return new Response("Unauthorized", { status: 401 });
+  }
   const { locale, t } = await getI18n();
   const params = new URL(request.url).searchParams;
   const story = params.get("format") === "story";

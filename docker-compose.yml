@@ -10,11 +10,16 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: "3000"
-      # Base SQLite persistée (le dossier ./prisma de l'hôte est monté sur /data).
-      DATABASE_URL: "file:/data/dev.db"
+      # Connexion PostgreSQL. Le mot de passe est repris de POSTGRES_PASSWORD
+      # (voir le service `db`) : préférez un mot de passe sans caractère à
+      # encoder dans une URL (`@`, `:`, `/`, `%`, `#`).
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-statisfy}:${POSTGRES_PASSWORD:?Renseignez POSTGRES_PASSWORD dans .env}@db:5432/${POSTGRES_DB:-statisfy}"
       SESSION_SECRET: "${SESSION_SECRET:?Renseignez SESSION_SECRET dans .env}"
       CREDENTIALS_KEY: "${CREDENTIALS_KEY:?Renseignez CREDENTIALS_KEY dans .env}"
       NEXT_PUBLIC_APP_NAME: "${NEXT_PUBLIC_APP_NAME:-Statisfy}"
@@ -29,8 +34,31 @@ services:
       BACKUP_DIR: "/backups"
       BACKUP_KEEP: "${BACKUP_KEEP:-7}"
     volumes:
-      - ./prisma:/data
       - ./backups:/backups
+
+  # Base de données PostgreSQL. Les données sont persistées dans le volume `pgdata`.
+  db:
+    image: postgres:18-alpine
+    container_name: statisfy-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-statisfy}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Renseignez POSTGRES_PASSWORD dans .env}"
+      POSTGRES_DB: "${POSTGRES_DB:-statisfy}"
+    volumes:
+      # PostgreSQL 18 stocke ses données dans un sous-dossier versionné :
+      # on monte le dossier parent.
+      - pgdata:/var/lib/postgresql
+    # Exposé uniquement en local, pour le développement hors Docker
+    # (`pnpm dev` avec DATABASE_URL vers localhost). Changez `POSTGRES_PORT`
+    # si le port 5432 est déjà pris sur l'hôte.
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-statisfy} -d $${POSTGRES_DB:-statisfy}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   # Synchronisation périodique (toutes les 2 min) + sauvegarde (toutes les 6 h).
   # Nécessite SYNC_TOKEN dans .env.
@@ -45,3 +73,6 @@ services:
       - 'i=0; while true; do curl -sf -X POST -H "Authorization: Bearer $$SYNC_TOKEN" http://statisfy:3000/api/sync > /dev/null || true; if [ $$((i % 180)) -eq 0 ]; then curl -sf -X POST -H "Authorization: Bearer $$SYNC_TOKEN" http://statisfy:3000/api/backup > /dev/null || true; fi; i=$$((i+1)); sleep 120; done'
     environment:
       SYNC_TOKEN: "${SYNC_TOKEN:-}"
+
+volumes:
+  pgdata:

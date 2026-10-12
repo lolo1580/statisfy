@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "../db";
-import { getCurrentUser } from "../auth/dal";
+import { getAdminUser, getCurrentUser } from "../auth/dal";
 import { runImport, runPlaysIngest, runSyncForConnection } from "../sync/engine";
 import { enrichMissingImages } from "../sources/enrich";
 import {
@@ -47,11 +47,9 @@ export async function syncConnection(
     revalidatePath("/dashboard");
     return { ok: true, message: t("msg.syncDone", { count: result.inserted }) };
   } catch (error) {
+    console.error("[sync] échec de la synchronisation", error);
     revalidatePath("/settings");
-    return {
-      error:
-        error instanceof Error ? error.message : t("err.syncFailed"),
-    };
+    return { error: t("err.syncFailed") };
   }
 }
 
@@ -102,10 +100,8 @@ export async function importHistory(
         }) + (enriched ? t("msg.importDoneVisuals", { count: enriched }) : ""),
     };
   } catch (error) {
-    return {
-      error:
-        error instanceof Error ? error.message : t("err.importFailed"),
-    };
+    console.error("[import] échec de l'import", error);
+    return { error: t("err.importFailed") };
   }
 }
 
@@ -146,10 +142,8 @@ export async function importYourSpotify(
       }),
     };
   } catch (error) {
-    return {
-      error:
-        error instanceof Error ? error.message : t("err.importFailed"),
-    };
+    console.error("[import] échec de l'import", error);
+    return { error: t("err.importFailed") };
   }
 }
 
@@ -176,10 +170,8 @@ export async function enrichImages(
       }),
     };
   } catch (error) {
-    return {
-      error:
-        error instanceof Error ? error.message : t("err.enrichFailed"),
-    };
+    console.error("[enrich] échec de l'enrichissement", error);
+    return { error: t("err.enrichFailed") };
   }
 }
 
@@ -198,8 +190,8 @@ export async function updateTimezone(formData: FormData): Promise<void> {
 }
 
 export async function setRegistration(formData: FormData): Promise<void> {
-  const user = await getCurrentUser();
-  if (!user.isAdmin) return;
+  const admin = await getAdminUser();
+  if (!admin) return;
   const enabled = String(formData.get("enabled") ?? "") === "true";
   await setSetting(SETTING_ALLOW_REGISTRATION, enabled ? "true" : "false");
   revalidatePath("/settings");
