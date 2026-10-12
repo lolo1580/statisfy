@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import { Readable } from "node:stream";
 import { NextResponse, type NextRequest } from "next/server";
-import { getOptionalUser } from "@/lib/auth/dal";
-import { syncToken } from "@/lib/env";
+import { getOptionalAdmin } from "@/lib/auth/dal";
+import { hasValidSyncToken } from "@/lib/auth/sync-token";
 import { createTemporarySnapshot } from "@/lib/backup";
 
 export const dynamic = "force-dynamic";
@@ -15,11 +15,9 @@ export const dynamic = "force-dynamic";
  * contient les données de tous les comptes et les identifiants chiffrés.
  */
 export async function GET(request: NextRequest) {
-  const provided =
-    request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  const admin = await getOptionalUser();
+  const admin = await getOptionalAdmin();
   const authorized =
-    Boolean(admin?.isAdmin) || (syncToken.length > 0 && provided === syncToken);
+    admin !== null || hasValidSyncToken(request.headers.get("authorization"));
 
   if (!authorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "../db";
-import { getCurrentUser } from "../auth/dal";
+import { getAdminUser, getCurrentUser } from "../auth/dal";
 import { runImport, runPlaysIngest, runSyncForConnection } from "../sync/engine";
 import { enrichMissingImages } from "../sources/enrich";
 import {
@@ -198,8 +198,8 @@ export async function updateTimezone(formData: FormData): Promise<void> {
 }
 
 export async function setRegistration(formData: FormData): Promise<void> {
-  const user = await getCurrentUser();
-  if (!user.isAdmin) return;
+  const admin = await getAdminUser();
+  if (!admin) return;
   const enabled = String(formData.get("enabled") ?? "") === "true";
   await setSetting(SETTING_ALLOW_REGISTRATION, enabled ? "true" : "false");
   revalidatePath("/settings");

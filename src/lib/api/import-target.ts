@@ -1,9 +1,9 @@
 import "server-only";
 
 import { NextResponse, type NextRequest } from "next/server";
-import { getOptionalUser, type CurrentUser } from "@/lib/auth/dal";
+import { getOptionalAdmin, type CurrentUser } from "@/lib/auth/dal";
 import { prisma } from "@/lib/db";
-import { syncToken } from "@/lib/env";
+import { hasValidSyncToken } from "@/lib/auth/sync-token";
 import { verifyPassword } from "@/lib/password";
 
 /** Vérifie un en-tête `Authorization: Basic <email:mot de passe>`. */
@@ -53,14 +53,13 @@ export async function resolveImportTarget(
 ): Promise<ImportTarget> {
   const url = new URL(request.url);
   const authorization = request.headers.get("authorization");
-  const tokenProvided = authorization?.replace(/^Bearer\s+/i, "") ?? "";
 
   const [admin, basicUser] = await Promise.all([
-    getOptionalUser(),
+    getOptionalAdmin(),
     userFromBasic(authorization),
   ]);
-  const tokenOk = syncToken.length > 0 && tokenProvided === syncToken;
-  const isAdmin = Boolean(admin?.isAdmin);
+  const tokenOk = hasValidSyncToken(authorization);
+  const isAdmin = admin !== null;
 
   if (!tokenOk && !isAdmin && !basicUser) {
     return {

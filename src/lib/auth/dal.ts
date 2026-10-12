@@ -44,3 +44,23 @@ export async function getOptionalUser(): Promise<CurrentUser | null> {
     select: { id: true, email: true, name: true, timezone: true, isAdmin: true },
   })
 }
+
+/**
+ * Renvoie l'utilisateur courant **uniquement s'il est administrateur**
+ * (`null` sinon). Centralise le contrôle de rôle côté serveur : les actions
+ * réservées à l'administration doivent passer par ce helper plutôt que de
+ * répéter `if (!user.isAdmin)`.
+ */
+export async function getAdminUser(): Promise<CurrentUser | null> {
+  const user = await getCurrentUser()
+  return user.isAdmin ? user : null
+}
+
+/**
+ * Variante non redirigeante pour les Route Handlers : renvoie l'utilisateur
+ * seulement s'il est connecté **et** administrateur (`null` sinon).
+ */
+export async function getOptionalAdmin(): Promise<CurrentUser | null> {
+  const user = await getOptionalUser()
+  return user?.isAdmin ? user : null
+}

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "../db";
-import { getCurrentUser } from "../auth/dal";
+import { getAdminUser, getCurrentUser } from "../auth/dal";
 import { hashPassword, verifyPassword } from "../password";
 import { readSession } from "../auth/session";
 import { clientIp, resetTokens, takeToken } from "../auth/rate-limit";
@@ -27,8 +27,8 @@ async function countAdmins(): Promise<number> {
 
 /** Active/désactive le rôle administrateur d'un autre compte. */
 export async function setUserAdmin(formData: FormData): Promise<void> {
-  const admin = await getCurrentUser();
-  if (!admin.isAdmin) return;
+  const admin = await getAdminUser();
+  if (!admin) return;
 
   const userId = String(formData.get("userId") ?? "");
   const makeAdmin = String(formData.get("isAdmin") ?? "") === "true";
@@ -49,8 +49,8 @@ export async function setUserAdmin(formData: FormData): Promise<void> {
 
 /** Supprime un compte et toutes ses données (cascade). */
 export async function deleteUser(formData: FormData): Promise<void> {
-  const admin = await getCurrentUser();
-  if (!admin.isAdmin) return;
+  const admin = await getAdminUser();
+  if (!admin) return;
 
   const userId = String(formData.get("userId") ?? "");
   if (!userId || userId === admin.id) return;
@@ -69,8 +69,8 @@ export async function resetUserPassword(
   formData: FormData,
 ): Promise<AdminState> {
   const { t } = await getI18n();
-  const admin = await getCurrentUser();
-  if (!admin.isAdmin) return { error: t("err.forbidden") };
+  const admin = await getAdminUser();
+  if (!admin) return { error: t("err.forbidden") };
 
   const userId = String(formData.get("userId") ?? "");
   const target = await prisma.user.findUnique({ where: { id: userId } });
@@ -94,8 +94,8 @@ export async function createInvitationAction(
   formData: FormData,
 ): Promise<AdminState> {
   const { t } = await getI18n();
-  const admin = await getCurrentUser();
-  if (!admin.isAdmin) return { error: t("err.forbidden") };
+  const admin = await getAdminUser();
+  if (!admin) return { error: t("err.forbidden") };
 
   const emailRaw = String(formData.get("email") ?? "")
     .trim()
@@ -118,8 +118,8 @@ export async function createInvitationAction(
 
 /** Révoque une invitation non consommée. */
 export async function revokeInvitation(formData: FormData): Promise<void> {
-  const admin = await getCurrentUser();
-  if (!admin.isAdmin) return;
+  const admin = await getAdminUser();
+  if (!admin) return;
   const id = String(formData.get("invitationId") ?? "");
   if (id) await deleteInvitation(id);
   revalidatePath("/settings");

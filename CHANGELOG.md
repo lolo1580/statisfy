@@ -182,6 +182,18 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Sécurité
 
+- **Comparaison du `SYNC_TOKEN` en temps constant** partout où il est vérifié
+  (`/api/sync`, `/api/backup`, `/api/export/db`, imports) via un helper commun
+  (`src/lib/auth/sync-token.ts`) : lève l'incohérence qui subsistait avec
+  `/api/sync`.
+- **Contrôle du rôle administrateur centralisé** (`getAdminUser` /
+  `getOptionalAdmin`) : toutes les actions réservées à l'administration passent
+  par une seule vérification, ce qui évite tout oubli futur.
+- **Accès Spotify administré** : les actions `approve`/`reject`/`revoke`
+  n'agissent plus sur le compte de l'administrateur lui-même et **tolèrent un
+  identifiant inexistant** (`updateMany` au lieu de `update`), là où une erreur
+  `500` était possible.
+
 - **Anti-SSRF sur les visuels distants** : `GET /api/wrapped/image` n'accepte
   plus que les URLs http(s) vers un hôte public (résolution DNS incluse) et
   refuse les adresses privées / loopback / lien-local ; il limite la taille

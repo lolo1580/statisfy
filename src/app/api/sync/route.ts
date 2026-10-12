@@ -1,18 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
-import crypto from "node:crypto";
-import { getOptionalUser } from "@/lib/auth/dal";
-import { syncMinIntervalMs, syncToken } from "@/lib/env";
+import { getOptionalAdmin } from "@/lib/auth/dal";
+import { hasValidSyncToken } from "@/lib/auth/sync-token";
+import { syncMinIntervalMs } from "@/lib/env";
 import { syncAllDue } from "@/lib/sync/engine";
 
 export const dynamic = "force-dynamic";
-
-/** Comparaison de chaînes en temps constant. */
-function safeEqual(a: string, b: string): boolean {
-  const ab = Buffer.from(a);
-  const bb = Buffer.from(b);
-  if (ab.length !== bb.length) return false;
-  return crypto.timingSafeEqual(ab, bb);
-}
 
 /**
  * Déclenche la synchronisation de toutes les sources dues.
@@ -23,12 +15,9 @@ function safeEqual(a: string, b: string): boolean {
  *   curl -X POST -H "Authorization: Bearer $SYNC_TOKEN" https://.../api/sync
  */
 async function handle(request: NextRequest) {
-  const provided =
-    request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-
-  const admin = await getOptionalUser();
-  const tokenOk = syncToken.length > 0 && safeEqual(provided, syncToken);
-  const authorized = tokenOk || Boolean(admin?.isAdmin);
+  const admin = await getOptionalAdmin();
+  const authorized =
+    hasValidSyncToken(request.headers.get("authorization")) || admin !== null;
 
   if (!authorized) {
     return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
