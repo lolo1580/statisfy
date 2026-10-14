@@ -45,8 +45,14 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
   partagé via un **lien public en lecture seule** (activation/désactivation
   dans les Réglages).
 - **Statut** : santé de l'instance (totaux d'écoute, dernière synchro, uptime,
-  taille de la base, sauvegardes, activité récente) intégrée à la page
-  **Réglages**.
+  taille de la base, sauvegardes, activité récente) intégrée à **l'espace
+  d'administration** (`/admin`).
+- **Administration & journal d'événements** : des pages dédiées `/admin`
+  (vue d'ensemble, utilisateurs, invitations, accès Spotify, instance) et un
+  **journal d'événements** persistant (authentification, actions admin,
+  connexions OAuth Spotify, échecs de sync/import) filtrable par niveau, origine
+  et dates, exportable en **CSV ou JSON**, vidable, et transmissible en option à
+  un serveur de logs externe (Graylog via GELF HTTP/UDP ou syslog).
 - **Filtres** : par période (aujourd'hui, semaine, mois, année, tout — calendaire,
   dans le fuseau du compte ; **défaut : aujourd'hui**).
 - **Multilingue** : anglais (par défaut) et français, avec sélecteur de langue
@@ -109,11 +115,11 @@ conserver sur une instance publique.
 
 Statisfy est **multi-utilisateur** : chaque personne crée son compte et connecte
 son **propre** compte Spotify (Réglages → Connecter Spotify) ; les écoutes, les
-statistiques et les connexions sont isolées par compte. Depuis
-**Réglages → Utilisateurs**, un administrateur peut nommer d'autres admins,
-réinitialiser un mot de passe ou supprimer un compte, et générer des **liens
-d'invitation** (« Invitations ») — utile pour garder les inscriptions fermées
-tout en invitant au cas par cas.
+statistiques et les connexions sont isolées par compte. Depuis **l'espace
+d'administration** (`/admin`), un administrateur peut nommer d'autres admins,
+réinitialiser un mot de passe ou supprimer un compte, gérer les **utilisateurs**,
+les **invitations** et valider les **demandes d'accès Spotify** — utile pour
+garder les inscriptions fermées tout en invitant au cas par cas.
 
 ### Production locale
 
@@ -179,7 +185,7 @@ docker compose -f docker-compose.prod.yml up -d
 ```
 
 Épinglez une autre version avec `STATISFY_IMAGE` (ex.
-`ghcr.io/lolo1580/statisfy:1.0.1`) et réglez `STATISFY_BIND` si votre proxy est
+`ghcr.io/lolo1580/statisfy:1.1.0`) et réglez `STATISFY_BIND` si votre proxy est
 sur un autre réseau.
 
 ## ⚙️ Configuration
@@ -200,6 +206,98 @@ Toutes les variables sont documentées dans [`.env.example`](.env.example).
 | `SYNC_TOKEN` | Jeton protégeant `POST /api/sync` (utilisé par le cron). |
 | `SYNC_MIN_INTERVAL_MS` | Intervalle minimal entre deux synchros déclenchées par l'API (défaut `120000`). |
 | `BACKUP_KEEP` | Nombre de sauvegardes de la base conservées (défaut `7`). |
+| `LOG_RETENTION_DAYS` | Rétention du journal d'événements en jours (défaut `90`, `0` = illimité). |
+| `LOG_SINK` | Envoi des événements vers un serveur de logs externe : `gelf-http`, `gelf-udp`, `gelf-tcp`, `syslog-udp`, `syslog-tcp`, `json-http`, `loki`, `elasticsearch`, `otlp-http` ou `file` (vide = désactivé). |
+| `LOG_SINK_URL` | URL de l'endpoint HTTP (GELF HTTP, JSON générique, push Loki, Elasticsearch/OpenSearch, OTLP). |
+| `LOG_SINK_HEADERS` | En-têtes HTTP additionnels au format JSON, ex. `{"Authorization":"Bearer …"}`. |
+| `LOG_SINK_INDEX` | Index Elasticsearch/OpenSearch (défaut `statisfy-logs`). |
+| `LOG_SINK_LABELS` | Labels Loki statiques supplémentaires (JSON), ex. `{"env":"prod"}`. |
+| `LOG_SINK_FILE` / `LOG_SINK_FILE_MAX_MB` / `LOG_SINK_FILE_FORMAT` | Fichier de sortie (agent Wazuh), taille de rotation en Mo (défaut `10`) et format de ligne `json` (défaut) ou `raw`. |
+| `LOG_SINK_HOST` / `LOG_SINK_PORT` | Hôte/port cible (défauts `12201` en GELF, `514` en syslog). |
+| `LOG_SINK_TLS` | Active TLS sur les transports TCP (`true`/`false`, défaut `false`). |
+| `LOG_SINK_TLS_REJECT_UNAUTHORIZED` | Vérifie le certificat du serveur (défaut `true` ; `false` réservé aux certificats auto-signés). |
+| `LOG_SINK_TLS_CA` | Chemin d'un bundle CA PEM (autorité de certification privée). |
+| `LOG_SINK_MIN_LEVEL` | Niveau minimal transmis : `debug` / `info` / `warn` / `error` (défaut `info`). |
+| `LOG_SINK_HOSTNAME` | Nom d'hôte signalé au serveur de logs (défaut : nom de l'application). |
+
+### Rediriger les logs (Graylog, GELF, syslog)
+
+En plus du journal en base, chaque entrée peut être transmise — en *best-effort*
+et sans bloquer les requêtes — à un serveur de logs externe. Le sink est
+**basé sur des protocoles** (indépendant d'un produit) : GELF (Graylog,
+Logstash, Fluent Bit…), syslog (rsyslog, syslog-ng, ELK…), JSON générique via
+HTTP, Grafana Loki, Elasticsearch/OpenSearch, OpenTelemetry/OTLP (SigNoz…), ou
+un fichier NDJSON local (agent Wazuh). Sélection via `LOG_SINK` :
+
+```bash
+# GELF via HTTP (recommandé : fiable, compatible proxy)
+LOG_SINK="gelf-http"
+LOG_SINK_URL="http://graylog:12201/gelf"
+
+# GELF via UDP (natif Graylog, port par défaut 12201)
+LOG_SINK="gelf-udp"
+LOG_SINK_HOST="graylog"
+LOG_SINK_PORT="12201"
+
+# GELF via TCP (délimité par un octet nul), TLS optionnel
+LOG_SINK="gelf-tcp"
+LOG_SINK_HOST="graylog"
+LOG_SINK_PORT="12201"
+LOG_SINK_TLS="true"                 # ou LOG_SINK="gelf-tcp-tls"
+LOG_SINK_TLS_REJECT_UNAUTHORIZED="true"
+# LOG_SINK_TLS_CA="/etc/ssl/private/ca.pem"   # autorité privée
+
+# Syslog RFC 5424 via UDP (port par défaut 514)
+LOG_SINK="syslog-udp"
+LOG_SINK_HOST="graylog"
+LOG_SINK_PORT="514"
+LOG_SINK_FACILITY="local0"
+
+# Syslog RFC 5424 via TCP (délimité par un saut de ligne), TLS optionnel
+LOG_SINK="syslog-tcp"
+LOG_SINK_HOST="graylog"
+LOG_SINK_PORT="514"
+LOG_SINK_TLS="true"                 # ou LOG_SINK="syslog-tcp-tls"
+
+# JSON générique via HTTP (Logstash, Fluent Bit, Vector, SaaS, endpoint maison…)
+LOG_SINK="json-http"
+LOG_SINK_URL="https://logs.example/ingest"
+LOG_SINK_HEADERS='{"Authorization":"Bearer xxx"}'
+
+# Grafana Loki (API push ; /loki/api/v1/push ajouté si absent)
+LOG_SINK="loki"
+LOG_SINK_URL="http://loki:3100"
+LOG_SINK_LABELS='{"env":"prod"}'
+
+# Elasticsearch / OpenSearch (API bulk ; /_bulk ajouté si absent)
+LOG_SINK="elasticsearch"
+LOG_SINK_URL="http://es:9200"
+LOG_SINK_INDEX="statisfy-logs"
+LOG_SINK_HEADERS='{"Authorization":"ApiKey xxx"}'
+
+# OpenTelemetry / OTLP HTTP (SigNoz, otel-collector ; /v1/logs ajouté si absent)
+LOG_SINK="otlp-http"
+LOG_SINK_URL="http://signoz-otel-collector:4318"
+
+# Fichier NDJSON local (lu par un agent Wazuh via `localfile`, log_format: json)
+LOG_SINK="file"
+LOG_SINK_FILE="/logs/statisfy-events.ndjson"
+LOG_SINK_FILE_MAX_MB="10"
+```
+
+Les entrées sont mises en file d'attente en mémoire (bornée) et envoyées de
+façon asynchrone : un serveur de logs lent ou injoignable ne ralentit jamais
+l'application. Les transports TCP maintiennent une connexion persistante
+(rétablie en cas d'échec). Les trames GELF/TCP sont délimitées par un octet nul,
+celles de syslog/TCP par un saut de ligne. Le bouton **« Tester l'envoi »** dans
+`/admin/logs` permet de valider la configuration. Quand `LOG_SINK` est vide
+(défaut), rien n'est transmis.
+
+> **Wazuh** : avec `LOG_SINK=file`, pointez `LOG_SINK_FILE` vers un volume monté
+> (ex. `/logs/statisfy-events.ndjson`) et déclarez-le dans la config de l'agent :
+> `<localfile><log_format>json</log_format><location>/logs/statisfy-events.ndjson</location></localfile>`.
+> **SigNoz** : avec `LOG_SINK=otlp-http`, ciblez l'endpoint OTLP HTTP (`:4318`) ;
+> passez la clé d'ingestion via `LOG_SINK_HEADERS` pour SigNoz Cloud.
 
 ## ♻️ Migration depuis SQLite
 
@@ -309,6 +407,7 @@ Dans les deux cas, l'import est **idempotent** (relancer ne crée pas de doublon
 | `POST /api/import/your-spotify` | Importe un dump *Your Spotify* (archive `.zip`) depuis un serveur. Auth : `Bearer $SYNC_TOKEN`, HTTP Basic (`-u email:motdepasse`) ou session admin. |
 | `GET /api/export` | Export CSV de l'historique de l'utilisateur connecté. |
 | `GET /api/export/db` | Dump complet de la base PostgreSQL (`.dump`). Auth : `Bearer $SYNC_TOKEN` ou session admin. |
+| `GET /api/admin/logs/export` | Export du journal d'événements (`?format=csv\|json` + `level`, `source`, `q`, `from`, `to`). Auth : `Bearer $SYNC_TOKEN` ou session admin. |
 | `GET /api/wrapped/image` | Image PNG du récapitulatif (`?year=2026&month=10`). |
 | `GET /oauth/spotify/callback` | Retour OAuth Spotify (à déclarer côté Spotify). |
 | `GET /api/sources/spotify/start` | Démarre l'OAuth Spotify. |
