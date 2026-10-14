@@ -27,7 +27,7 @@ export async function deleteConnection(formData: FormData): Promise<void> {
   if (id) {
     await prisma.sourceConnection.deleteMany({ where: { id, userId: user.id } });
   }
-  revalidatePath("/settings");
+  revalidatePath("/settings/sources");
 }
 
 export async function syncConnection(
@@ -44,12 +44,12 @@ export async function syncConnection(
 
   try {
     const result = await runSyncForConnection(connection.id);
-    revalidatePath("/settings");
+    revalidatePath("/settings/sources");
     revalidatePath("/dashboard");
     return { ok: true, message: t("msg.syncDone", { count: result.inserted }) };
   } catch (error) {
     console.error("[sync] échec de la synchronisation", error);
-    revalidatePath("/settings");
+    revalidatePath("/settings/sources");
     return { error: t("err.syncFailed") };
   }
 }
@@ -89,7 +89,7 @@ export async function importHistory(
       // L'enrichissement est optionnel : l'import reste valide sans lui.
     }
 
-    revalidatePath("/settings");
+    revalidatePath("/settings/import");
     revalidatePath("/dashboard");
     return {
       ok: true,
@@ -133,7 +133,7 @@ export async function importYourSpotify(
     const { plays } = mapYourSpotifyData(data);
     const result = await runPlaysIngest(user.id, plays);
 
-    revalidatePath("/settings");
+    revalidatePath("/settings/import");
     revalidatePath("/dashboard");
     return {
       ok: true,
@@ -157,7 +157,7 @@ export async function enrichImages(
   const user = await getCurrentUser();
   try {
     const result = await enrichMissingImages(user.id, { max: 80 });
-    revalidatePath("/settings");
+    revalidatePath("/settings/sources");
     revalidatePath("/dashboard");
     revalidatePath("/top");
     revalidatePath("/history");

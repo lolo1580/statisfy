@@ -182,6 +182,11 @@ export const fr: Dictionary = {
 
   // Settings
   "settings.title": "Réglages",
+  "settings.nav.account": "Compte",
+  "settings.nav.sources": "Spotify & sources",
+  "settings.nav.import": "Import",
+  "settings.nav.activity": "Activité",
+  "settings.nav.data": "Données",
   "settings.account": "Compte",
   "settings.timezone": "Fuseau horaire (utilisé pour les statistiques)",
   "settings.save": "Enregistrer",

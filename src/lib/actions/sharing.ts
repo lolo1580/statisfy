@@ -26,7 +26,7 @@ export async function enableWrappedShare(): Promise<void> {
     where: { id: user.id },
     data: { wrappedShareToken: token },
   });
-  revalidatePath("/settings");
+  revalidatePath("/settings/data");
 }
 
 /** Désactive le partage public du récapitulatif. */
@@ -36,5 +36,5 @@ export async function disableWrappedShare(): Promise<void> {
     where: { id: user.id },
     data: { wrappedShareToken: null },
   });
-  revalidatePath("/settings");
+  revalidatePath("/settings/data");
 }

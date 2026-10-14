@@ -57,7 +57,7 @@ export async function requestSpotifyAccess(
     },
   });
 
-  revalidatePath("/settings");
+  revalidatePath("/settings/sources");
   return { ok: true, message: t("msg.spotifyRequested") };
 }
 
@@ -151,5 +151,5 @@ export async function cancelSpotifyRequest(): Promise<void> {
     where: { id: user.id, spotifyAccessStatus: SPOTIFY_ACCESS_PENDING },
     data: { spotifyAccessStatus: SPOTIFY_ACCESS_NONE, spotifyDecidedAt: null },
   });
-  revalidatePath("/settings");
+  revalidatePath("/settings/sources");
 }

@@ -184,12 +184,12 @@ export default async function DashboardPage({
           <ul className="space-y-2">
             <ChecklistItem
               done={hasSpotify}
-              href="/settings"
+              href="/settings/sources"
               label={t("checklist.connect")}
             />
             <ChecklistItem
               done={hasImport}
-              href="/settings"
+              href="/settings/import"
               label={t("checklist.import")}
             />
             <ChecklistItem
@@ -229,7 +229,7 @@ export default async function DashboardPage({
         ) : (
           <EmptyState>
             {t("dash.empty")}{" "}
-            <Link href="/settings" className="text-accent hover:underline">
+            <Link href="/settings/sources" className="text-accent hover:underline">
               {t("nav.settings")}
             </Link>
           </EmptyState>
