@@ -32,7 +32,7 @@ export default async function AppLayout({
           <span aria-hidden>🎧</span>
           {appName}
         </Link>
-        <Nav pendingCount={pendingRequests} />
+        <Nav pendingCount={pendingRequests} isAdmin={user.isAdmin} />
         <form action="/search" className="order-last w-full sm:order-none sm:w-56">
           <input
             type="search"

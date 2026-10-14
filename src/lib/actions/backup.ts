@@ -6,6 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { getAdminUser } from "../auth/dal";
 import { restoreDatabase, runBackup } from "../backup";
+import { logEvent, errorMessage } from "../log";
 import { getI18n } from "@/i18n/server";
 
 export type RestoreState =
@@ -38,9 +39,22 @@ export async function restoreBackup(
     // Sauvegarde de sécurité de l'état actuel avant d'écraser (best-effort).
     await runBackup().catch(() => undefined);
     await restoreDatabase(tmp);
-    revalidatePath("/settings");
+    await logEvent({
+      level: "warn",
+      source: "backup",
+      message: "Base de données restaurée",
+      userId: admin.id,
+    });
+    revalidatePath("/admin/instance");
     return { ok: true, message: t("msg.restoreDone") };
-  } catch {
+  } catch (error) {
+    await logEvent({
+      level: "error",
+      source: "backup",
+      message: "Échec de la restauration de la base",
+      userId: admin.id,
+      meta: { error: errorMessage(error) },
+    });
     return { error: t("err.restoreFailed") };
   } finally {
     fs.rmSync(tmp, { force: true });

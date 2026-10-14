@@ -202,5 +202,11 @@ export async function setRegistration(formData: FormData): Promise<void> {
   if (!admin) return;
   const enabled = String(formData.get("enabled") ?? "") === "true";
   await setSetting(SETTING_ALLOW_REGISTRATION, enabled ? "true" : "false");
-  revalidatePath("/settings");
+  await logEvent({
+    level: "info",
+    source: "admin",
+    message: enabled ? "Inscriptions activées" : "Inscriptions désactivées",
+    userId: admin.id,
+  });
+  revalidatePath("/admin/instance");
 }

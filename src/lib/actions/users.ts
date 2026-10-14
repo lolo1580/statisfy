@@ -31,6 +31,7 @@ export async function setUserAdmin(formData: FormData): Promise<void> {
   // On ne modifie pas son propre rôle : évite de se verrouiller par erreur.
   if (!userId || userId === admin.id) return;
 
+  let changed = false;
   try {
     // Isolation SERIALIZABLE : deux admins ne peuvent pas se rétrograder
     // concurremment jusqu'à n'en laisser aucun.
@@ -47,13 +48,23 @@ export async function setUserAdmin(formData: FormData): Promise<void> {
           where: { id: userId },
           data: { isAdmin: makeAdmin },
         });
+        changed = true;
       },
       { isolationLevel: "Serializable" },
     );
   } catch {
     // Course rare (échec de sérialisation) : on ne change rien.
   }
-  revalidatePath("/settings");
+  if (changed) {
+    await logEvent({
+      level: "info",
+      source: "admin",
+      message: makeAdmin ? "Rôle admin accordé" : "Rôle admin retiré",
+      userId: admin.id,
+      meta: { targetUserId: userId },
+    });
+  }
+  revalidatePath("/admin/users");
 }
 
 /** Supprime un compte et toutes ses données (cascade). */
@@ -64,6 +75,7 @@ export async function deleteUser(formData: FormData): Promise<void> {
   const userId = String(formData.get("userId") ?? "");
   if (!userId || userId === admin.id) return;
 
+  let deleted = false;
   try {
     await prisma.$transaction(
       async (tx) => {
@@ -74,13 +86,23 @@ export async function deleteUser(formData: FormData): Promise<void> {
           if (count <= 1) return;
         }
         await tx.user.delete({ where: { id: userId } });
+        deleted = true;
       },
       { isolationLevel: "Serializable" },
     );
   } catch {
     // Course rare (échec de sérialisation) : on ne supprime rien.
   }
-  revalidatePath("/settings");
+  if (deleted) {
+    await logEvent({
+      level: "warn",
+      source: "admin",
+      message: "Compte supprimé",
+      userId: admin.id,
+      meta: { targetUserId: userId },
+    });
+  }
+  revalidatePath("/admin/users");
 }
 
 /** Réinitialise le mot de passe d'un compte et affiche un mot de passe temporaire. */
@@ -104,7 +126,14 @@ export async function resetUserPassword(
   // Révoque les sessions existantes : le mot de passe a changé.
   await prisma.session.deleteMany({ where: { userId } });
 
-  revalidatePath("/settings");
+  await logEvent({
+    level: "warn",
+    source: "admin",
+    message: "Mot de passe réinitialisé",
+    userId: admin.id,
+    meta: { targetUserId: userId },
+  });
+  revalidatePath("/admin/users");
   return { ok: true, message: t("msg.passwordReset", { password }) };
 }
 
@@ -132,7 +161,14 @@ export async function createInvitationAction(
     days,
   });
 
-  revalidatePath("/settings");
+  await logEvent({
+    level: "info",
+    source: "admin",
+    message: "Invitation créée",
+    userId: admin.id,
+    meta: { email: emailRaw || null, days },
+  });
+  revalidatePath("/admin/invitations");
   return { ok: true, inviteUrl: `/register?invite=${invitation.token}` };
 }
 
@@ -142,7 +178,14 @@ export async function revokeInvitation(formData: FormData): Promise<void> {
   if (!admin) return;
   const id = String(formData.get("invitationId") ?? "");
   if (id) await deleteInvitation(id);
-  revalidatePath("/settings");
+  await logEvent({
+    level: "info",
+    source: "admin",
+    message: "Invitation révoquée",
+    userId: admin.id,
+    meta: { invitationId: id },
+  });
+  revalidatePath("/admin/invitations");
 }
 
 /** Change le mot de passe de l'utilisateur connecté. */

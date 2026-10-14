@@ -10,6 +10,7 @@ import {
   SPOTIFY_ACCESS_REJECTED,
 } from "../spotify-access";
 import { clientIp, takeToken } from "../auth/rate-limit";
+import { logEvent } from "../log";
 import { getI18n } from "@/i18n/server";
 
 export type SpotifyAccessState =
@@ -77,7 +78,14 @@ export async function approveSpotifyAccess(formData: FormData): Promise<void> {
       spotifyDecidedAt: new Date(),
     },
   });
-  revalidatePath("/settings");
+  await logEvent({
+    level: "info",
+    source: "admin",
+    message: "Accès Spotify approuvé",
+    userId: admin.id,
+    meta: { targetUserId: userId },
+  });
+  revalidatePath("/admin/spotify");
 }
 
 /** Un administrateur refuse une demande d'accès Spotify. */
@@ -95,7 +103,14 @@ export async function rejectSpotifyAccess(formData: FormData): Promise<void> {
       spotifyDecidedAt: new Date(),
     },
   });
-  revalidatePath("/settings");
+  await logEvent({
+    level: "info",
+    source: "admin",
+    message: "Accès Spotify refusé",
+    userId: admin.id,
+    meta: { targetUserId: userId },
+  });
+  revalidatePath("/admin/spotify");
 }
 
 /**
@@ -119,7 +134,14 @@ export async function revokeSpotifyAccess(formData: FormData): Promise<void> {
   await prisma.sourceConnection.deleteMany({
     where: { userId, type: "spotify" },
   });
-  revalidatePath("/settings");
+  await logEvent({
+    level: "warn",
+    source: "admin",
+    message: "Accès Spotify révoqué",
+    userId: admin.id,
+    meta: { targetUserId: userId },
+  });
+  revalidatePath("/admin/spotify");
 }
 
 /** L'utilisateur annule sa propre demande d'accès encore en attente. */

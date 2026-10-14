@@ -15,13 +15,23 @@ const LINKS = [
   { href: "/settings", key: "nav.settings" },
 ];
 
-export function Nav({ pendingCount = 0 }: { pendingCount?: number }) {
+export function Nav({
+  pendingCount = 0,
+  isAdmin = false,
+}: {
+  pendingCount?: number;
+  isAdmin?: boolean;
+}) {
   const pathname = usePathname();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
+  const links = isAdmin
+    ? [...LINKS, { href: "/admin", key: "nav.admin" }]
+    : LINKS;
+
   const badge = (href: string) =>
-    href === "/settings" && pendingCount > 0 ? (
+    href === "/admin" && pendingCount > 0 ? (
       <span
         title={t("nav.pendingRequests", { count: pendingCount })}
         className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white"
@@ -34,7 +44,7 @@ export function Nav({ pendingCount = 0 }: { pendingCount?: number }) {
     <>
       {/* Barre horizontale (à partir de md) */}
       <nav className="hidden items-center gap-1 md:flex">
-        {LINKS.map((link) => {
+        {links.map((link) => {
           const active = pathname === link.href;
           return (
             <Link
@@ -88,7 +98,7 @@ export function Nav({ pendingCount = 0 }: { pendingCount?: number }) {
           className="absolute right-0 top-full z-40 mt-2 w-56 rounded-xl border border-border bg-surface p-2 shadow-xl md:hidden"
         >
           <div className="flex flex-col gap-0.5">
-            {LINKS.map((link) => {
+            {links.map((link) => {
               const active = pathname === link.href;
               return (
                 <Link
