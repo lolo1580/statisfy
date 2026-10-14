@@ -36,10 +36,28 @@ services:
       SPOTIFY_REDIRECT_URI: "${SPOTIFY_REDIRECT_URI:-}"
       APP_URL: "${APP_URL:-}"
       COOKIE_DOMAIN: "${COOKIE_DOMAIN:-}"
+      TRUST_PROXY_HEADERS: "${TRUST_PROXY_HEADERS:-true}"
       SYNC_TOKEN: "${SYNC_TOKEN:-}"
       SYNC_MIN_INTERVAL_MS: "${SYNC_MIN_INTERVAL_MS:-120000}"
       BACKUP_DIR: "/backups"
       BACKUP_KEEP: "${BACKUP_KEEP:-7}"
+      LOG_RETENTION_DAYS: "${LOG_RETENTION_DAYS:-90}"
+      LOG_SINK: "${LOG_SINK:-}"
+      LOG_SINK_URL: "${LOG_SINK_URL:-}"
+      LOG_SINK_HEADERS: "${LOG_SINK_HEADERS:-}"
+      LOG_SINK_INDEX: "${LOG_SINK_INDEX:-statisfy-logs}"
+      LOG_SINK_LABELS: "${LOG_SINK_LABELS:-}"
+      LOG_SINK_FILE: "${LOG_SINK_FILE:-}"
+      LOG_SINK_FILE_MAX_MB: "${LOG_SINK_FILE_MAX_MB:-10}"
+      LOG_SINK_FILE_FORMAT: "${LOG_SINK_FILE_FORMAT:-json}"
+      LOG_SINK_HOST: "${LOG_SINK_HOST:-}"
+      LOG_SINK_PORT: "${LOG_SINK_PORT:-}"
+      LOG_SINK_TLS: "${LOG_SINK_TLS:-false}"
+      LOG_SINK_TLS_REJECT_UNAUTHORIZED: "${LOG_SINK_TLS_REJECT_UNAUTHORIZED:-true}"
+      LOG_SINK_TLS_CA: "${LOG_SINK_TLS_CA:-}"
+      LOG_SINK_MIN_LEVEL: "${LOG_SINK_MIN_LEVEL:-info}"
+      LOG_SINK_HOSTNAME: "${LOG_SINK_HOSTNAME:-}"
+      LOG_SINK_TIMEOUT_MS: "${LOG_SINK_TIMEOUT_MS:-2000}"
     ports:
       # Exposé en local uniquement : placez un reverse proxy (HTTPS) devant.
       # Si votre proxy est un conteneur sur un autre réseau Docker, remplacez
@@ -47,6 +65,8 @@ services:
       - "${STATISFY_BIND:-127.0.0.1}:3000:3000"
     volumes:
       - ./backups:/backups
+      # Sortie du sink `file` (lisible par l'agent Wazuh sur l'hôte).
+      - ./logs:/logs
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:3000/login || exit 1"]
       interval: 30s

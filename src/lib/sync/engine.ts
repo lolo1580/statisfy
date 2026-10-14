@@ -5,6 +5,7 @@ import { decryptJson, encryptJson } from '../crypto'
 import { getAdapter } from '../sources/registry'
 import { parseSpotifyHistoryFiles } from '../sources/importer'
 import type { RawPlay } from '../sources/types'
+import { logEvent } from '../log'
 import { ingestPlays, type IngestResult } from './ingest'
 
 /** Connexions en cours de synchronisation (verrou par connexion). */
@@ -120,6 +121,17 @@ async function runSync(connectionId: string): Promise<IngestResult> {
       where: { id: connection.id },
       data: { status: 'error', lastError: message },
     })
+    await logEvent({
+      level: 'error',
+      source: 'sync',
+      message: 'Échec de synchronisation',
+      userId: connection.userId,
+      meta: {
+        connectionId: connection.id,
+        connection: connection.displayName,
+        error: message,
+      },
+    })
     throw error
   }
 }
@@ -153,6 +165,13 @@ export async function runImport(
     await prisma.job.update({
       where: { id: job.id },
       data: { status: 'error', error: message, finishedAt: new Date() },
+    })
+    await logEvent({
+      level: 'error',
+      source: 'import',
+      message: "Échec de l'import",
+      userId,
+      meta: { error: message },
     })
     throw error
   }
@@ -214,6 +233,13 @@ export async function runPlaysIngest(
     await prisma.job.update({
       where: { id: job.id },
       data: { status: 'error', error: message, finishedAt: new Date() },
+    })
+    await logEvent({
+      level: 'error',
+      source: 'import',
+      message: "Échec de l'import",
+      userId,
+      meta: { error: message },
     })
     throw error
   }

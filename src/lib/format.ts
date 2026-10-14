@@ -126,6 +126,39 @@ export function startOfLocalDay(timeZone: string, now: Date = new Date()): Date 
   return localMidnight(timeZone, year, month, day)
 }
 
+/**
+ * Instant (UTC) correspondant à minuit local pour une date locale « YYYY-MM-DD »
+ * (champ `<input type="date">`). Renvoie `null` si la date est invalide.
+ */
+export function startOfLocalDayKey(timeZone: string, key: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key)
+  if (!match) return null
+  const year = Number(match[1])
+  const month = Number(match[2]) - 1
+  const day = Number(match[3])
+  // Rejette les dates « impossibles » (ex. 2026-02-30) que Date normalise.
+  const check = new Date(Date.UTC(year, month, day))
+  if (
+    check.getUTCFullYear() !== year ||
+    check.getUTCMonth() !== month ||
+    check.getUTCDate() !== day
+  ) {
+    return null
+  }
+  return localMidnight(timeZone, year, month, day)
+}
+
+/** Jour suivant d'une date locale « YYYY-MM-DD » (ou `null` si invalide). */
+export function nextLocalDayKey(key: string): string | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key)
+  if (!match) return null
+  const date = new Date(
+    Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]) + 1),
+  )
+  if (Number.isNaN(date.getTime())) return null
+  return date.toISOString().slice(0, 10)
+}
+
 /** Début de la semaine locale (lundi). */
 export function startOfLocalWeek(timeZone: string, now: Date = new Date()): Date {
   const { year, month, day, dow } = localParts(timeZone, now)

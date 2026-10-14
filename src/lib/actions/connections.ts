@@ -10,6 +10,7 @@ import {
   mapYourSpotifyData,
 } from "../sources/your-spotify";
 import { SETTING_ALLOW_REGISTRATION, setSetting } from "../settings";
+import { logEvent, errorMessage } from "../log";
 import { getI18n } from "@/i18n/server";
 
 export type SettingsState =
@@ -171,6 +172,13 @@ export async function enrichImages(
     };
   } catch (error) {
     console.error("[enrich] échec de l'enrichissement", error);
+    await logEvent({
+      level: "error",
+      source: "source",
+      message: "Échec de l'enrichissement des visuels",
+      userId: user.id,
+      meta: { error: errorMessage(error) },
+    });
     return { error: t("err.enrichFailed") };
   }
 }

@@ -8,6 +8,7 @@ import { createSession, deleteSession } from "./session";
 import { clientIp, resetTokens, takeToken } from "./rate-limit";
 import { registrationAllowed } from "../settings";
 import { findUsableInvitation } from "../invitations";
+import { logEvent } from "../log";
 import { getI18n } from "@/i18n/server";
 
 /**
@@ -154,6 +155,14 @@ export async function register(
   }
 
   await createSession(user.id);
+  await logEvent({
+    level: "info",
+    source: "auth",
+    message: "Compte créé",
+    userId: user.id,
+    ip,
+    meta: { email, invitation: Boolean(invitation) },
+  });
   redirect("/dashboard");
 }
 
@@ -190,12 +199,27 @@ export async function login(
     user?.passwordHash ?? DUMMY_PASSWORD_HASH,
   );
   if (!user || !passwordOk) {
+    await logEvent({
+      level: "warn",
+      source: "auth",
+      message: "Échec de connexion",
+      userId: user?.id ?? null,
+      ip,
+      meta: { email },
+    });
     return { error: t("autherr.credentials"), values: { email } };
   }
 
   resetTokens(userKey);
   resetTokens(ipKey);
   await createSession(user.id);
+  await logEvent({
+    level: "info",
+    source: "auth",
+    message: "Connexion réussie",
+    userId: user.id,
+    ip,
+  });
   redirect("/dashboard");
 }
 

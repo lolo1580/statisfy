@@ -202,6 +202,29 @@ model Job {
   @@index([userId, status])
 }
 
+// Journal d'événements de l'instance (auth, administration, sync/import…).
+// Conservé même si le compte associé est supprimé (userId passe à null).
+model LogEntry {
+  id        String   @id @default(cuid())
+  // debug | info | warn | error
+  level     String   @default("info")
+  // auth | admin | sync | import | backup | source | system
+  source    String
+  message   String
+  // JSON libre : détails (compteurs, action, cible…).
+  meta      String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([level, createdAt])
+  @@index([source, createdAt])
+  @@index([userId, createdAt])
+}
+
 // Préférences globales (clé/valeur JSON).
 model AppSetting {
   key       String   @id

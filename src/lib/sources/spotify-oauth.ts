@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { prisma } from '../db'
 import { encryptJson } from '../crypto'
 import { appUrl, cookieDomain } from '../env'
+import { logEvent, errorMessage } from '../log'
 import { exchangeSpotifyCode } from './spotify'
 import { spotifyFetch } from './spotify-http'
 import {
@@ -57,13 +58,36 @@ export async function handleSpotifyCallback(request: NextRequest) {
   const fallback = appOrigin ?? reqOrigin ?? new URL(request.url).origin
   const requested = normalizeOrigin(state?.ret)
   const base = requested && allowed.has(requested) ? requested : fallback
-  const back = (query: string) => NextResponse.redirect(`${base}/settings${query}`)
+  const back = (query: string) => NextResponse.redirect(`${base}/settings/sources${query}`)
 
-  if (oauthError) return back('?error=spotify_denied')
-  if (!state || !code) return back('?error=spotify_state')
+  if (oauthError) {
+    await logEvent({
+      level: 'warn',
+      source: 'source',
+      message: 'Autorisation Spotify refusée',
+      userId: state?.uid ?? null,
+    })
+    return back('?error=spotify_denied')
+  }
+  if (!state || !code) {
+    await logEvent({
+      level: 'warn',
+      source: 'source',
+      message: 'Retour OAuth Spotify invalide',
+    })
+    return back('?error=spotify_state')
+  }
 
   // Liaison au navigateur quand le cookie est disponible (même hôte).
-  if (cookieState && cookieState !== rawState) return back('?error=spotify_state')
+  if (cookieState && cookieState !== rawState) {
+    await logEvent({
+      level: 'warn',
+      source: 'source',
+      message: 'Retour OAuth Spotify invalide',
+      userId: state.uid,
+    })
+    return back('?error=spotify_state')
+  }
 
   try {
     const credentials = await exchangeSpotifyCode(code)
@@ -100,8 +124,23 @@ export async function handleSpotifyCallback(request: NextRequest) {
       },
     })
 
+    await logEvent({
+      level: 'info',
+      source: 'source',
+      message: 'Compte Spotify connecté',
+      userId: state.uid,
+      meta: { connection: displayName },
+    })
+
     return back('?ok=spotify')
-  } catch {
+  } catch (error) {
+    await logEvent({
+      level: 'error',
+      source: 'source',
+      message: "Échec de l'échange de jeton Spotify",
+      userId: state?.uid ?? null,
+      meta: { error: errorMessage(error) },
+    })
     return back('?error=spotify_exchange')
   }
 }

@@ -8,6 +8,7 @@ import {
   type AdminState,
 } from "@/lib/actions/users";
 import { restoreBackup, type RestoreState } from "@/lib/actions/backup";
+import { testLogSink, type LogTestState } from "@/lib/actions/logs";
 import { INVITATION_TTL_CHOICES } from "@/lib/invitation-rules";
 import { useI18n } from "@/components/i18n-provider";
 import { Feedback, inputClass } from "@/components/form-ui";
@@ -230,5 +231,29 @@ export function RestoreForm() {
         {pending ? t("settings.restoring") : t("settings.restoreCta")}
       </button>
     </form>
+  );
+}
+
+/** Bouton de test de l'envoi vers le serveur de logs externe (admin). */
+export function TestLogSinkButton() {
+  const { t } = useI18n();
+  const [state, action, pending] = useActionState<LogTestState, FormData>(
+    testLogSink,
+    undefined,
+  );
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <form action={action}>
+        <button
+          type="submit"
+          disabled={pending}
+          className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-50"
+        >
+          {pending ? t("admin.logTestSending") : t("admin.logTest")}
+        </button>
+      </form>
+      <Feedback state={state} />
+    </div>
   );
 }

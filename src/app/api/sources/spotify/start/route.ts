@@ -9,6 +9,7 @@ import {
   signOAuthState,
 } from "@/lib/sources/spotify-state";
 import { appUrl, cookieDomain, spotify } from "@/lib/env";
+import { logEvent } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,13 @@ export async function GET() {
     path: "/",
     maxAge: 600,
     ...(cookieDomain ? { domain: cookieDomain } : {}),
+  });
+
+  await logEvent({
+    level: "info",
+    source: "source",
+    message: "Connexion Spotify démarrée",
+    userId: user.id,
   });
 
   return NextResponse.redirect(buildSpotifyAuthUrl(state));
