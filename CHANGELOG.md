@@ -7,6 +7,83 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-10-14
+
+### Ajouté
+
+- **Journal d'événements** : nouvelle table `LogEntry` et page **`/admin/logs`**
+  listant l'activité de l'instance (authentification, actions d'administration,
+  connexions OAuth Spotify, échecs de synchronisation/import, restauration) avec
+  filtres par **niveau**, **origine**, **plage de dates (du/au, fuseau du compte)**
+  et recherche plein texte. **Export CSV et JSON** via
+  `GET /api/admin/logs/export` (session admin ou `Bearer $SYNC_TOKEN`), paginé et
+  filtrable, et bouton **« Vider le journal »** (avec confirmation). Rétention
+  configurable par `LOG_RETENTION_DAYS` (défaut 90 jours, `0` = illimité), purgée
+  à l'ouverture de la page.
+
+- **Redirection des logs vers un serveur externe** : chaque événement peut être
+  transmis en plus de l'écriture en base, via des protocoles standards (sans
+  dépendance npm) : **GELF HTTP/UDP/TCP** (Graylog, Logstash, Fluent Bit…),
+  **Syslog RFC 5424 UDP/TCP**, **JSON générique via HTTP** (SaaS, endpoint
+  maison), **Grafana Loki** (API push), **Elasticsearch/OpenSearch** (API
+  bulk), **OpenTelemetry/OTLP HTTP** (SigNoz, otel-collector) et **fichier NDJSON
+  local** (agent Wazuh, rotation incluse, format `json` ou `raw`). Configuration
+  par `LOG_SINK`
+  (+ `LOG_SINK_URL`, `LOG_SINK_HEADERS`, `LOG_SINK_INDEX`, `LOG_SINK_LABELS`,
+  `LOG_SINK_FILE`) avec **TLS optionnel** sur les transports TCP
+  (`LOG_SINK_TLS*`). Envoi **best-effort** et asynchrone (file bornée,
+  connexion TCP persistante rétablie en cas d'échec) qui ne bloque jamais les
+  requêtes, seuil de niveau configurable (`LOG_SINK_MIN_LEVEL`), et bouton
+  **« Tester l'envoi »** dans `/admin/logs`.
+
+- **Espace d'administration dédié** (`/admin`) : chaque domaine a désormais sa
+  propre page — **Vue d'ensemble** (compteurs + état système), **Utilisateurs**,
+  **Invitations**, **Accès Spotify** et **Instance** (inscriptions, sauvegarde &
+  restauration). L'accès est réservé aux comptes administrateurs (contrôle
+  serveur dans le layout, redirection des autres comptes vers le tableau de
+  bord). Un lien **Admin** avec compteur de demandes en attente apparaît dans la
+  navigation.
+
+### Sécurité
+
+- **Dépendances** : `pnpm.overrides` épinglant les versions corrigées des
+  transitifs vulnérables du CLI Prisma (`lodash` 4.18.1, `mysql2` 3.24.5,
+  `deepmerge-ts` 8.0.2). `pnpm audit --prod` ne remonte plus aucune
+  vulnérabilité ; le CLI Prisma (`db push`, `generate`) reste fonctionnel.
+- **Injection de logs** : neutralisation des retours ligne et caractères de
+  contrôle dans les sinks *ligne par ligne* (syslog, fichier `raw`) — empêche la
+  forge de fausses entrées côté SIEM.
+- **Limiteur de débit** : bornage mémoire (éviction des plus anciens) en cas de
+  flood de clés distinctes.
+- **`GET /api/sync`** : n'accepte plus la session (cookie) — jeton `Bearer`
+  uniquement, pour éviter un déclenchement par navigation.
+- **Bandeau de notification** : seules les valeurs connues sont affichées
+  (plus de reflet arbitraire d'un paramètre d'URL).
+- **Rotation de session** : le changement de mot de passe détruit toutes les
+  sessions puis en ouvre une nouvelle (le jeton change).
+- **En-têtes de proxy** : `X-Forwarded-For` / `X-Real-IP` sont désormais validés
+  comme adresses IP réelles (sinon « local »), sans retomber sur un saut forgé
+  par le client.
+- **Surveillance des dépendances** : étape `pnpm audit --prod --audit-level high`
+  dans la CI et configuration **Dependabot** (npm/pnpm + GitHub Actions,
+  hebdomadaire, mises à jour mineures regroupées).
+- **Sessions** : durée de vie ramenée à **7 jours** (`SESSION_TTL_DAYS`) et ajout
+  d'un **timeout d'inactivité de 24 h** (`SESSION_IDLE_HOURS`, via
+  `Session.lastUsedAt` rafraîchi au plus toutes les 5 min) ; les sessions
+  expirées ou inactives sont supprimées.
+
+### Modifié
+
+- **Réglages** : les cartes réservées à l'administration (utilisateurs,
+  invitations, demandes Spotify, restauration, inscriptions, état système) sont
+  déplacées vers `/admin` ; la page Réglages ne conserve que les réglages
+  personnels. `/status` redirige désormais vers `/admin`.
+- **Réglages en sous-pages** : la page Réglages adopte la même structure que
+  l'espace d'administration, avec des onglets et **une page par section** —
+  *Compte*, *Spotify & sources*, *Import*, *Activité* et *Données*. Les
+  redirections OAuth Spotify pointent vers l'onglet *Spotify & sources* et le
+  bandeau de notification reste visible quel que soit l'onglet.
+
 ## [1.0.1] — 2026-10-12
 
 ### Ajouté
