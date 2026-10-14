@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "../db";
 import { getAdminUser, getCurrentUser } from "../auth/dal";
 import { hashPassword, verifyPassword } from "../password";
-import { readSession } from "../auth/session";
+import { createSession } from "../auth/session";
 import { clientIp, resetTokens, takeToken } from "../auth/rate-limit";
 import { createInvitation, deleteInvitation } from "../invitations";
 import { INVITATION_TTL_DAYS } from "../invitation-rules";
 import { generateTemporaryPassword } from "../temp-password";
+import { logEvent } from "../log";
 import { getI18n } from "@/i18n/server";
 
 export type AdminState =
@@ -219,11 +220,11 @@ export async function changePassword(
     where: { id: user.id },
     data: { passwordHash: await hashPassword(next) },
   });
-  // On garde la session courante mais on révoque les autres.
-  const session = await readSession();
-  await prisma.session.deleteMany({
-    where: { userId: user.id, ...(session ? { id: { not: session.sid } } : {}) },
-  });
+  // Rotation de session : on détruit **toutes** les sessions (y compris la
+  // courante) puis on en ouvre une nouvelle — le jeton de session change après
+  // un changement de mot de passe.
+  await prisma.session.deleteMany({ where: { userId: user.id } });
+  await createSession(user.id);
   resetTokens(rateKey);
   revalidatePath("/settings");
   return { ok: true, message: t("settings.passwordChanged") };

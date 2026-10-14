@@ -53,6 +53,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Audit dependencies
+        # Échoue sur toute vulnérabilité « high » ou « critical » parmi les
+        # dépendances de production (les overrides `pnpm-workspace.yaml` doivent
+        # rester à jour).
+        run: pnpm audit --prod --audit-level high
+
       - name: Validate Prisma schema
         run: pnpm db:push
 

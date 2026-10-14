@@ -51,9 +51,18 @@ async function runSync(connectionId: string): Promise<IngestResult> {
   })
 
   try {
-    const credentials = connection.credentials
-      ? decryptJson<Record<string, unknown>>(connection.credentials)
-      : {}
+    let credentials: Record<string, unknown>
+    try {
+      credentials = connection.credentials
+        ? decryptJson<Record<string, unknown>>(connection.credentials)
+        : {}
+    } catch {
+      // AES-GCM échoue si la clé de chiffrement a changé (ou si la base
+      // provient d'une autre instance) : message explicite pour l'UI.
+      throw new Error(
+        "Identifiants illisibles : CREDENTIALS_KEY a changé ou la base provient d'une autre instance. Supprimez puis reconnectez la source.",
+      )
+    }
     const config = connection.config
       ? (JSON.parse(connection.config) as Record<string, unknown>)
       : {}

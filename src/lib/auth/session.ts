@@ -6,15 +6,31 @@ import { prisma } from '../db'
 import { cookieDomain, getSessionSecret } from '../env'
 
 const COOKIE_NAME = 'statisfy_session'
-const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000 // 30 jours
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+function positiveIntEnv(name: string, fallback: number): number {
+  const value = Number(process.env[name])
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback
+}
+
+/** Durée de vie **absolue** d'une session (défaut 7 jours, `SESSION_TTL_DAYS`). */
+const SESSION_DURATION_MS = positiveIntEnv('SESSION_TTL_DAYS', 7) * DAY_MS
+
+/** Timeout d'**inactivité** (défaut 24 h, `SESSION_IDLE_HOURS`). */
+const SESSION_IDLE_MS =
+  positiveIntEnv('SESSION_IDLE_HOURS', 24) * 60 * 60 * 1000
+
+/** Intervalle minimal entre deux rafraîchissements de `lastUsedAt`. */
+const SESSION_TOUCH_MS = 5 * 60 * 1000
 
 export type SessionPayload = { uid: string; sid: string }
 
-async function sign(payload: SessionPayload): Promise<string> {
+async function sign(payload: SessionPayload, expiresAt: Date): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('30d')
+    .setExpirationTime(expiresAt)
     .sign(getSessionSecret())
 }
 
@@ -39,7 +55,7 @@ export async function createSession(userId: string): Promise<void> {
   const session = await prisma.session.create({
     data: { userId, expiresAt },
   })
-  const token = await sign({ uid: userId, sid: session.id })
+  const token = await sign({ uid: userId, sid: session.id }, expiresAt)
   const jar = await cookies()
   jar.set(COOKIE_NAME, token, {
     httpOnly: true,
@@ -53,7 +69,8 @@ export async function createSession(userId: string): Promise<void> {
 
 /**
  * Vérifie le cookie et confirme que la session existe toujours en base
- * (permet de révoquer une session côté serveur).
+ * (permet de révoquer une session côté serveur), qu'elle n'est ni expirée ni
+ * inactive depuis trop longtemps. Rafraîchit l'activité (throttlé).
  */
 export async function readSession(): Promise<SessionPayload | null> {
   const jar = await cookies()
@@ -61,8 +78,25 @@ export async function readSession(): Promise<SessionPayload | null> {
   if (!payload) return null
 
   const row = await prisma.session.findUnique({ where: { id: payload.sid } })
-  if (!row || row.expiresAt < new Date() || row.userId !== payload.uid) {
+  if (!row || row.userId !== payload.uid) return null
+
+  const now = Date.now()
+  if (
+    row.expiresAt.getTime() < now ||
+    now - row.lastUsedAt.getTime() > SESSION_IDLE_MS
+  ) {
+    // Expirée ou inactive : on nettoie la session.
+    await prisma.session
+      .deleteMany({ where: { id: row.id } })
+      .catch(() => undefined)
     return null
+  }
+
+  // Rafraîchit l'horodatage d'activité au plus toutes les 5 minutes.
+  if (now - row.lastUsedAt.getTime() > SESSION_TOUCH_MS) {
+    await prisma.session
+      .update({ where: { id: row.id }, data: { lastUsedAt: new Date(now) } })
+      .catch(() => undefined)
   }
 
   return payload

@@ -49,16 +49,20 @@ model User {
   connections SourceConnection[]
   plays       Play[]
   jobs        Job[]
+  logs        LogEntry[]
 
   createdInvitations Invitation[] @relation("InvitationCreatedBy")
   usedInvitations    Invitation[] @relation("InvitationUsedBy")
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  // Dernière activité : sert au timeout d'inactivité (rafraîchi au plus toutes
+  // les quelques minutes pour limiter les écritures).
+  lastUsedAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

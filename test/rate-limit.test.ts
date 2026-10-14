@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { resetTokens, takeToken } from "@/lib/rate-limit-store";
+import { bucketCount, resetTokens, takeToken } from "@/lib/rate-limit-store";
 
 describe("rate-limit-store", () => {
   it("autorise jusqu'à la limite puis refuse", () => {
@@ -37,5 +37,12 @@ describe("rate-limit-store", () => {
     expect(takeToken(a, 1, 1000)).toBe(true);
     expect(takeToken(a, 1, 1000)).toBe(false);
     expect(takeToken(b, 1, 1000)).toBe(true);
+  });
+
+  it("borne le nombre de seaux malgré un flood de clés distinctes", () => {
+    for (let i = 0; i < 6000; i += 1) {
+      takeToken(`flood-${i}`, 1, 60_000);
+    }
+    expect(bucketCount()).toBeLessThanOrEqual(5000);
   });
 });

@@ -14,10 +14,13 @@ export const dynamic = "force-dynamic";
  * Exemple de cron :
  *   curl -X POST -H "Authorization: Bearer $SYNC_TOKEN" https://.../api/sync
  */
-async function handle(request: NextRequest) {
-  const admin = await getOptionalAdmin();
+async function handle(request: NextRequest, allowSession: boolean) {
+  // Le jeton `Bearer` est toujours accepté. La session administrateur n'est
+  // acceptée qu'en POST : un GET déclenché par navigation (cookie `SameSite=Lax`)
+  // ne doit pas pouvoir lancer la synchronisation.
   const authorized =
-    hasValidSyncToken(request.headers.get("authorization")) || admin !== null;
+    hasValidSyncToken(request.headers.get("authorization")) ||
+    (allowSession && (await getOptionalAdmin()) !== null);
 
   if (!authorized) {
     return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
@@ -32,9 +35,9 @@ async function handle(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  return handle(request);
+  return handle(request, true);
 }
 
 export async function GET(request: NextRequest) {
-  return handle(request);
+  return handle(request, false);
 }

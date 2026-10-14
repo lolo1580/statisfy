@@ -21,6 +21,8 @@ services:
       # encoder dans une URL (`@`, `:`, `/`, `%`, `#`).
       DATABASE_URL: "postgresql://${POSTGRES_USER:-statisfy}:${POSTGRES_PASSWORD:?Renseignez POSTGRES_PASSWORD dans .env}@db:5432/${POSTGRES_DB:-statisfy}"
       SESSION_SECRET: "${SESSION_SECRET:?Renseignez SESSION_SECRET dans .env}"
+      SESSION_TTL_DAYS: "${SESSION_TTL_DAYS:-7}"
+      SESSION_IDLE_HOURS: "${SESSION_IDLE_HOURS:-24}"
       CREDENTIALS_KEY: "${CREDENTIALS_KEY:?Renseignez CREDENTIALS_KEY dans .env}"
       NEXT_PUBLIC_APP_NAME: "${NEXT_PUBLIC_APP_NAME:-Statisfy}"
       ALLOW_REGISTRATION: "${ALLOW_REGISTRATION:-true}"

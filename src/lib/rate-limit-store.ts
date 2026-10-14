@@ -12,19 +12,27 @@ type Bucket = { count: number; resetAt: number };
 const buckets = new Map<string, Bucket>();
 const MAX_BUCKETS = 5_000;
 
-function purge(now: number): void {
-  if (buckets.size < MAX_BUCKETS) return;
+/**
+ * Retire les seaux expirés ; si le plafond reste atteint (flood de clés
+ * distinctes), évince les plus anciens pour **borner la mémoire**.
+ */
+function evict(now: number): void {
   for (const [key, bucket] of buckets) {
     if (bucket.resetAt <= now) buckets.delete(key);
+  }
+  while (buckets.size >= MAX_BUCKETS) {
+    const oldest = buckets.keys().next().value;
+    if (oldest === undefined) break;
+    buckets.delete(oldest);
   }
 }
 
 /** Consomme un jeton ; renvoie `false` si la limite est dépassée. */
 export function takeToken(key: string, limit: number, windowMs: number): boolean {
   const now = Date.now();
-  purge(now);
   const bucket = buckets.get(key);
   if (!bucket || bucket.resetAt <= now) {
+    if (buckets.size >= MAX_BUCKETS) evict(now);
     buckets.set(key, { count: 1, resetAt: now + windowMs });
     return true;
   }

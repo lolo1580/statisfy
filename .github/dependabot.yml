@@ -1,0 +1,28 @@
+version: 2
+updates:
+  # Dépendances npm / pnpm (lit pnpm-lock.yaml).
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    # Regroupe les mises à jour mineures/correctives pour limiter le bruit.
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    # Prisma (CLI) et son client doivent être mis à jour manuellement ensemble
+    # (génération du client + `db push`) : on ignore les majeures.
+    ignore:
+      - dependency-name: "prisma"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@prisma/client"
+        update-types: ["version-update:semver-major"]
+
+  # Actions GitHub utilisées par les workflows.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
