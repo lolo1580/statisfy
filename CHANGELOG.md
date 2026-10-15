@@ -7,6 +7,15 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Modifié
+
+- **Image Docker allégée** : build en **sortie auto-portée**
+  (`output: "standalone"`) — le serveur n'embarque plus que les dépendances
+  réellement utilisées, au lieu de tout `node_modules`. L'image de production
+  passe d'environ **1,5 Go à ~850 Mo**. Le CLI Prisma, requis par l'entrypoint
+  pour `db push`, est installé dans un préfixe isolé (`/app/prisma-cli`), et le
+  serveur démarre via `node server.js`.
+
 ## [1.1.0] — 2026-10-14
 
 ### Ajouté

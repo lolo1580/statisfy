@@ -3,6 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // N'expose pas `X-Powered-By: Next.js`.
   poweredByHeader: false,
+  // Sortie auto-portée : `.next/standalone` ne contient que le serveur et les
+  // dépendances réellement utilisées (l'image Docker passe de ~1,5 Go à
+  // quelques centaines de Mo). Démarré par `node server.js`.
+  output: "standalone",
   // Dashboard fortement dynamique (base de données + cookies) : on reste sur
   // le modèle de cache classique plutôt que Cache Components.
   cacheComponents: false,

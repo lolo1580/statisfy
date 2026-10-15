@@ -15,7 +15,13 @@ if [ -n "${DATABASE_URL:-}" ] && [ -d /backups ] && command -v pg_dump >/dev/nul
 fi
 
 echo "→ Synchronisation du schéma de base de données…"
-./node_modules/.bin/prisma db push
+# Le CLI Prisma est isolé dans `/app/prisma-cli` (voir Dockerfile) : on s'y
+# place le temps du `db push` pour que `prisma.config.ts` résolve ses imports.
+(cd /app/prisma-cli && ./node_modules/.bin/prisma db push)
 
 echo "→ Démarrage de Statisfy sur le port ${PORT:-3000}…"
-exec ./node_modules/.bin/next start -H 0.0.0.0 -p "${PORT:-3000}"
+# `next start` est remplacé par le serveur `standalone` (`node server.js`).
+# On force l'écoute sur toutes les interfaces : `HOSTNAME` est défini par Docker
+# (ID du conteneur), ce qui lierait le serveur à la seule IP du conteneur.
+export HOSTNAME=0.0.0.0
+exec node server.js

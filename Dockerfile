@@ -30,16 +30,36 @@ COPY . .
 # mais aucune connexion réelle n'est faite. Le vrai DATABASE_URL est fourni
 # au runtime par docker-compose.
 ENV DATABASE_URL="postgresql://statisfy:statisfy@localhost:5432/statisfy"
-RUN pnpm build
-# Ne conserver que les dépendances de production (allège nettement l'image).
-RUN pnpm prune --prod \
+# `output: "standalone"` (next.config.ts) produit `.next/standalone` : le
+# serveur + les seules dépendances réellement utilisées. On n'a donc plus
+# besoin de `pnpm prune`.
+RUN pnpm build \
  && chmod +x docker-entrypoint.sh
+
+# --- CLI Prisma isolé ---
+# La sortie `standalone` de Next ne trace pas le CLI `prisma` (utilisé par
+# l'entrypoint pour `db push`). On l'installe dans un préfixe dédié plutôt que
+# d'embarquer tout `node_modules` de l'application.
+FROM base AS prisma
+ENV PRISMA_SKIP_POSTINSTALL_GENERATE=1
+WORKDIR /prisma
+RUN npm install --omit=dev prisma@7.10.0 "dotenv@^18"
 
 # --- Image finale ---
 FROM base AS runner
 ENV NODE_ENV=production
-# `--chown` évite une couche `chown -R` qui dupliquerait tout l'arbre.
-COPY --chown=node:node --from=build /app ./
+WORKDIR /app
+# Application auto-portée. `--chown` évite une couche `chown -R` qui
+# dupliquerait tout l'arbre.
+COPY --chown=node:node --from=build /app/.next/standalone ./
+COPY --chown=node:node --from=build /app/.next/static ./.next/static
+COPY --chown=node:node --from=build /app/public ./public
+# CLI Prisma + config/schéma, regroupés pour que `prisma.config.ts` resolve
+# `dotenv` et `prisma/config` depuis `./prisma-cli/node_modules`.
+COPY --chown=node:node --from=prisma /prisma/node_modules ./prisma-cli/node_modules
+COPY --chown=node:node --from=build /app/prisma.config.ts ./prisma-cli/prisma.config.ts
+COPY --chown=node:node --from=build /app/prisma ./prisma-cli/prisma
+COPY --chown=node:node --from=build /app/docker-entrypoint.sh ./docker-entrypoint.sh
 # Exécution sans privilèges (l'utilisateur `node` a l'UID/GID 1000, comme la
 # plupart des comptes hôtes ; le volume ./backups lui est accessible en écriture).
 USER node
