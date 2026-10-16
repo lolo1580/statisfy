@@ -9,6 +9,10 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Ajouté
 
+- **Import d'historique** : lien direct vers la page « Confidentialité » de
+  Spotify pour demander l'« historique d'écoute étendu » (`Extended streaming
+  history`). Le sélecteur de langue passe de menu déroulant à des **boutons
+  EN/FR**, dans le même style que le sélecteur de thème.
 - **Thème clair / sombre** : les couleurs sont désormais des jetons
   (`--background`, `--surface`, `--accent`, `--on-accent`, `--danger`…) résolus
   selon `color-scheme`, avec `light-dark()` (repli sombre pour les navigateurs

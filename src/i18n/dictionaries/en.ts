@@ -25,6 +25,9 @@ export const en: Dictionary = {
   "theme.light": "Light",
   "theme.dark": "Dark",
 
+  // Language
+  "locale.label": "Language",
+
   // Authentication
   "auth.tagline": "Your listening stats, at home.",
   "auth.email": "Email address",
@@ -208,6 +211,7 @@ export const en: Dictionary = {
   "settings.redirectUri": "Redirect URI to allow:",
   "settings.import": "Import Spotify history",
   "settings.importSubtitle": "From your Spotify privacy data",
+  "settings.importRequest": "Request your data on Spotify (Extended streaming history)",
   "settings.importHint":
     "Spotify data export (.zip) or the Streaming_History_Audio_*.json / StreamingHistory*.json files. Multiple files accepted.",
   "settings.importCta": "Import",
