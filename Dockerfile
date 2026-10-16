@@ -26,6 +26,10 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml prisma.config.ts ./
 COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
 COPY . .
+# `public/` peut être absent du contexte de build (dossier vide, non versionné) :
+# on garantit son existence pour que la copie depuis l'étape de build (`runner`)
+# ne casse pas — notamment au checkout CI.
+RUN mkdir -p public
 # URL factice : le client Prisma est instancié à l'import pendant le build,
 # mais aucune connexion réelle n'est faite. Le vrai DATABASE_URL est fourni
 # au runtime par docker-compose.
