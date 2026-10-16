@@ -183,7 +183,8 @@ jobs:
         run: |
           git show "${{ steps.prev.outputs.tag }}:prisma/schema.prisma" > /tmp/old-schema.prisma
           pnpm exec prisma migrate diff --from-empty --to-schema /tmp/old-schema.prisma --script > /tmp/old-schema.sql
-          pnpm exec prisma db execute --url "$DATABASE_URL" --stdin < /tmp/old-schema.sql
+          # `db execute` lit l'URL depuis prisma.config.ts / DATABASE_URL (pas de --url).
+          pnpm exec prisma db execute --stdin < /tmp/old-schema.sql
 
       - name: Build image
         if: steps.prev.outputs.tag != ''
