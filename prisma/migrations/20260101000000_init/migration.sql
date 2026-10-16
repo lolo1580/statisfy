@@ -94,7 +94,6 @@ CREATE TABLE "Play" (
     "albumId" TEXT,
     "playedAt" TIMESTAMP(3) NOT NULL,
     "msPlayed" INTEGER NOT NULL DEFAULT 0,
-    "counted" BOOLEAN NOT NULL DEFAULT true,
     "source" TEXT NOT NULL,
     "context" TEXT,
     "dedupKey" TEXT NOT NULL,
