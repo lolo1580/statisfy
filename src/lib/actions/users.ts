@@ -11,6 +11,7 @@ import { INVITATION_TTL_DAYS } from "../invitation-rules";
 import { generateTemporaryPassword } from "../temp-password";
 import { logEvent } from "../log";
 import { getI18n } from "@/i18n/server";
+import type { MutationOutcome } from "../optimistic";
 
 export type AdminState =
   | {
@@ -23,16 +24,18 @@ export type AdminState =
   | undefined;
 
 /** Active/désactive le rôle administrateur d'un autre compte. */
-export async function setUserAdmin(formData: FormData): Promise<void> {
+export async function setUserAdmin(formData: FormData): Promise<MutationOutcome> {
+  const { t } = await getI18n();
   const admin = await getAdminUser();
-  if (!admin) return;
+  if (!admin) return { error: t("err.forbidden") };
 
   const userId = String(formData.get("userId") ?? "");
   const makeAdmin = String(formData.get("isAdmin") ?? "") === "true";
   // On ne modifie pas son propre rôle : évite de se verrouiller par erreur.
-  if (!userId || userId === admin.id) return;
+  if (!userId || userId === admin.id) return { error: t("err.forbidden") };
 
   let changed = false;
+  let lastAdmin = false;
   try {
     // Isolation SERIALIZABLE : deux admins ne peuvent pas se rétrograder
     // concurremment jusqu'à n'en laisser aucun.
@@ -43,7 +46,10 @@ export async function setUserAdmin(formData: FormData): Promise<void> {
         // Toujours conserver au moins un administrateur actif.
         if (!makeAdmin && target.isAdmin) {
           const count = await tx.user.count({ where: { isAdmin: true } });
-          if (count <= 1) return;
+          if (count <= 1) {
+            lastAdmin = true;
+            return;
+          }
         }
         await tx.user.update({
           where: { id: userId },
@@ -66,17 +72,22 @@ export async function setUserAdmin(formData: FormData): Promise<void> {
     });
   }
   revalidatePath("/admin/users");
+  if (lastAdmin) return { error: t("err.lastAdmin") };
+  if (!changed) return { error: t("err.userNotFound") };
+  return { ok: true };
 }
 
 /** Supprime un compte et toutes ses données (cascade). */
-export async function deleteUser(formData: FormData): Promise<void> {
+export async function deleteUser(formData: FormData): Promise<MutationOutcome> {
+  const { t } = await getI18n();
   const admin = await getAdminUser();
-  if (!admin) return;
+  if (!admin) return { error: t("err.forbidden") };
 
   const userId = String(formData.get("userId") ?? "");
-  if (!userId || userId === admin.id) return;
+  if (!userId || userId === admin.id) return { error: t("err.forbidden") };
 
   let deleted = false;
+  let lastAdmin = false;
   try {
     await prisma.$transaction(
       async (tx) => {
@@ -84,7 +95,10 @@ export async function deleteUser(formData: FormData): Promise<void> {
         if (!target) return;
         if (target.isAdmin) {
           const count = await tx.user.count({ where: { isAdmin: true } });
-          if (count <= 1) return;
+          if (count <= 1) {
+            lastAdmin = true;
+            return;
+          }
         }
         await tx.user.delete({ where: { id: userId } });
         deleted = true;
@@ -104,6 +118,9 @@ export async function deleteUser(formData: FormData): Promise<void> {
     });
   }
   revalidatePath("/admin/users");
+  if (lastAdmin) return { error: t("err.lastAdmin") };
+  if (!deleted) return { error: t("err.userNotFound") };
+  return { ok: true };
 }
 
 /** Réinitialise le mot de passe d'un compte et affiche un mot de passe temporaire. */
@@ -174,11 +191,15 @@ export async function createInvitationAction(
 }
 
 /** Révoque une invitation non consommée. */
-export async function revokeInvitation(formData: FormData): Promise<void> {
+export async function revokeInvitation(
+  formData: FormData,
+): Promise<MutationOutcome> {
+  const { t } = await getI18n();
   const admin = await getAdminUser();
-  if (!admin) return;
+  if (!admin) return { error: t("err.forbidden") };
   const id = String(formData.get("invitationId") ?? "");
-  if (id) await deleteInvitation(id);
+  if (!id) return { error: t("err.invitationNotFound") };
+  await deleteInvitation(id);
   await logEvent({
     level: "info",
     source: "admin",
@@ -187,6 +208,7 @@ export async function revokeInvitation(formData: FormData): Promise<void> {
     meta: { invitationId: id },
   });
   revalidatePath("/admin/invitations");
+  return { ok: true };
 }
 
 /** Change le mot de passe de l'utilisateur connecté. */

@@ -12,6 +12,7 @@ import {
 import { clientIp, takeToken } from "../auth/rate-limit";
 import { logEvent } from "../log";
 import { getI18n } from "@/i18n/server";
+import type { MutationOutcome } from "../optimistic";
 
 export type SpotifyAccessState =
   | { ok?: boolean; error?: string; message?: string }
@@ -62,16 +63,19 @@ export async function requestSpotifyAccess(
 }
 
 /** Un administrateur approuve une demande d'accès Spotify. */
-export async function approveSpotifyAccess(formData: FormData): Promise<void> {
+export async function approveSpotifyAccess(
+  formData: FormData,
+): Promise<MutationOutcome> {
+  const { t } = await getI18n();
   const admin = await getAdminUser();
-  if (!admin) return;
+  if (!admin) return { error: t("err.forbidden") };
 
   const userId = String(formData.get("userId") ?? "");
   // On n'agit pas sur son propre compte (cohérent avec les autres actions admin).
-  if (!userId || userId === admin.id) return;
+  if (!userId || userId === admin.id) return { error: t("err.forbidden") };
 
   // `updateMany` : ne lève pas d'erreur si l'identifiant n'existe pas.
-  await prisma.user.updateMany({
+  const updated = await prisma.user.updateMany({
     where: { id: userId },
     data: {
       spotifyAccessStatus: SPOTIFY_ACCESS_APPROVED,
@@ -86,17 +90,22 @@ export async function approveSpotifyAccess(formData: FormData): Promise<void> {
     meta: { targetUserId: userId },
   });
   revalidatePath("/admin/spotify");
+  if (updated.count === 0) return { error: t("err.userNotFound") };
+  return { ok: true };
 }
 
 /** Un administrateur refuse une demande d'accès Spotify. */
-export async function rejectSpotifyAccess(formData: FormData): Promise<void> {
+export async function rejectSpotifyAccess(
+  formData: FormData,
+): Promise<MutationOutcome> {
+  const { t } = await getI18n();
   const admin = await getAdminUser();
-  if (!admin) return;
+  if (!admin) return { error: t("err.forbidden") };
 
   const userId = String(formData.get("userId") ?? "");
-  if (!userId || userId === admin.id) return;
+  if (!userId || userId === admin.id) return { error: t("err.forbidden") };
 
-  await prisma.user.updateMany({
+  const updated = await prisma.user.updateMany({
     where: { id: userId },
     data: {
       spotifyAccessStatus: SPOTIFY_ACCESS_REJECTED,
@@ -111,20 +120,25 @@ export async function rejectSpotifyAccess(formData: FormData): Promise<void> {
     meta: { targetUserId: userId },
   });
   revalidatePath("/admin/spotify");
+  if (updated.count === 0) return { error: t("err.userNotFound") };
+  return { ok: true };
 }
 
 /**
  * Un administrateur révoque un accès Spotify déjà approuvé : la connexion
  * (et ses jetons) est supprimée et l'utilisateur devra refaire une demande.
  */
-export async function revokeSpotifyAccess(formData: FormData): Promise<void> {
+export async function revokeSpotifyAccess(
+  formData: FormData,
+): Promise<MutationOutcome> {
+  const { t } = await getI18n();
   const admin = await getAdminUser();
-  if (!admin) return;
+  if (!admin) return { error: t("err.forbidden") };
 
   const userId = String(formData.get("userId") ?? "");
-  if (!userId || userId === admin.id) return;
+  if (!userId || userId === admin.id) return { error: t("err.forbidden") };
 
-  await prisma.user.updateMany({
+  const updated = await prisma.user.updateMany({
     where: { id: userId },
     data: {
       spotifyAccessStatus: SPOTIFY_ACCESS_NONE,
@@ -142,6 +156,8 @@ export async function revokeSpotifyAccess(formData: FormData): Promise<void> {
     meta: { targetUserId: userId },
   });
   revalidatePath("/admin/spotify");
+  if (updated.count === 0) return { error: t("err.userNotFound") };
+  return { ok: true };
 }
 
 /** L'utilisateur annule sa propre demande d'accès encore en attente. */

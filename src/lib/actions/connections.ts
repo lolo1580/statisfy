@@ -18,6 +18,7 @@ import {
 import { recountPlays } from "../sync/recount";
 import { logEvent, errorMessage } from "../log";
 import { getI18n } from "@/i18n/server";
+import type { MutationOutcome } from "../optimistic";
 
 export type SettingsState =
   | {
@@ -27,13 +28,20 @@ export type SettingsState =
     }
   | undefined;
 
-export async function deleteConnection(formData: FormData): Promise<void> {
+export async function deleteConnection(
+  formData: FormData,
+): Promise<MutationOutcome> {
+  const { t } = await getI18n();
   const user = await getCurrentUser();
   const id = String(formData.get("connectionId") ?? "");
-  if (id) {
-    await prisma.sourceConnection.deleteMany({ where: { id, userId: user.id } });
-  }
+  if (!id) return { error: t("err.connectionNotFound") };
+
+  const deleted = await prisma.sourceConnection.deleteMany({
+    where: { id, userId: user.id },
+  });
   revalidatePath("/settings/sources");
+  if (deleted.count === 0) return { error: t("err.connectionNotFound") };
+  return { ok: true };
 }
 
 export async function syncConnection(

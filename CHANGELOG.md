@@ -7,6 +7,19 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Ajouté
+
+- **Mises à jour optimistes** : les listes d'**invitations**, de **comptes**
+  (rôle admin, suppression), de **sources connectées** et des **demandes
+  d'accès Spotify** (approbation/refus avec réordonnancement, révocation)
+  réagissent immédiatement (création avec identifiant temporaire, bascule de
+  statut, suppression), affichent un indicateur discret pendant la
+  synchronisation et **reviennent en arrière** si le serveur refuse (dernier
+  admin, session expirée…). Primitives réutilisables dans
+  `src/lib/optimistic.ts` et le hook `useOptimisticList`
+  (`src/components/optimistic.tsx`) ; les Server Actions concernées renvoient
+  désormais un résultat `{ ok, error }` pour signaler les échecs.
+
 ## [1.1.1] — 2026-10-16
 
 ### Ajouté

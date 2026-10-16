@@ -3,13 +3,11 @@
 import { useActionState, useState } from "react";
 import {
   changePassword,
-  createInvitationAction,
   resetUserPassword,
   type AdminState,
 } from "@/lib/actions/users";
 import { restoreBackup, type RestoreState } from "@/lib/actions/backup";
 import { testLogSink, type LogTestState } from "@/lib/actions/logs";
-import { INVITATION_TTL_CHOICES } from "@/lib/invitation-rules";
 import { useI18n } from "@/components/i18n-provider";
 import { Feedback, inputClass } from "@/components/form-ui";
 
@@ -44,65 +42,6 @@ export function CopyField({ value, label }: { value: string; label?: string }) {
       >
         {copied ? t("settings.copied") : t("settings.copy")}
       </button>
-    </div>
-  );
-}
-
-/** Formulaire de création d'un lien d'invitation (admin). */
-export function InviteForm({ origin }: { origin: string }) {
-  const { t } = useI18n();
-  const [state, action, pending] = useActionState<AdminState, FormData>(
-    createInvitationAction,
-    undefined,
-  );
-
-  return (
-    <div className="space-y-3">
-      <form action={action} className="flex flex-wrap items-end gap-2">
-        <div className="min-w-[200px] flex-1">
-          <label htmlFor="invite-email" className="mb-1 block text-xs text-muted">
-            {t("settings.inviteEmail")}
-          </label>
-          <input
-            id="invite-email"
-            name="email"
-            type="email"
-            className={inputClass}
-            placeholder={t("settings.inviteEmailPlaceholder")}
-          />
-        </div>
-        <div>
-          <label htmlFor="invite-days" className="mb-1 block text-xs text-muted">
-            {t("settings.inviteDays")}
-          </label>
-          <select
-            id="invite-days"
-            name="days"
-            defaultValue="7"
-            className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
-          >
-            {INVITATION_TTL_CHOICES.map((days) => (
-              <option key={days} value={days}>
-                {t("settings.inviteDaysValue", { days })}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[#04140d] transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {pending ? t("settings.inviteCreating") : t("settings.inviteCreate")}
-        </button>
-      </form>
-      <Feedback state={state} />
-      {state?.inviteUrl ? (
-        <CopyField
-          value={`${origin}${state.inviteUrl}`}
-          label={t("settings.inviteCreated")}
-        />
-      ) : null}
     </div>
   );
 }
