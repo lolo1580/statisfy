@@ -86,9 +86,12 @@ export default async function DashboardPage({
   const [
     overview,
     timeline,
-    topTracks,
-    topArtists,
-    topGenres,
+    topTracksByPlays,
+    topTracksByTime,
+    topArtistsByPlays,
+    topArtistsByTime,
+    topGenresByPlays,
+    topGenresByTime,
     trends,
     anyPlays,
     spotifyConnection,
@@ -98,8 +101,11 @@ export default async function DashboardPage({
     getOverview(user.id, filters),
     getTimelineStats(user.id, user.timezone, filters),
     getTopTracks(user.id, filters, 10),
+    getTopTracks(user.id, filters, 10, "time"),
     getTopArtists(user.id, filters, 10),
+    getTopArtists(user.id, filters, 10, "time"),
     getTopGenres(user.id, filters, 10),
+    getTopGenres(user.id, filters, 10, "time"),
     getArtistTrends(user.id, filters, 4),
     hasAnyPlays(user.id),
     prisma.sourceConnection.findFirst({
@@ -248,7 +254,8 @@ export default async function DashboardPage({
             <Card>
               <TopTracksPanel
                 title={t("dash.topTracks")}
-                items={topTracks}
+                itemsByPlays={topTracksByPlays}
+                itemsByTime={topTracksByTime}
                 query={query}
                 empty={t("dash.noTracks")}
               />
@@ -257,7 +264,8 @@ export default async function DashboardPage({
             <Card>
               <TopArtistsPanel
                 title={t("dash.topArtists")}
-                items={topArtists}
+                itemsByPlays={topArtistsByPlays}
+                itemsByTime={topArtistsByTime}
                 query={query}
                 empty={t("dash.noArtists")}
               />
@@ -267,7 +275,8 @@ export default async function DashboardPage({
               <TopGenresPanel
                 title={t("dash.genres")}
                 subtitle={t("dash.genresWeighted")}
-                items={topGenres}
+                itemsByPlays={topGenresByPlays}
+                itemsByTime={topGenresByTime}
                 empty={t("dash.genresUnavailable")}
               />
             </Card>

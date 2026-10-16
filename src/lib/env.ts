@@ -19,8 +19,18 @@ function required(name: string): string {
   return value
 }
 
+/** Longueur minimale (octets) du secret de session HS256. */
+const MIN_SESSION_SECRET_BYTES = 32
+
 export function getSessionSecret(): Uint8Array {
-  return new TextEncoder().encode(required('SESSION_SECRET'))
+  const raw = required('SESSION_SECRET')
+  const bytes = new TextEncoder().encode(raw)
+  if (bytes.length < MIN_SESSION_SECRET_BYTES) {
+    throw new Error(
+      `SESSION_SECRET doit faire au moins ${MIN_SESSION_SECRET_BYTES} octets (openssl rand -base64 32).`,
+    )
+  }
+  return bytes
 }
 
 export function getCredentialsKey(): Buffer {

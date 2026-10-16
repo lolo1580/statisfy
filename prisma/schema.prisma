@@ -151,6 +151,10 @@ model Play {
   albumId  String?
   playedAt DateTime
   msPlayed Int      @default(0)
+  // Une écoute ne comptabilise que si au moins 3/4 de la piste a été écouté
+  // (durée inconnue -> comptée). Filtré dans les agrégations de stats ; les
+  // écoutes trop courtes restent stockées. Cf. src/lib/play-counting.ts.
+  counted  Boolean  @default(true)
   source   String
   context  String? // playlist, album, radio...
   dedupKey String

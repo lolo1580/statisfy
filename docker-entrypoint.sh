@@ -14,10 +14,10 @@ if [ -n "${DATABASE_URL:-}" ] && [ -d /backups ] && command -v pg_dump >/dev/nul
   done
 fi
 
-echo "→ Synchronisation du schéma de base de données…"
+echo "→ Application des migrations de base de données…"
 # Le CLI Prisma est isolé dans `/app/prisma-cli` (voir Dockerfile) : on s'y
-# place le temps du `db push` pour que `prisma.config.ts` résolve ses imports.
-(cd /app/prisma-cli && ./node_modules/.bin/prisma db push)
+# place le temps de la commande pour que `prisma.config.ts` résolve ses imports.
+(cd /app/prisma-cli && ./node_modules/.bin/prisma migrate deploy)
 
 echo "→ Démarrage de Statisfy sur le port ${PORT:-3000}…"
 # `next start` est remplacé par le serveur `standalone` (`node server.js`).

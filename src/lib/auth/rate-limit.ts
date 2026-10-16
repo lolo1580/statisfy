@@ -10,19 +10,20 @@ import { pickClientIp } from "../client-ip";
 export { resetTokens, takeToken } from "../rate-limit-store";
 
 /**
- * Adresse IP du client (derrière un proxy si les en-têtes sont transmis).
- * Les valeurs sont validées comme IP réelles : un en-tête forgé ou malformé ne
- * peut ni contourner le rate-limit par une clé arbitraire, ni injecter de texte
- * dans les journaux.
+ * Adresse IP du client (derrière un proxy si les en-têtes sont transmis), ou
+ * `null` si elle n'est pas déterminable de façon fiable.
+ *
+ * On renvoie `null` — et jamais une valeur constante — quand les en-têtes de
+ * proxy ne sont pas fiables (`TRUST_PROXY_HEADERS=false`) ou absents : une
+ * valeur constante créerait un seau de rate-limit **partagé par tous les
+ * clients**, transformant une limite par IP en blocage global (DoS).
  */
-export async function clientIp(): Promise<string> {
-  // Par défaut, on fait confiance aux en-têtes de proxy (déploiement derrière un
-  // reverse proxy). Mettre `TRUST_PROXY_HEADERS=false` si l'app est exposée
-  // directement, afin d'ignorer des en-têtes `X-Forwarded-For` forgés.
-  if (process.env.TRUST_PROXY_HEADERS === "false") return "local";
+export async function clientIp(): Promise<string | null> {
+  if (process.env.TRUST_PROXY_HEADERS === "false") return null;
   const headerList = await headers();
-  return pickClientIp(
+  const ip = pickClientIp(
     headerList.get("x-forwarded-for"),
     headerList.get("x-real-ip"),
   );
+  return ip === "local" ? null : ip;
 }

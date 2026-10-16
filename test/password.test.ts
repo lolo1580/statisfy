@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { hashPassword, verifyPassword } from "@/lib/password";
+import {
+  hashPassword,
+  verifyPassword,
+  verifyPasswordOrDummy,
+} from "@/lib/password";
 
 describe("password", () => {
   it("hache puis vérifie un mot de passe", async () => {
@@ -20,5 +24,13 @@ describe("password", () => {
   it("rejette une valeur stockée malformée", async () => {
     expect(await verifyPassword("x", "pas-un-hash")).toBe(false);
     expect(await verifyPassword("x", "bcrypt$aa$bb")).toBe(false);
+  });
+
+  it("vérifie via un hash factice quand le compte est inconnu", async () => {
+    expect(await verifyPasswordOrDummy("x", null)).toBe(false);
+    expect(await verifyPasswordOrDummy("x", undefined)).toBe(false);
+    const hash = await hashPassword("bon");
+    expect(await verifyPasswordOrDummy("bon", hash)).toBe(true);
+    expect(await verifyPasswordOrDummy("mauvais", hash)).toBe(false);
   });
 });

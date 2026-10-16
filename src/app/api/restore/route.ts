@@ -5,6 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getOptionalAdmin } from "@/lib/auth/dal";
 import { hasValidSyncToken } from "@/lib/auth/sync-token";
 import { restoreDatabase, runBackup } from "@/lib/backup";
+import { readBodyLimited } from "@/lib/http-body";
 
 export const dynamic = "force-dynamic";
 
@@ -31,12 +32,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Payload too large" }, { status: 413 });
   }
 
-  const body = Buffer.from(await request.arrayBuffer());
+  // Lecture bornée en streaming : ne charge jamais plus de MAX_BYTES, même si
+  // l'en-tête `Content-Length` est absent (transfert chunked) ou mensonger.
+  const limited = await readBodyLimited(request, MAX_BYTES);
+  if (!limited) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
+  const body = Buffer.from(limited);
   if (body.length === 0) {
     return NextResponse.json({ error: "Empty body" }, { status: 400 });
-  }
-  if (body.length > MAX_BYTES) {
-    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
   }
 
   const file = path.join(os.tmpdir(), `statisfy-restore-${Date.now()}.dump`);

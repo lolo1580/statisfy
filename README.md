@@ -26,7 +26,9 @@ to be **easy to deploy**, **fast** and **pleasant to explore**.
 - **Automatic artwork**: missing visuals (especially after an import) are
   completed via the **Spotify catalog**.
 - **Rich statistics**: listening time, top tracks / artists / albums, weighted
-  genres, daily listening, hourly breakdown, recent plays.
+  genres, daily listening, hourly breakdown, recent plays. A play counts only if
+  at least **3/4 of the track** was listened to (unknown duration → counted);
+  **configurable threshold** in the admin area.
 - **Plays / time toggle**: on the ranking panels (Dashboard and Rankings), a
   per-panel switch changes the display **and the sorting**, instantly.
 - **Interactive charts**: grid, axes (durations) and hover tooltip (full date +
@@ -104,8 +106,9 @@ pnpm dev        # http://localhost:3000
 ```
 
 The **first account created becomes the administrator**. Locally, `pnpm db:seed`
-creates a demo account (`demo@statisfy.local` / `statisfy123`) — do not keep it
-on a public instance.
+creates a demo account (`demo@statisfy.local`) with a **randomly generated**
+password printed on run (or set via `SEED_PASSWORD`) — do not keep it on a
+public instance.
 
 Statisfy is **multi-user**: each person creates an account and connects their
 **own** Spotify account (Settings → Connect Spotify); listens, statistics and

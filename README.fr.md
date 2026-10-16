@@ -27,6 +27,8 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
   sont complétés via le **catalogue Spotify**.
 - **Statistiques riches** : temps d'écoute, top titres / artistes / albums,
   genres pondérés, écoute quotidienne, répartition horaire, dernières écoutes.
+  Une écoute ne compte que si **au moins 3/4 de la piste** a été écouté (durée
+  inconnue → comptée) ; **seuil réglable** dans l'administration.
 - **Bascule « écoutes / temps »** : sur les panneaux de classement (Tableau de
   bord et Classements), un switch par panneau change l'affichage **et le tri**,
   instantanément.
@@ -110,8 +112,9 @@ pnpm dev        # http://localhost:3000
 ```
 
 Le **premier compte créé devient administrateur**. En local, `pnpm db:seed`
-crée un compte de démo (`demo@statisfy.local` / `statisfy123`) — à ne pas
-conserver sur une instance publique.
+crée un compte de démo (`demo@statisfy.local`) avec un mot de passe **généré
+aléatoirement** et affiché à l'exécution (ou défini via `SEED_PASSWORD`) — à ne
+pas conserver sur une instance publique.
 
 Statisfy est **multi-utilisateur** : chaque personne crée son compte et connecte
 son **propre** compte Spotify (Réglages → Connecter Spotify) ; les écoutes, les
@@ -308,6 +311,7 @@ basculer une base existante vers PostgreSQL :
 docker compose up -d db     # ou pointez DATABASE_URL vers votre PostgreSQL
 pnpm db:push                # crée le schéma
 pnpm migrate:sqlite         # copie utilisateurs, connexions, écoutes… (idempotent)
+pnpm db:backfill-counted    # recalcule le seuil des 3/4 sur les écoutes copiées
 ```
 
 Options : `--sqlite <chemin>` pour un autre fichier, `--dry-run` pour

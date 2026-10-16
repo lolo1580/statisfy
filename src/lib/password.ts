@@ -31,3 +31,17 @@ export async function verifyPassword(
   if (derived.length !== expected.length) return false
   return crypto.timingSafeEqual(derived, expected)
 }
+
+/**
+ * Hash scrypt factice (coût de calcul identique) : vérifie un mot de passe sans
+ * révéler l'existence du compte par le **temps de réponse** (email inconnu).
+ */
+const DUMMY_PASSWORD_HASH = `scrypt$${Buffer.alloc(16, 7).toString('base64')}$${Buffer.alloc(64, 3).toString('base64')}`
+
+/** Vérifie `stored` s'il existe, sinon un hash factice (coût identique). */
+export function verifyPasswordOrDummy(
+  password: string,
+  stored: string | null | undefined,
+): Promise<boolean> {
+  return verifyPassword(password, stored ?? DUMMY_PASSWORD_HASH)
+}

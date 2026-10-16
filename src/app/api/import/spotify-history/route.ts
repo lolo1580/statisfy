@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { resolveImportTarget } from "@/lib/api/import-target";
 import { runImport } from "@/lib/sync/engine";
+import { enrichMissingDurations } from "@/lib/sources/enrich";
+import { recountPlays } from "@/lib/sync/recount";
+import { getMinListenRatio } from "@/lib/settings";
 import { readBodyLimited } from "@/lib/http-body";
 import { takeToken } from "@/lib/rate-limit-store";
 
@@ -61,6 +64,15 @@ export async function POST(request: NextRequest) {
       },
       { status: 422 },
     );
+  }
+
+  // Complète les durées de piste manquantes (l'export n'en fournit pas) puis
+  // applique le seuil de comptabilisation aux écoutes importées.
+  try {
+    await enrichMissingDurations(user.id, { max: 60 });
+    await recountPlays(await getMinListenRatio());
+  } catch {
+    // Enrichissement optionnel : l'import reste valide sans lui.
   }
 
   return NextResponse.json({

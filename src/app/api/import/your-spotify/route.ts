@@ -3,6 +3,7 @@ import { resolveImportTarget } from "@/lib/api/import-target";
 import {
   buildYourSpotifyData,
   mapYourSpotifyData,
+  peekCollection,
 } from "@/lib/sources/your-spotify";
 import { runPlaysIngest } from "@/lib/sync/engine";
 import { readBodyLimited } from "@/lib/http-body";
@@ -13,6 +14,18 @@ export const maxDuration = 300;
 
 /** Taille maximale du corps accepté (dump Your Spotify). */
 const MAX_BODY_BYTES = 256 * 1024 * 1024;
+
+/** Extrait un nom de fichier d'un en-tête `Content-Disposition`. */
+function filenameFromContentDisposition(value: string | null): string | null {
+  if (!value) return null;
+  const match = /filename\*?=(?:UTF-8''|")?([^";]+)/i.exec(value);
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match[1].replace(/"/g, "").trim());
+  } catch {
+    return match[1].replace(/"/g, "").trim();
+  }
+}
 
 /**
  * Import d'un dump *Your Spotify* envoyé en POST.
@@ -47,7 +60,17 @@ export async function POST(request: NextRequest) {
   }
 
   const isZip = buffer[0] === 0x50 && buffer[1] === 0x4b; // "PK"
-  const name = isZip ? "dump.zip" : "dump.bson";
+  // Fichier isolé (non zippé) : on retrouve la collection via un nom fourni
+  // (`X-Filename`, `Content-Disposition`) ou l'inspection du premier document.
+  // À défaut, le nom « dump » reste ignoré (comportement historique).
+  let name = "dump.zip";
+  if (!isZip) {
+    const hint =
+      request.headers.get("x-filename") ??
+      filenameFromContentDisposition(request.headers.get("content-disposition"));
+    const collection = peekCollection(buffer, hint);
+    name = collection ? `${collection}.bson` : "dump.bson";
+  }
   const { data, counts } = buildYourSpotifyData([{ name, data: buffer }]);
 
   if (!counts.infos) {

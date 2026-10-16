@@ -51,6 +51,10 @@ async function verify(token: string | undefined): Promise<SessionPayload | null>
 
 /** Crée une session en base, pose le cookie signé. */
 export async function createSession(userId: string): Promise<void> {
+  // Purge opportuniste des sessions expirées (best-effort, à la connexion).
+  await prisma.session
+    .deleteMany({ where: { expiresAt: { lt: new Date() } } })
+    .catch(() => undefined)
   const expiresAt = new Date(Date.now() + SESSION_DURATION_MS)
   const session = await prisma.session.create({
     data: { userId, expiresAt },

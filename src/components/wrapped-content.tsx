@@ -86,9 +86,9 @@ export async function WrappedContent({
   ] = await Promise.all([
     getOverview(userId, filters),
     getOverview(userId, prevFilters),
-    getTopTracks(userId, filters, 10),
-    getTopArtists(userId, filters, 5),
-    getTopAlbums(userId, filters, 5),
+    getTopTracks(userId, filters, 10, "time"),
+    getTopArtists(userId, filters, 5, "time"),
+    getTopAlbums(userId, filters, 5, "time"),
     getTopGenres(userId, filters, 8),
     getWrappedExtras(userId, timezone, filters),
     getDiscoveredArtists(userId, filters, 5),

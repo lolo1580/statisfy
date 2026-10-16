@@ -32,10 +32,20 @@ export default async function TopPage({ searchParams }: PageProps<"/top">) {
   };
   const query = `range=${parsed.key}`;
 
-  const [tracks, artists, albums] = await Promise.all([
+  const [
+    tracksByPlays,
+    tracksByTime,
+    artistsByPlays,
+    artistsByTime,
+    albumsByPlays,
+    albumsByTime,
+  ] = await Promise.all([
     getTopTracks(user.id, filters, 25),
+    getTopTracks(user.id, filters, 25, "time"),
     getTopArtists(user.id, filters, 25),
+    getTopArtists(user.id, filters, 25, "time"),
     getTopAlbums(user.id, filters, 20),
+    getTopAlbums(user.id, filters, 20, "time"),
   ]);
 
   return (
@@ -53,7 +63,8 @@ export default async function TopPage({ searchParams }: PageProps<"/top">) {
         <Card>
           <TopTracksPanel
             title={t("top.topTracks")}
-            items={tracks}
+            itemsByPlays={tracksByPlays}
+            itemsByTime={tracksByTime}
             query={query}
             showAlbum
           />
@@ -63,7 +74,8 @@ export default async function TopPage({ searchParams }: PageProps<"/top">) {
           <Card>
             <TopArtistsPanel
               title={t("top.topArtists")}
-              items={artists}
+              itemsByPlays={artistsByPlays}
+              itemsByTime={artistsByTime}
               query={query}
               genresCount={3}
             />
@@ -72,7 +84,8 @@ export default async function TopPage({ searchParams }: PageProps<"/top">) {
           <Card>
             <TopAlbumsPanel
               title={t("top.topAlbums")}
-              items={albums}
+              itemsByPlays={albumsByPlays}
+              itemsByTime={albumsByTime}
               query={query}
             />
           </Card>

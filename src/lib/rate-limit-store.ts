@@ -13,17 +13,13 @@ const buckets = new Map<string, Bucket>();
 const MAX_BUCKETS = 5_000;
 
 /**
- * Retire les seaux expirés ; si le plafond reste atteint (flood de clés
- * distinctes), évince les plus anciens pour **borner la mémoire**.
+ * Retire les seaux expirés. On n'évince **jamais** un seau encore actif : sinon
+ * un attaquant pourrait, en générant assez de clés distinctes, faire supprimer
+ * le compteur qui le limite et contourner le throttle.
  */
-function evict(now: number): void {
+function evictExpired(now: number): void {
   for (const [key, bucket] of buckets) {
     if (bucket.resetAt <= now) buckets.delete(key);
-  }
-  while (buckets.size >= MAX_BUCKETS) {
-    const oldest = buckets.keys().next().value;
-    if (oldest === undefined) break;
-    buckets.delete(oldest);
   }
 }
 
@@ -31,13 +27,18 @@ function evict(now: number): void {
 export function takeToken(key: string, limit: number, windowMs: number): boolean {
   const now = Date.now();
   const bucket = buckets.get(key);
-  if (!bucket || bucket.resetAt <= now) {
-    if (buckets.size >= MAX_BUCKETS) evict(now);
-    buckets.set(key, { count: 1, resetAt: now + windowMs });
+  if (bucket && bucket.resetAt > now) {
+    bucket.count += 1;
+    return bucket.count <= limit;
+  }
+  evictExpired(now);
+  if (buckets.size >= MAX_BUCKETS) {
+    // Capacité atteinte : on n'enregistre aucun nouveau seau (et on n'en évince
+    // aucun) pour rester borné en mémoire sans ouvrir de contournement.
     return true;
   }
-  bucket.count += 1;
-  return bucket.count <= limit;
+  buckets.set(key, { count: 1, resetAt: now + windowMs });
+  return true;
 }
 
 /** Réinitialise le compteur d'une clé (ex. après une connexion réussie). */

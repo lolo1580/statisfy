@@ -25,7 +25,9 @@ export function parseSpotifyHistoryFiles(files: HistoryFile[]): HistoryParseResu
   const collect = (name: string, data: Uint8Array): void => {
     const rows = parseSpotifyHistory(decode(data))
     if (rows.length > 0) {
-      plays.push(...rows)
+      // Boucle plutôt que `push(...rows)` : un gros fichier peut dépasser la
+      // limite d'arguments de V8 (RangeError « Maximum call stack size »).
+      for (const row of rows) plays.push(row)
       parsed += 1
     }
   }
@@ -143,8 +145,16 @@ function parseRows(text: string): unknown[] {
 }
 
 function parseDate(value: string): Date | null {
-  // « 2023-06-01 14:23 » (ancien format) -> ISO
-  const normalized = value.includes('T') ? value : value.replace(' ', 'T')
+  let normalized = value.trim()
+  // « 2023-06-01 14:23 » (ancien format) -> « 2023-06-01T14:23 ».
+  if (!normalized.includes('T') && normalized.includes(' ')) {
+    normalized = normalized.replace(' ', 'T')
+  }
+  // Sans fuseau explicite, Spotify exporte des horodatages **UTC** : `new Date`
+  // les interpréterait sinon comme l'heure locale du serveur (décalage +1/+2 h).
+  if (!/(Z|[+-]\d{2}:?\d{2})$/.test(normalized) && /\d{2}:\d{2}/.test(normalized)) {
+    normalized += 'Z'
+  }
   const date = new Date(normalized)
   return Number.isNaN(date.getTime()) ? null : date
 }

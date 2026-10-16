@@ -21,7 +21,7 @@ export type StatsRange = {
 }
 
 function buildWhere(userId: string, range: StatsRange): Prisma.PlayWhereInput {
-  const where: Prisma.PlayWhereInput = { userId }
+  const where: Prisma.PlayWhereInput = { userId, counted: true }
   if (range.from || range.to) {
     where.playedAt = {
       ...(range.from ? { gte: range.from } : {}),
@@ -45,9 +45,9 @@ function parseGenres(value: string | null | undefined): string[] {
   if (!value) return [];
   try {
     const parsed = JSON.parse(value);
-    return Array.isArray(parsed)
-      ? parsed.filter((g): g is string => typeof g === "string")
-      : [];
+    if (!Array.isArray(parsed)) return [];
+    // Dédoublonne : un même genre présent deux fois serait compté deux fois.
+    return [...new Set(parsed.filter((g): g is string => typeof g === "string"))];
   } catch {
     return [];
   }
@@ -55,6 +55,8 @@ function parseGenres(value: string | null | undefined): string[] {
 
 export type Overview = {
   totalPlays: number
+  /** Toutes les écoutes (seuil appliqué ou non), pour le taux d'écoute complète. */
+  allPlays: number
   totalMs: number
   distinctArtists: number
   distinctTracks: number
@@ -68,7 +70,7 @@ export async function getOverview(
   range: StatsRange,
 ): Promise<Overview> {
   const where = buildWhere(userId, range)
-  const [aggregate, combos] = await Promise.all([
+  const [aggregate, combos, allPlays] = await Promise.all([
     prisma.play.aggregate({
       where,
       _count: { _all: true },
@@ -83,6 +85,8 @@ export async function getOverview(
       by: ['artistId', 'trackId', 'albumId'],
       where,
     }),
+    // Même filtre sans `counted` : nombre total d'écoutes (toutes confondues).
+    prisma.play.count({ where: { ...where, counted: undefined } }),
   ])
 
   const artists = new Set<string>()
@@ -96,6 +100,7 @@ export async function getOverview(
 
   return {
     totalPlays: aggregate._count._all,
+    allPlays,
     totalMs: aggregate._sum.msPlayed ?? 0,
     distinctArtists: artists.size,
     distinctTracks: tracks.size,
@@ -105,10 +110,10 @@ export async function getOverview(
   }
 }
 
-/** Indique si l'utilisateur possède au moins une écoute (toutes périodes). */
+/** Indique si l'utilisateur possède au moins une écoute comptée (toutes périodes). */
 export async function hasAnyPlays(userId: string): Promise<boolean> {
   const play = await prisma.play.findFirst({
-    where: { userId },
+    where: { userId, counted: true },
     select: { id: true },
   })
   return play !== null
@@ -123,7 +128,7 @@ export async function countWindow(
   to: Date,
 ): Promise<WindowStat> {
   const aggregate = await prisma.play.aggregate({
-    where: { userId, playedAt: { gte: from, lt: to } },
+    where: { userId, counted: true, playedAt: { gte: from, lt: to } },
     _count: { _all: true },
     _sum: { msPlayed: true },
   })
@@ -144,10 +149,14 @@ export type TopTrack = {
   imageUrl: string | null
 }
 
+/** Métrique de classement : nombre d'écoutes ou temps d'écoute. */
+export type RankMetric = 'plays' | 'time'
+
 export async function getTopTracks(
   userId: string,
   range: StatsRange,
   limit = 10,
+  metric: RankMetric = 'plays',
 ): Promise<TopTrack[]> {
   const where = buildWhere(userId, range)
   const grouped = await prisma.play.groupBy({
@@ -155,7 +164,10 @@ export async function getTopTracks(
     where,
     _count: { trackId: true },
     _sum: { msPlayed: true },
-    orderBy: { _count: { trackId: 'desc' } },
+    orderBy:
+      metric === 'time'
+        ? { _sum: { msPlayed: 'desc' } }
+        : { _count: { trackId: 'desc' } },
     take: limit,
   })
   if (grouped.length === 0) return []
@@ -198,6 +210,7 @@ export async function getTopArtists(
   userId: string,
   range: StatsRange,
   limit = 10,
+  metric: RankMetric = 'plays',
 ): Promise<TopArtist[]> {
   const where = buildWhere(userId, range)
   const grouped = await prisma.play.groupBy({
@@ -205,7 +218,10 @@ export async function getTopArtists(
     where,
     _count: { artistId: true },
     _sum: { msPlayed: true },
-    orderBy: { _count: { artistId: 'desc' } },
+    orderBy:
+      metric === 'time'
+        ? { _sum: { msPlayed: 'desc' } }
+        : { _count: { artistId: 'desc' } },
     take: limit,
   })
   if (grouped.length === 0) return []
@@ -244,6 +260,7 @@ export async function getTopAlbums(
   userId: string,
   range: StatsRange,
   limit = 10,
+  metric: RankMetric = 'plays',
 ): Promise<TopAlbum[]> {
   const where: Prisma.PlayWhereInput = {
     ...buildWhere(userId, range),
@@ -254,7 +271,10 @@ export async function getTopAlbums(
     where,
     _count: { albumId: true },
     _sum: { msPlayed: true },
-    orderBy: { _count: { albumId: 'desc' } },
+    orderBy:
+      metric === 'time'
+        ? { _sum: { msPlayed: 'desc' } }
+        : { _count: { albumId: 'desc' } },
     take: limit,
   })
 
@@ -288,15 +308,17 @@ export async function getTopGenres(
   userId: string,
   range: StatsRange,
   limit = 12,
+  metric: RankMetric = 'plays',
 ): Promise<GenreStat[]> {
   const where = buildWhere(userId, range)
+  // Pas de `take` : les genres doivent agréger **tous** les artistes écoutés,
+  // sinon les genres des artistes hors du top-100 (par écoutes) disparaissent et
+  // le classement est faussé.
   const grouped = await prisma.play.groupBy({
     by: ['artistId'],
     where,
     _count: { artistId: true },
     _sum: { msPlayed: true },
-    orderBy: { _count: { artistId: 'desc' } },
-    take: 100,
   })
   if (grouped.length === 0) return []
 
@@ -322,7 +344,7 @@ export async function getTopGenres(
 
   return [...totals.entries()]
     .map(([genre, value]) => ({ genre, plays: value.plays, msPlayed: value.msPlayed }))
-    .sort((a, b) => b.plays - a.plays)
+    .sort((a, b) => (metric === 'time' ? b.msPlayed - a.msPlayed : b.plays - a.plays))
     .slice(0, limit)
 }
 
@@ -345,7 +367,10 @@ async function getTimeBuckets(
   userId: string,
   range: StatsRange,
 ): Promise<TimeBucket[]> {
-  const conditions: Prisma.Sql[] = [Prisma.sql`"userId" = ${userId}`]
+  const conditions: Prisma.Sql[] = [
+    Prisma.sql`"userId" = ${userId}`,
+    Prisma.sql`"counted" = true`,
+  ]
   if (range.from) conditions.push(Prisma.sql`"playedAt" >= ${range.from}`)
   if (range.to) conditions.push(Prisma.sql`"playedAt" < ${range.to}`)
   if (!range.from && !range.to && range.days) {
@@ -365,7 +390,7 @@ async function getTimeBuckets(
     Array<{ bucket: number | bigint; plays: number | bigint; msPlayed: number | bigint }>
   >(
     Prisma.sql`
-      SELECT (EXTRACT(EPOCH FROM "playedAt")::bigint / ${BUCKET_SECONDS}) AS bucket,
+      SELECT floor(EXTRACT(EPOCH FROM "playedAt") / ${BUCKET_SECONDS})::bigint AS bucket,
              COUNT(*) AS plays,
              COALESCE(SUM("msPlayed"), 0)::bigint AS "msPlayed"
       FROM "Play"
@@ -571,8 +596,8 @@ export async function getArtistDetail(
   const [overview, topTracks, topAlbums, daily, recent] =
     await Promise.all([
       getOverview(userId, scoped),
-      getTopTracks(userId, scoped, 10),
-      getTopAlbums(userId, scoped, 6),
+      getTopTracks(userId, scoped, 10, 'time'),
+      getTopAlbums(userId, scoped, 6, 'time'),
       getDailyStats(userId, timeZone, scoped),
       getRecentPlays(userId, scoped, 15),
     ])
@@ -687,12 +712,18 @@ export async function searchLibrary(
 
   const [artists, tracks] = await Promise.all([
     prisma.artist.findMany({
-      where: { name: { contains: q }, plays: { some: { userId } } },
+      where: {
+        name: { contains: q, mode: "insensitive" },
+        plays: { some: { userId, counted: true } },
+      },
       take: limit,
       orderBy: { name: 'asc' },
     }),
     prisma.track.findMany({
-      where: { name: { contains: q }, plays: { some: { userId } } },
+      where: {
+        name: { contains: q, mode: "insensitive" },
+        plays: { some: { userId, counted: true } },
+      },
       take: limit,
       include: { artist: true, album: true },
       orderBy: { name: 'asc' },
@@ -701,7 +732,7 @@ export async function searchLibrary(
 
   const artistPlays = await prisma.play.groupBy({
     by: ['artistId'],
-    where: { userId, artistId: { in: artists.map((a) => a.id) } },
+    where: { userId, counted: true, artistId: { in: artists.map((a) => a.id) } },
     _count: { artistId: true },
     _sum: { msPlayed: true },
   })
@@ -760,7 +791,10 @@ export async function getWrappedExtras(
 
   for (const bucket of hourBuckets) {
     const date = bucketDate(bucket.bucket)
-    const dayKeyValue = dayKey(date, timeZone)
+    // Clés en **UTC** : les périodes Wrapped sont des bornes UTC ; des clés
+    // locales produisaient des tranches hors période (ex. un jour local basculant
+    // sur le mois/année suivants) et un décalage avec `getOverview`.
+    const dayKeyValue = date.toISOString().slice(0, 10)
     const monthKey = dayKeyValue.slice(0, 7)
 
     const day = daily.get(dayKeyValue) ?? { key: dayKeyValue, msPlayed: 0, plays: 0 }
@@ -816,7 +850,7 @@ export async function getDiscoveredArtists(
   const [before, inRange] = await Promise.all([
     prisma.play.groupBy({
       by: ['artistId'],
-      where: { userId, playedAt: { lt: range.from } },
+      where: { userId, counted: true, playedAt: { lt: range.from } },
     }),
     prisma.play.groupBy({
       by: ['artistId'],
@@ -854,10 +888,10 @@ export async function getDiscoveredArtists(
   }
 }
 
-/** Années pour lesquelles l'utilisateur possède des écoutes (desc.). */
+/** Années pour lesquelles l'utilisateur possède des écoutes comptées (desc.). */
 export async function getPlayingYears(userId: string): Promise<number[]> {
   const aggregate = await prisma.play.aggregate({
-    where: { userId },
+    where: { userId, counted: true },
     _min: { playedAt: true },
     _max: { playedAt: true },
   })
@@ -1002,7 +1036,12 @@ export async function getTrends(
 
   const windowWhere = (from: Date, to: Date): Prisma.PlayWhereInput => ({
     userId,
+    counted: true,
     playedAt: { gte: from, lt: to },
+    // Restreint à l'entité éventuellement ciblée (cohérent avec `buildWhere`).
+    ...(range.artistId ? { artistId: range.artistId } : {}),
+    ...(range.trackId ? { trackId: range.trackId } : {}),
+    ...(range.albumId ? { albumId: range.albumId } : {}),
   })
 
   const [currentMap, previousMap] = await Promise.all([

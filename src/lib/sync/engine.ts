@@ -50,8 +50,9 @@ async function runSync(connectionId: string): Promise<IngestResult> {
     },
   })
 
+  let credentials: Record<string, unknown> = {}
+  let credentialsBefore: string | null = null
   try {
-    let credentials: Record<string, unknown>
     try {
       credentials = connection.credentials
         ? decryptJson<Record<string, unknown>>(connection.credentials)
@@ -67,7 +68,7 @@ async function runSync(connectionId: string): Promise<IngestResult> {
       ? (JSON.parse(connection.config) as Record<string, unknown>)
       : {}
 
-    const credentialsBefore = JSON.stringify(credentials)
+    credentialsBefore = JSON.stringify(credentials)
     // Reprise basée sur la **dernière écoute ingérée** (+ léger recouvrement) et
     // non sur l'heure de synchro : évite de « sauter » des écoutes arrivées avec
     // du retard. `lastSyncedAt` reste le marqueur de throttle du cron.
@@ -122,6 +123,20 @@ async function runSync(connectionId: string): Promise<IngestResult> {
     return result
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erreur inconnue'
+    // Un jeton OAuth a pu être rafraîchi avant l'échec : on le persiste quand
+    // même, sinon le refresh token (tourné par Spotify) serait perdu et les
+    // synchronisations suivantes échoueraient.
+    if (
+      credentialsBefore !== null &&
+      JSON.stringify(credentials) !== credentialsBefore
+    ) {
+      await prisma.sourceConnection
+        .update({
+          where: { id: connection.id },
+          data: { credentials: encryptJson(credentials) },
+        })
+        .catch(() => undefined)
+    }
     await prisma.job.update({
       where: { id: job.id },
       data: { status: 'error', error: message, finishedAt: new Date() },

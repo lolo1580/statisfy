@@ -122,12 +122,18 @@ export default async function ComparePage({
     overviewB,
     extrasA,
     extrasB,
-    artistsA,
-    artistsB,
-    tracksA,
-    tracksB,
-    genresA,
-    genresB,
+    artistsAByPlays,
+    artistsAByTime,
+    artistsBByPlays,
+    artistsBByTime,
+    tracksAByPlays,
+    tracksAByTime,
+    tracksBByPlays,
+    tracksBByTime,
+    genresAByPlays,
+    genresAByTime,
+    genresBByPlays,
+    genresBByTime,
   ] = await Promise.all([
     getPlayingYears(user.id),
     getOverview(user.id, filtersA),
@@ -135,11 +141,17 @@ export default async function ComparePage({
     getWrappedExtras(user.id, user.timezone, filtersA),
     getWrappedExtras(user.id, user.timezone, filtersB),
     getTopArtists(user.id, filtersA, 5),
+    getTopArtists(user.id, filtersA, 5, "time"),
     getTopArtists(user.id, filtersB, 5),
+    getTopArtists(user.id, filtersB, 5, "time"),
     getTopTracks(user.id, filtersA, 5),
+    getTopTracks(user.id, filtersA, 5, "time"),
     getTopTracks(user.id, filtersB, 5),
+    getTopTracks(user.id, filtersB, 5, "time"),
     getTopGenres(user.id, filtersA, 6),
+    getTopGenres(user.id, filtersA, 6, "time"),
     getTopGenres(user.id, filtersB, 6),
+    getTopGenres(user.id, filtersB, 6, "time"),
   ]);
 
   const labelA = formatPeriodLabel(periodA, locale, t("recap.yearLabel"));
@@ -309,7 +321,8 @@ export default async function ComparePage({
                 <Card>
                   <TopArtistsPanel
                     title={labelA}
-                    items={artistsA}
+                    itemsByPlays={artistsAByPlays}
+                    itemsByTime={artistsAByTime}
                     query=""
                     empty={t("compare.noData")}
                   />
@@ -317,7 +330,8 @@ export default async function ComparePage({
                 <Card>
                   <TopArtistsPanel
                     title={labelB}
-                    items={artistsB}
+                    itemsByPlays={artistsBByPlays}
+                    itemsByTime={artistsBByTime}
                     query=""
                     empty={t("compare.noData")}
                   />
@@ -333,7 +347,8 @@ export default async function ComparePage({
                 <Card>
                   <TopTracksPanel
                     title={labelA}
-                    items={tracksA}
+                    itemsByPlays={tracksAByPlays}
+                    itemsByTime={tracksAByTime}
                     query=""
                     showAlbum
                     empty={t("compare.noData")}
@@ -342,7 +357,8 @@ export default async function ComparePage({
                 <Card>
                   <TopTracksPanel
                     title={labelB}
-                    items={tracksB}
+                    itemsByPlays={tracksBByPlays}
+                    itemsByTime={tracksBByTime}
                     query=""
                     showAlbum
                     empty={t("compare.noData")}
@@ -359,14 +375,16 @@ export default async function ComparePage({
                 <Card>
                   <TopGenresPanel
                     title={labelA}
-                    items={genresA}
+                    itemsByPlays={genresAByPlays}
+                    itemsByTime={genresAByTime}
                     empty={t("compare.noData")}
                   />
                 </Card>
                 <Card>
                   <TopGenresPanel
                     title={labelB}
-                    items={genresB}
+                    itemsByPlays={genresBByPlays}
+                    itemsByTime={genresBByTime}
                     empty={t("compare.noData")}
                   />
                 </Card>

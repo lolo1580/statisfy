@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { prisma } from "@/lib/db";
-import { LOG_LEVELS, LOG_SOURCES, purgeLogs } from "@/lib/log";
+import { LOG_LEVELS, LOG_SOURCES } from "@/lib/log";
 import { logQueryString, logWhere, parseLogFilters } from "@/lib/logs-query";
 import { activeSinkKind } from "@/lib/log-sink";
 import { clearLogs } from "@/lib/actions/logs";
@@ -34,9 +34,6 @@ export default async function AdminLogsPage({
   const user = await getCurrentUser();
   const { locale, t } = await getI18n();
   const params = await searchParams;
-
-  // Purge opportuniste selon la rétention configurée.
-  await purgeLogs();
 
   const filters = parseLogFilters(params);
   const where = logWhere(filters, user.timezone);

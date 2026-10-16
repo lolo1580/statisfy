@@ -8,6 +8,7 @@
  * tableau de bord sans dépendre de Spotify.
  */
 import 'dotenv/config'
+import crypto from 'node:crypto'
 import { prisma } from '../src/lib/db'
 import { hashPassword } from '../src/lib/password'
 import { ingestPlays } from '../src/lib/sync/ingest'
@@ -24,7 +25,10 @@ import { formatDuration } from '../src/lib/format'
 import type { RawPlay } from '../src/lib/sources/types'
 
 const DEMO_EMAIL = process.env.SEED_EMAIL ?? 'demo@statisfy.local'
-const DEMO_PASSWORD = process.env.SEED_PASSWORD ?? 'statisfy123'
+// Mot de passe : fourni via SEED_PASSWORD, sinon **généré aléatoirement** (plus
+// de mot de passe administrateur par défaut connu).
+const DEMO_PASSWORD =
+  process.env.SEED_PASSWORD ?? crypto.randomBytes(12).toString('base64url')
 const DEMO_TZ = 'Europe/Paris'
 
 const CATALOG = [
@@ -102,6 +106,9 @@ function generatePlays(count = 750): RawPlay[] {
 }
 
 async function main() {
+  const existingUser = await prisma.user.findUnique({
+    where: { email: DEMO_EMAIL },
+  })
   const user = await prisma.user.upsert({
     where: { email: DEMO_EMAIL },
     update: {},
@@ -113,7 +120,11 @@ async function main() {
       isAdmin: true,
     },
   })
-  console.log(`👤 Utilisateur : ${user.email}  (mot de passe : ${DEMO_PASSWORD})`)
+  console.log(
+    existingUser
+      ? `👤 Utilisateur : ${user.email} (existant, mot de passe inchangé)`
+      : `👤 Utilisateur : ${user.email}  (mot de passe : ${DEMO_PASSWORD})`,
+  )
 
   const existing = await prisma.play.count({ where: { userId: user.id } })
   if (existing === 0) {

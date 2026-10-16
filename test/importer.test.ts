@@ -26,4 +26,36 @@ describe("parseSpotifyHistory", () => {
   it("ignore les lignes sans titre/artiste/date", () => {
     expect(parseSpotifyHistory(JSON.stringify([{ foo: "bar" }]))).toEqual([]);
   });
+
+  it("interprète les dates sans fuseau (export classique) comme UTC", () => {
+    const plays = parseSpotifyHistory(
+      JSON.stringify([
+        {
+          endTime: "2024-05-01 14:23",
+          artistName: "Artiste",
+          trackName: "Titre",
+          msPlayed: 1000,
+        },
+      ]),
+    );
+
+    expect(plays).toHaveLength(1);
+    // Sans le correctif, la date serait lue comme heure locale du serveur.
+    expect(plays[0].playedAt.toISOString()).toBe("2024-05-01T14:23:00.000Z");
+  });
+
+  it("respecte un fuseau explicite quand il est présent", () => {
+    const plays = parseSpotifyHistory(
+      JSON.stringify([
+        {
+          endTime: "2024-05-01T14:23:00+02:00",
+          artistName: "Artiste",
+          trackName: "Titre",
+          msPlayed: 1000,
+        },
+      ]),
+    );
+
+    expect(plays[0].playedAt.toISOString()).toBe("2024-05-01T12:23:00.000Z");
+  });
 });

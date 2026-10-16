@@ -34,7 +34,7 @@ export type YourSpotifyInfo = {
   albumId?: string;
   primaryArtistId?: string;
   durationMs?: number;
-  played_at?: Date | string;
+  played_at?: Date | string | number | { $date?: string | number | Date };
 };
 
 export type YourSpotifyData = {
@@ -47,6 +47,24 @@ export type YourSpotifyData = {
 function firstImage(images?: YourSpotifyImage[]): string | undefined {
   if (!Array.isArray(images) || images.length === 0) return undefined;
   return images[0]?.url;
+}
+
+/**
+ * Normalise une date de dump MongoDB. `mongodump` produit des `Date`, mais
+ * `mongoexport` (JSON) sérialise en Extended JSON : `{ "$date": "…" }`.
+ * Sans cela, `new Date({…})` est invalide et **toutes** les écoutes sont
+ * ignorées silencieusement.
+ */
+function toDate(value: unknown): Date | null {
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if (typeof value === "string" || typeof value === "number") {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  if (value && typeof value === "object" && "$date" in value) {
+    return toDate((value as { $date?: unknown }).$date);
+  }
+  return null;
 }
 
 export function mapYourSpotifyData(data: YourSpotifyData): {
@@ -79,8 +97,8 @@ export function mapYourSpotifyData(data: YourSpotifyData): {
   let skipped = 0;
 
   for (const info of data.infos) {
-    const playedAt = info.played_at ? new Date(info.played_at) : null;
-    if (!info.id || !playedAt || Number.isNaN(playedAt.getTime())) {
+    const playedAt = toDate(info.played_at);
+    if (!info.id || !playedAt) {
       skipped += 1;
       continue;
     }
@@ -181,6 +199,63 @@ function collectionOf(filename: string): CollectionName | null {
   return null;
 }
 
+/** Devine la collection à partir des clés du premier document. */
+function collectionFromKeys(doc: Record<string, unknown>): CollectionName | null {
+  if ("played_at" in doc || "playedAt" in doc) return "infos";
+  if ("genres" in doc) return "artists";
+  if ("duration_ms" in doc || "durationMs" in doc) return "tracks";
+  if ("images" in doc) return "albums";
+  return null;
+}
+
+/**
+ * Détermine la collection d'un fichier isolé (non zippé) envoyé à l'API, où le
+ * nom d'origine est perdu : d'abord via un nom fourni (`X-Filename`), sinon en
+ * inspectant le premier document (BSON, puis JSON/JSONL).
+ */
+export function peekCollection(
+  buffer: Uint8Array,
+  filenameHint?: string | null,
+): CollectionName | null {
+  if (filenameHint) {
+    const byName = collectionOf(filenameHint);
+    if (byName) return byName;
+  }
+  // BSON : le premier document commence par sa taille (4 octets LE).
+  if (buffer.length >= 5) {
+    const size =
+      buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
+    if (size > 4 && size <= buffer.length) {
+      try {
+        return collectionFromKeys(
+          deserialize(buffer.subarray(0, size)) as Record<string, unknown>,
+        );
+      } catch {
+        // Pas du BSON : on tente le JSON ci-dessous.
+      }
+    }
+  }
+  // JSON/JSONL : on décode un début borné et on inspecte le premier objet.
+  const head = new TextDecoder().decode(
+    buffer.subarray(0, Math.min(buffer.length, 256 * 1024)),
+  );
+  for (const line of head.split(/\r?\n/)) {
+    let value = line.trim();
+    value = value.replace(/^\[/, "").replace(/^,/, "").trim();
+    value = value.replace(/\]$/, "").replace(/,$/, "").trim();
+    if (!value) continue;
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === "object") {
+        return collectionFromKeys(parsed as Record<string, unknown>);
+      }
+    } catch {
+      // Ligne tronquée ou invalide : on continue.
+    }
+  }
+  return null;
+}
+
 export type YourSpotifyImport = {
   data: YourSpotifyData;
   counts: Record<CollectionName, number>;
@@ -232,7 +307,9 @@ export function buildYourSpotifyData(files: UploadedFile[]): YourSpotifyImport {
     const documents = file.name.toLowerCase().endsWith(".bson")
       ? parseBsonDocuments(file.data)
       : parseJsonDocuments(decoder.decode(file.data));
-    collections[collection].push(...documents);
+    // Boucle plutôt que `push(...documents)` : un dump complet peut dépasser la
+    // limite d'arguments de V8 (RangeError « Maximum call stack size »).
+    for (const document of documents) collections[collection].push(document);
     counts[collection] += documents.length;
   }
 

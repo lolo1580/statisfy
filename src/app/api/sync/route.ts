@@ -3,6 +3,8 @@ import { getOptionalAdmin } from "@/lib/auth/dal";
 import { hasValidSyncToken } from "@/lib/auth/sync-token";
 import { syncMinIntervalMs } from "@/lib/env";
 import { syncAllDue } from "@/lib/sync/engine";
+import { purgeLogs } from "@/lib/log";
+import { purgeInvitations } from "@/lib/invitations";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +29,11 @@ async function handle(request: NextRequest, allowSession: boolean) {
   }
 
   const results = await syncAllDue(syncMinIntervalMs);
+
+  // Entretien (rétention) : la purge des journaux et invitations se fait ici
+  // (appelée par le cron), et non plus pendant le rendu GET des pages admin.
+  await Promise.allSettled([purgeLogs(), purgeInvitations()]);
+
   return NextResponse.json({
     synced: results.filter((r) => r.ok).length,
     failed: results.filter((r) => !r.ok).length,

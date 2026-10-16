@@ -1,7 +1,13 @@
 import 'server-only'
 
 import { prisma } from '../db'
+import { isPlayCounted } from '../play-counting'
+import { getMinListenRatio } from '../settings'
 import type { RawPlay } from '../sources/types'
+import { buildDedupKey } from './dedup'
+
+/** Piste résolue : identifiant + durée (pour la règle des 3/4). */
+type TrackRef = { id: string; durationMs: number | null }
 
 export type IngestResult = {
   total: number
@@ -10,14 +16,6 @@ export type IngestResult = {
 }
 
 const CHUNK_SIZE = 400
-
-/** Clé de déduplication stable par fournisseur, piste et horodatage. */
-function buildDedupKey(play: RawPlay): string {
-  const identity =
-    play.externalTrackId ??
-    `${play.artistName.trim().toLowerCase()}::${play.trackName.trim().toLowerCase()}`
-  return `${play.provider}|${identity}|${play.playedAt.toISOString()}`
-}
 
 function mergeGenres(existing: string | null, incoming?: string[]): string | null {
   if (!incoming?.length) return existing
@@ -55,12 +53,14 @@ export async function ingestPlays(
 ): Promise<IngestResult> {
   if (plays.length === 0) return { total: 0, inserted: 0, skipped: 0 }
 
+  const ratio = await getMinListenRatio()
+
   const artistByName = new Map<string, string>()
   const artistByExt = new Map<string, string>()
   const albumByKey = new Map<string, string>()
   const albumByExt = new Map<string, string>()
-  const trackByKey = new Map<string, string>()
-  const trackByExt = new Map<string, string>()
+  const trackByKey = new Map<string, TrackRef>()
+  const trackByExt = new Map<string, TrackRef>()
 
   async function resolveArtist(play: RawPlay): Promise<string> {
     const ext = play.externalArtistId
@@ -88,13 +88,23 @@ export async function ingestPlays(
 
     let record = await prisma.artist.findUnique({ where: { name } })
     if (!record) {
-      record = await prisma.artist.create({
-        data: {
-          name,
-          imageUrl: play.artistImageUrl ?? null,
-          genres: play.genres?.length ? JSON.stringify(play.genres) : null,
-        },
-      })
+      try {
+        record = await prisma.artist.create({
+          data: {
+            name,
+            imageUrl: play.artistImageUrl ?? null,
+            genres: play.genres?.length
+              ? JSON.stringify([...new Set(play.genres)])
+              : null,
+          },
+        })
+      } catch (error) {
+        // Course avec une autre synchro/import sur le même artiste : on relit
+        // l'entité créée par l'autre transaction au lieu d'avorter le lot.
+        if (!isUniqueViolation(error)) throw error
+        record = await prisma.artist.findUnique({ where: { name } })
+        if (!record) throw error
+      }
     } else if (play.genres?.length || (play.artistImageUrl && !record.imageUrl)) {
       record = await prisma.artist.update({
         where: { id: record.id },
@@ -150,14 +160,24 @@ export async function ingestPlays(
       select: { id: true, imageUrl: true },
     })
     if (!record) {
-      record = await prisma.album.create({
-        data: {
-          artistId,
-          name: play.albumName,
-          imageUrl: play.imageUrl ?? null,
-        },
-        select: { id: true, imageUrl: true },
-      })
+      try {
+        record = await prisma.album.create({
+          data: {
+            artistId,
+            name: play.albumName,
+            imageUrl: play.imageUrl ?? null,
+          },
+          select: { id: true, imageUrl: true },
+        })
+      } catch (error) {
+        // Course sur l'unicité (artistId, name) : on relit l'album existant.
+        if (!isUniqueViolation(error)) throw error
+        record = await prisma.album.findUnique({
+          where: { artistId_name: { artistId, name: play.albumName } },
+          select: { id: true, imageUrl: true },
+        })
+        if (!record) throw error
+      }
     }
     albumByKey.set(key, record.id)
     if (ext) {
@@ -175,7 +195,7 @@ export async function ingestPlays(
     play: RawPlay,
     artistId: string,
     albumId: string | null,
-  ): Promise<string> {
+  ): Promise<TrackRef> {
     const ext = play.externalTrackId
     if (ext) {
       const cached = trackByExt.get(ext)
@@ -187,8 +207,16 @@ export async function ingestPlays(
         select: { trackId: true },
       })
       if (ref?.trackId) {
-        trackByExt.set(ext, ref.trackId)
-        return ref.trackId
+        const existing = await prisma.track.findUnique({
+          where: { id: ref.trackId },
+          select: { durationMs: true },
+        })
+        const value: TrackRef = {
+          id: ref.trackId,
+          durationMs: existing?.durationMs ?? null,
+        }
+        trackByExt.set(ext, value)
+        return value
       }
     }
 
@@ -201,7 +229,7 @@ export async function ingestPlays(
 
     let record = await prisma.track.findFirst({
       where: { artistId, name: play.trackName, albumId: albumId ?? null },
-      select: { id: true },
+      select: { id: true, durationMs: true },
     })
     if (!record) {
       record = await prisma.track.create({
@@ -213,19 +241,20 @@ export async function ingestPlays(
           imageUrl: play.imageUrl ?? null,
           isrc: play.isrc ?? null,
         },
-        select: { id: true },
+        select: { id: true, durationMs: true },
       })
     }
-    trackByKey.set(key, record.id)
+    const value: TrackRef = { id: record.id, durationMs: record.durationMs }
+    trackByKey.set(key, value)
     if (ext) {
       await prisma.externalRef.upsert({
         where: { provider_externalId: { provider: play.provider, externalId: ext } },
         create: { provider: play.provider, externalId: ext, trackId: record.id },
         update: { trackId: record.id },
       })
-      trackByExt.set(ext, record.id)
+      trackByExt.set(ext, value)
     }
-    return record.id
+    return value
   }
 
   const seen = new Set<string>()
@@ -247,10 +276,24 @@ export async function ingestPlays(
       where: { externalId: { in: extIds } },
       select: { externalId: true, artistId: true, albumId: true, trackId: true },
     })
+    const refTrackIds = distinct(refs.map((r) => r.trackId ?? undefined))
+    const refTracks =
+      refTrackIds.length > 0
+        ? await prisma.track.findMany({
+            where: { id: { in: refTrackIds } },
+            select: { id: true, durationMs: true },
+          })
+        : []
+    const durationByTrackId = new Map(refTracks.map((t) => [t.id, t.durationMs]))
     for (const ref of refs) {
       if (ref.artistId) artistByExt.set(ref.externalId, ref.artistId)
       if (ref.albumId) albumByExt.set(ref.externalId, ref.albumId)
-      if (ref.trackId) trackByExt.set(ref.externalId, ref.trackId)
+      if (ref.trackId) {
+        trackByExt.set(ref.externalId, {
+          id: ref.trackId,
+          durationMs: durationByTrackId.get(ref.trackId) ?? null,
+        })
+      }
     }
   }
   if (albumNames.length > 0) {
@@ -263,10 +306,13 @@ export async function ingestPlays(
   if (trackNames.length > 0) {
     const tracks = await prisma.track.findMany({
       where: { name: { in: trackNames } },
-      select: { id: true, artistId: true, albumId: true, name: true },
+      select: { id: true, artistId: true, albumId: true, name: true, durationMs: true },
     })
     for (const track of tracks) {
-      trackByKey.set(`${track.artistId}|${track.albumId ?? ""}|${track.name}`, track.id)
+      trackByKey.set(`${track.artistId}|${track.albumId ?? ""}|${track.name}`, {
+        id: track.id,
+        durationMs: track.durationMs,
+      })
     }
   }
 
@@ -277,28 +323,44 @@ export async function ingestPlays(
     albumId: string | null
     playedAt: Date
     msPlayed: number
+    counted: boolean
     source: string
     context: string | null
     dedupKey: string
   }> = []
 
-  for (const play of plays) {
-    if (!play.trackName?.trim() || !play.artistName?.trim()) continue
+  for (const raw of plays) {
+    const trackName = raw.trackName?.trim()
+    const artistName = raw.artistName?.trim()
+    if (!trackName || !artistName) continue
+    // Normalise une fois pour toutes : la clé de dédup et la résolution des
+    // entités utilisent alors exactement les mêmes valeurs (évite de créer des
+    // artistes/pistes « fantômes » à cause d'espaces parasites).
+    const play: RawPlay = {
+      ...raw,
+      artistName,
+      trackName,
+      albumName: raw.albumName?.trim() || undefined,
+    }
     const dedupKey = buildDedupKey(play)
     if (seen.has(dedupKey)) continue
     seen.add(dedupKey)
 
     const artistId = await resolveArtist(play)
     const albumId = await resolveAlbum(play, artistId)
-    const trackId = await resolveTrack(play, artistId, albumId)
+    const track = await resolveTrack(play, artistId, albumId)
+
+    const msPlayed = Math.max(0, Math.round(play.msPlayed ?? play.durationMs ?? 0))
+    const durationMs = play.durationMs ?? track.durationMs ?? null
 
     rows.push({
       userId,
-      trackId,
+      trackId: track.id,
       artistId,
       albumId,
       playedAt: play.playedAt,
-      msPlayed: Math.max(0, Math.round(play.msPlayed ?? play.durationMs ?? 0)),
+      msPlayed,
+      counted: isPlayCounted(msPlayed, durationMs, ratio),
       source: play.origin ?? play.provider,
       context: play.context ?? null,
       dedupKey,

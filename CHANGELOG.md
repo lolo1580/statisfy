@@ -7,6 +7,106 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Ajouté
+
+- **Seuil de comptabilisation des écoutes (3/4)** : une écoute ne compte dans
+  les statistiques que si au moins **3/4 de la piste** a été écouté (colonne
+  `Play.counted`, calculée à l'ingestion ; durée inconnue → comptée). Les
+  écoutes trop courtes restent stockées et visibles dans l'export, mais sont
+  exclues des agrégations, classements, graphiques et tendances. Règle définie
+  dans `src/lib/play-counting.ts`. Pour recalculer l'existant :
+  `pnpm db:backfill-counted`.
+
+### Corrigé
+
+- **Import Spotify** : les horodatages de l'export classique (`endTime`, sans
+  fuseau) sont désormais lus en **UTC** (et non en heure locale du serveur) ; un
+  fuseau explicite reste respecté.
+- **Import « Your Spotify »** : les dates Extended JSON de `mongoexport`
+  (`{ "$date": … }`) sont normalisées (avant, toutes les écoutes d'un dump JSON
+  étaient ignorées) ; un **fichier isolé** (non zippé) est accepté via l'en-tête
+  `X-Filename`/`Content-Disposition` ou la détection du premier document.
+- **Gros imports** : plus de `push(...documents)` (dépassement de pile V8 sur
+  les historiques volumineux) — insertion par boucle.
+- **Import/sync** : course à la création d'un **artiste** ou d'un **album**
+  partagé entre deux imports concurrents gérée (relit l'entité au lieu d'avorter
+  le lot) ; les noms sont normalisés (`trim`) avant résolution, évitant les
+  entités « fantômes ».
+- **Sync Spotify** : un jeton OAuth rafraîchi est désormais **persisté même si
+  le fetch/ingest échoue** (évite de perdre un refresh token tourné).
+- **Statistiques** : le classement des **genres** agrège tous les artistes
+  écoutés (fini le plafond des 100 artistes les plus écoutés qui faussait le
+  classement).
+- **CLI `import:your-spotify`** : la connexion MongoDB est fermée même en cas
+  d'erreur.
+
+### Sécurité / robustesse (2ᵉ passe)
+
+- **Déduplication** : la clé d'écoute est calculée **à la seconde** (au lieu des
+  millisecondes), si bien qu'une même écoute synchronisée puis importée n'est
+  plus comptée deux fois. Nouveau rattrapage : `pnpm db:normalize-dedup`
+  (supprime les doublons existants et réécrit les clés).
+- **`SESSION_SECRET`** : longueur minimale de **32 octets** imposée (le secret
+  signe les sessions HS256 et le `state` OAuth).
+- **Rate-limit** : une IP indéterminable ne crée plus de seau **global** partagé
+  par tous les clients (fini le blocage de connexion global) ; les seaux encore
+  actifs ne sont plus évincés par un flood de clés (contournement fermé).
+- **Statistiques** : les tranches temporelles SQL sont **tronquées** à la
+  seconde (`floor`) au lieu d'être arrondies ; les tendances respectent le
+  périmètre (artiste/titre/album) ; la recherche est insensible à la casse.
+- **`/api/restore`** : lecture du corps **bornée en streaming** (plus de
+  chargement intégral en mémoire avant le contrôle de taille).
+
+### Classements & auth (3ᵉ passe)
+
+- **Tri « écoutes / temps »** : le classement affiché est désormais calculé
+  **côté serveur** pour chaque métrique (vrais tops par temps d'écoute, plus un
+  simple re-tri du top par écoutes). Concerné : Tableau de bord, Classements,
+  Comparateur, fiches artiste et récapitulatif.
+- **Auth** : le hash scrypt factice (anti-oracle temporel sur l'existence d'un
+  compte) s'applique aussi à l'**authentification HTTP Basic** des imports ;
+  le **mot de passe du compte de démo** n'est plus un mot de passe par défaut
+  connu (généré aléatoirement, ou via `SEED_PASSWORD`) ; les **sessions
+  expirées** sont purgées à la connexion.
+
+### Maintenance & données (4ᵉ passe)
+
+- **Purge hors GET** : le nettoyage de rétention des journaux et des invitations
+  n'est plus déclenché pendant le rendu (GET) des pages admin ; il est exécuté
+  par le **cron** (`/api/sync`), supprimant toute mutation déclenchable par une
+  simple navigation.
+- **Bornes du récapitulatif** : les tranches journalières/mensuelles du Wrapped
+  sont calculées en **UTC**, alignées sur la période : plus de jour/mois hors
+  période (frontière de fuseau) et cohérence avec les totaux affichés.
+- **Genres dédoublonnés** au stockage comme à la lecture (un genre présent deux
+  fois n'est plus compté doublement).
+- **`/api/export/db`** : filet de sécurité qui supprime le dump temporaire même
+  si le flux n'émet jamais `close`.
+
+### Seuil d'écoute (5ᵉ passe)
+
+- **Seuil configurable** : le seuil de comptabilisation (3/4 par défaut) est
+  réglable depuis **Administration → Instance** ; l'enregistrer **recalcule**
+  `counted` sur toutes les écoutes.
+- **Durées de piste enrichies** : à l'import d'un export Spotify sans durée, les
+  durées manquantes sont récupérées via le catalogue Spotify, puis le seuil est
+  réappliqué — le seuil est donc effectif aussi pour ces imports.
+- **Taux d'écoute complète** : la page *Activité* affiche la part d'écoutes ayant
+  atteint le seuil.
+
+### Ops & performance (6ᵉ passe)
+
+- **Migrations Prisma versionnées** : le schéma est désormais géré par
+  `prisma migrate` (migration de référence + index), et l'entrypoint applique
+  `migrate deploy` au démarrage au lieu de `db push` — plus d'altération
+  implicite du schéma. Commandes : `pnpm db:migrate` /
+  `pnpm exec prisma migrate dev`.
+- **Healthcheck Docker** sur le service `statisfy` (état `healthy` fiable).
+- **Sauvegardes auto-vérifiées** : chaque dump est relu (`pg_restore --list`)
+  juste après sa création ; un dump corrompu est supprimé et signalé.
+- **Recherche** : index **GIN trigram** (`pg_trgm`) sur `Artist.name` et
+  `Track.name` — la recherche « contient » n'est plus un parcours séquentiel.
+
 ### Modifié
 
 - **Image Docker allégée** : build en **sortie auto-portée**

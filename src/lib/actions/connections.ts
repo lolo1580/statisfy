@@ -4,12 +4,18 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "../db";
 import { getAdminUser, getCurrentUser } from "../auth/dal";
 import { runImport, runPlaysIngest, runSyncForConnection } from "../sync/engine";
-import { enrichMissingImages } from "../sources/enrich";
+import { enrichMissingDurations, enrichMissingImages } from "../sources/enrich";
 import {
   buildYourSpotifyData,
   mapYourSpotifyData,
 } from "../sources/your-spotify";
-import { SETTING_ALLOW_REGISTRATION, setSetting } from "../settings";
+import {
+  SETTING_ALLOW_REGISTRATION,
+  SETTING_MIN_LISTEN_RATIO,
+  getMinListenRatio,
+  setSetting,
+} from "../settings";
+import { recountPlays } from "../sync/recount";
 import { logEvent, errorMessage } from "../log";
 import { getI18n } from "@/i18n/server";
 
@@ -87,6 +93,14 @@ export async function importHistory(
       enriched = enrichment.artistsUpdated + enrichment.albumsUpdated;
     } catch {
       // L'enrichissement est optionnel : l'import reste valide sans lui.
+    }
+
+    // Complète les durées manquantes puis applique le seuil de comptabilisation.
+    try {
+      await enrichMissingDurations(user.id, { max: 60 });
+      await recountPlays(await getMinListenRatio());
+    } catch {
+      // Optionnel : l'import reste valide même si l'enrichissement échoue.
     }
 
     revalidatePath("/settings/import");
@@ -209,4 +223,27 @@ export async function setRegistration(formData: FormData): Promise<void> {
     userId: admin.id,
   });
   revalidatePath("/admin/instance");
+}
+
+/**
+ * Règle le seuil de comptabilisation d'une écoute (en pourcentage) et
+ * recalcule l'indicateur `counted` de toutes les écoutes.
+ */
+export async function setMinListenRatio(formData: FormData): Promise<void> {
+  const admin = await getAdminUser();
+  if (!admin) return;
+  const percent = Number(formData.get("percent"));
+  if (!Number.isFinite(percent) || percent < 0 || percent > 100) return;
+  const ratio = percent / 100;
+  await setSetting(SETTING_MIN_LISTEN_RATIO, String(ratio));
+  await recountPlays(ratio);
+  await logEvent({
+    level: "info",
+    source: "admin",
+    message: "Seuil d'écoute modifié",
+    userId: admin.id,
+    meta: { ratio },
+  });
+  revalidatePath("/admin/instance");
+  revalidatePath("/dashboard");
 }

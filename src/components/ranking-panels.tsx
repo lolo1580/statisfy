@@ -12,9 +12,40 @@ type Metric = "plays" | "time";
 
 type Ranked = { plays: number; msPlayed: number };
 
-function byMetric<T extends Ranked>(metric: Metric) {
-  return (a: T, b: T) =>
-    metric === "plays" ? b.plays - a.plays : b.msPlayed - a.msPlayed;
+export type TrackItem = {
+  id: string;
+  name: string;
+  artistName: string;
+  albumName?: string | null;
+  imageUrl: string | null;
+  plays: number;
+  msPlayed: number;
+};
+
+export type ArtistItem = {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  genres: string[];
+  plays: number;
+  msPlayed: number;
+};
+
+export type AlbumItem = {
+  id: string;
+  name: string;
+  artistId: string;
+  artistName: string;
+  imageUrl: string | null;
+  plays: number;
+  msPlayed: number;
+};
+
+export type GenreItem = { genre: string; plays: number; msPlayed: number };
+
+/** Choisit le classement pré-trié par le serveur selon la métrique. */
+function pickRanking<T>(metric: Metric, byPlays: T[], byTime: T[]): T[] {
+  return metric === "plays" ? byPlays : byTime;
 }
 
 function MetricSwitch({
@@ -80,37 +111,33 @@ function metricValue(metric: Metric, item: Ranked, locale: string): string {
 /** Classement de titres avec bascule écoutes / temps. */
 export function TopTracksPanel({
   title,
-  items,
+  itemsByPlays,
+  itemsByTime,
   query,
   showAlbum = false,
   empty,
 }: {
   title: string;
-  items: Array<{
-    id: string;
-    name: string;
-    artistName: string;
-    albumName?: string | null;
-    imageUrl: string | null;
-    plays: number;
-    msPlayed: number;
-  }>;
+  /** Top titres classés par écoutes (calculé côté serveur). */
+  itemsByPlays: TrackItem[];
+  /** Top titres classés par temps d'écoute (calculé côté serveur). */
+  itemsByTime: TrackItem[];
   query: string;
   showAlbum?: boolean;
   empty?: string;
 }) {
   const { locale, t } = useI18n();
   const [metric, setMetric] = useState<Metric>("time");
-  const sorted = [...items].sort(byMetric(metric));
+  const items = pickRanking(metric, itemsByPlays, itemsByTime);
 
   return (
     <div>
       <PanelHeader title={title} metric={metric} onChange={setMetric} />
-      {sorted.length === 0 ? (
+      {items.length === 0 ? (
         <EmptyState>{empty ?? t("generic.noData")}</EmptyState>
       ) : (
         <ol className="space-y-3">
-          {sorted.map((track, index) => (
+          {items.map((track, index) => (
             <li key={track.id}>
               <Link
                 href={`/track/${track.id}${query ? `?${query}` : ""}`}
@@ -140,36 +167,31 @@ export function TopTracksPanel({
 /** Classement d'artistes avec bascule écoutes / temps. */
 export function TopArtistsPanel({
   title,
-  items,
+  itemsByPlays,
+  itemsByTime,
   query,
   genresCount = 2,
   empty,
 }: {
   title: string;
-  items: Array<{
-    id: string;
-    name: string;
-    imageUrl: string | null;
-    genres: string[];
-    plays: number;
-    msPlayed: number;
-  }>;
+  itemsByPlays: ArtistItem[];
+  itemsByTime: ArtistItem[];
   query: string;
   genresCount?: number;
   empty?: string;
 }) {
   const { locale, t } = useI18n();
   const [metric, setMetric] = useState<Metric>("time");
-  const sorted = [...items].sort(byMetric(metric));
+  const items = pickRanking(metric, itemsByPlays, itemsByTime);
 
   return (
     <div>
       <PanelHeader title={title} metric={metric} onChange={setMetric} />
-      {sorted.length === 0 ? (
+      {items.length === 0 ? (
         <EmptyState>{empty ?? t("generic.noData")}</EmptyState>
       ) : (
         <ol className="space-y-3">
-          {sorted.map((artist, index) => (
+          {items.map((artist, index) => (
             <li key={artist.id}>
               <Link
                 href={`/artist/${artist.id}${query ? `?${query}` : ""}`}
@@ -205,35 +227,29 @@ export function TopArtistsPanel({
 /** Classement d'albums avec bascule écoutes / temps. */
 export function TopAlbumsPanel({
   title,
-  items,
+  itemsByPlays,
+  itemsByTime,
   query,
   empty,
 }: {
   title: string;
-  items: Array<{
-    id: string;
-    name: string;
-    artistId: string;
-    artistName: string;
-    imageUrl: string | null;
-    plays: number;
-    msPlayed: number;
-  }>;
+  itemsByPlays: AlbumItem[];
+  itemsByTime: AlbumItem[];
   query: string;
   empty?: string;
 }) {
   const { locale, t } = useI18n();
   const [metric, setMetric] = useState<Metric>("time");
-  const sorted = [...items].sort(byMetric(metric));
+  const items = pickRanking(metric, itemsByPlays, itemsByTime);
 
   return (
     <div>
       <PanelHeader title={title} metric={metric} onChange={setMetric} />
-      {sorted.length === 0 ? (
+      {items.length === 0 ? (
         <EmptyState>{empty ?? t("generic.noData")}</EmptyState>
       ) : (
         <ol className="space-y-3">
-          {sorted.map((album, index) => (
+          {items.map((album, index) => (
             <li key={album.id}>
               <Link
                 href={`/artist/${album.artistId}${query ? `?${query}` : ""}`}
@@ -261,17 +277,19 @@ export function TopAlbumsPanel({
 export function TopGenresPanel({
   title,
   subtitle,
-  items,
+  itemsByPlays,
+  itemsByTime,
   empty,
 }: {
   title: string;
   subtitle?: string;
-  items: Array<{ genre: string; plays: number; msPlayed: number }>;
+  itemsByPlays: GenreItem[];
+  itemsByTime: GenreItem[];
   empty?: string;
 }) {
   const { locale, t } = useI18n();
   const [metric, setMetric] = useState<Metric>("time");
-  const sorted = [...items].sort(byMetric(metric));
+  const items = pickRanking(metric, itemsByPlays, itemsByTime);
 
   return (
     <div>
@@ -281,11 +299,11 @@ export function TopGenresPanel({
         metric={metric}
         onChange={setMetric}
       />
-      {sorted.length === 0 ? (
+      {items.length === 0 ? (
         <EmptyState>{empty ?? t("generic.noData")}</EmptyState>
       ) : (
         <RankBars
-          items={sorted.map((genre) => ({
+          items={items.map((genre) => ({
             label: genre.genre,
             value: metric === "plays" ? genre.plays : genre.msPlayed,
             display:

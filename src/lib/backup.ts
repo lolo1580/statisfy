@@ -50,6 +50,11 @@ async function dumpDatabase(target: string): Promise<void> {
       ],
       { maxBuffer: 16 * 1024 * 1024 },
     );
+    // Vérifie que le dump est lisible (table des matières) : un dump tronqué ou
+    // corrompu est détecté immédiatement, avant d'écraser une bonne sauvegarde.
+    await execFileAsync("pg_restore", ["--list", target], {
+      maxBuffer: 16 * 1024 * 1024,
+    });
   } catch (error) {
     // Ne pas laisser un dump partiel derrière soi (pg_dump crée le fichier tôt).
     fs.rmSync(/*turbopackIgnore: true*/ target, { force: true });

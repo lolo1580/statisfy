@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/lib/auth/dal";
 import { revokeInvitation } from "@/lib/actions/users";
 import { CopyField, InviteForm } from "@/components/admin-forms";
-import { listInvitations, purgeInvitations } from "@/lib/invitations";
+import { listInvitations } from "@/lib/invitations";
 import { isInvitationUsable } from "@/lib/invitation-rules";
 import { requestOrigin } from "@/lib/sources/spotify-state";
 import { appUrl } from "@/lib/env";
@@ -16,7 +16,6 @@ export default async function AdminInvitationsPage() {
   const user = await getCurrentUser();
   const { locale, t } = await getI18n();
 
-  await purgeInvitations();
   const invitations = await listInvitations();
   // Origine publique pour construire des liens d'invitation absolus.
   const inviteOrigin = (await requestOrigin()) ?? appUrl;

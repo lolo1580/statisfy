@@ -38,7 +38,7 @@ RUN pnpm build \
 
 # --- CLI Prisma isolé ---
 # La sortie `standalone` de Next ne trace pas le CLI `prisma` (utilisé par
-# l'entrypoint pour `db push`). On l'installe dans un préfixe dédié plutôt que
+# l'entrypoint pour `migrate deploy`). On l'installe dans un préfixe dédié plutôt que
 # d'embarquer tout `node_modules` de l'application.
 FROM base AS prisma
 ENV PRISMA_SKIP_POSTINSTALL_GENERATE=1

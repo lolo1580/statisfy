@@ -49,36 +49,40 @@ async function main() {
   }
 
   const client = new MongoClient(mongoUrl)
-  await client.connect()
-  const db = client.db()
+  try {
+    await client.connect()
+    const db = client.db()
 
-  const [artists, albums, tracks, allInfos] = await Promise.all([
-    db.collection<YourSpotifyArtist>('artists').find({}).toArray(),
-    db.collection<YourSpotifyAlbum>('albums').find({}).toArray(),
-    db.collection<YourSpotifyTrack>('tracks').find({}).toArray(),
-    db.collection<YourSpotifyInfo>('infos').find({}).toArray(),
-  ])
-  const infos = limit > 0 ? allInfos.slice(0, limit) : allInfos
+    const [artists, albums, tracks, allInfos] = await Promise.all([
+      db.collection<YourSpotifyArtist>('artists').find({}).toArray(),
+      db.collection<YourSpotifyAlbum>('albums').find({}).toArray(),
+      db.collection<YourSpotifyTrack>('tracks').find({}).toArray(),
+      db.collection<YourSpotifyInfo>('infos').find({}).toArray(),
+    ])
+    const infos = limit > 0 ? allInfos.slice(0, limit) : allInfos
 
-  const { plays, skipped } = mapYourSpotifyData({
-    artists,
-    albums,
-    tracks,
-    infos,
-  })
+    const { plays, skipped } = mapYourSpotifyData({
+      artists,
+      albums,
+      tracks,
+      infos,
+    })
 
-  console.log(
-    `Your Spotify : ${artists.length} artistes, ${albums.length} albums, ` +
-      `${tracks.length} titres, ${infos.length} écoutes (${skipped} ignorées).`,
-  )
+    console.log(
+      `Your Spotify : ${artists.length} artistes, ${albums.length} albums, ` +
+        `${tracks.length} titres, ${infos.length} écoutes (${skipped} ignorées).`,
+    )
 
-  const result = await ingestPlays(user.id, plays)
-  console.log(
-    `Import terminé pour ${user.email} : ${result.inserted} écoute(s) insérée(s) ` +
-      `sur ${result.total} lue(s).`,
-  )
+    const result = await ingestPlays(user.id, plays)
+    console.log(
+      `Import terminé pour ${user.email} : ${result.inserted} écoute(s) insérée(s) ` +
+        `sur ${result.total} lue(s).`,
+    )
+  } finally {
+    // Ferme la connexion Mongo même en cas d'erreur d'import.
+    await client.close().catch(() => undefined)
+  }
 
-  await client.close()
   await prisma.$disconnect()
 }
 

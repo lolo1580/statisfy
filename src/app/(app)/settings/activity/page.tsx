@@ -40,6 +40,12 @@ export default async function SettingsActivityPage() {
   const jobType = (value: string) =>
     value === "import" ? t("status.import") : t("status.sync");
 
+  // Part des écoutes comptabilisées (ayant atteint le seuil d'écoute).
+  const completionPct =
+    overview.allPlays > 0
+      ? Math.round((overview.totalPlays / overview.allPlays) * 100)
+      : null;
+
   const lastSync = connections
     .map((c) => c.lastSyncedAt)
     .filter((d): d is Date => d !== null)
@@ -88,6 +94,13 @@ export default async function SettingsActivityPage() {
             }
           />
         </div>
+        {completionPct !== null ? (
+          <p className="text-xs text-muted">
+            {t("settings.completionRate", {
+              percent: formatNumber(completionPct, locale),
+            })}
+          </p>
+        ) : null}
       </section>
 
       <Card>

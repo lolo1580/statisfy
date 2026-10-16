@@ -31,7 +31,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Export failed" }, { status: 500 });
   }
   const nodeStream = fs.createReadStream(snapshot.file);
-  const cleanup = () => snapshot.dispose();
+  let disposed = false;
+  const cleanup = () => {
+    if (disposed) return;
+    disposed = true;
+    clearTimeout(guard);
+    snapshot.dispose();
+  };
+  // Filet de sécurité : libère le dump temporaire même si le flux n'émet jamais
+  // `close` (réponse non consommée / client abandonnant sans annulation).
+  const guard = setTimeout(cleanup, 10 * 60 * 1000);
+  guard.unref?.();
   nodeStream.once("close", cleanup);
   nodeStream.once("error", cleanup);
 

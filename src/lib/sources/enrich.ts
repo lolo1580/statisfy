@@ -21,6 +21,9 @@ type SpotifySearchResponse = {
   albums?: { items?: Array<{ images?: SpotifyImage[] }> };
   artists?: { items?: Array<{ images?: SpotifyImage[] }> };
 };
+type SpotifySearchTrackResponse = {
+  tracks?: { items?: Array<{ duration_ms?: number }> };
+};
 
 let cachedToken: { value: string; expiresAt: number } | null = null;
 
@@ -94,6 +97,32 @@ export async function findArtistPicture(name: string): Promise<string | null> {
   return searchImage(token, "artist", `artist:"${name}"`);
 }
 
+/**
+ * Recherche la durée (ms) d'un titre dans le catalogue Spotify.
+ *
+ * Utilisé pour compléter les imports qui ne contiennent pas la durée (export
+ * Spotify « classique » / « extended »), afin que la règle des 3/4 puisse
+ * s'appliquer. La correspondance est approximative (artiste + titre).
+ */
+export async function findTrackDuration(
+  artistName: string,
+  trackName: string,
+): Promise<number | null> {
+  const token = await getClientToken();
+  const url = new URL(`${API}/search`);
+  url.searchParams.set("q", `artist:"${artistName}" track:"${trackName}"`);
+  url.searchParams.set("type", "track");
+  url.searchParams.set("limit", "1");
+  const res = await spotifyFetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  const data = (await res.json()) as SpotifySearchTrackResponse;
+  const ms = data.tracks?.items?.[0]?.duration_ms;
+  return typeof ms === "number" && ms > 0 ? ms : null;
+}
+
 export type EnrichResult = {
   artistsChecked: number;
   artistsUpdated: number;
@@ -159,4 +188,46 @@ export async function enrichMissingImages(
     albumsChecked: albums.length,
     albumsUpdated,
   };
+}
+
+export type EnrichDurationResult = {
+  tracksChecked: number;
+  tracksUpdated: number;
+};
+
+/**
+ * Complète la durée des titres écoutés dont la durée est inconnue (imports sans
+ * durée), via le catalogue Spotify. Les appels sont séquentiels et espacés.
+ *
+ * Après cet enrichissement, appeler `recountPlays(...)` pour appliquer le seuil
+ * de comptabilisation aux écoutes déjà présentes.
+ */
+export async function enrichMissingDurations(
+  userId: string,
+  options: { max?: number; delayMs?: number } = {},
+): Promise<EnrichDurationResult> {
+  const max = options.max ?? 100;
+  const delayMs = options.delayMs ?? 120;
+
+  const tracks = await prisma.track.findMany({
+    where: { durationMs: null, plays: { some: { userId } } },
+    orderBy: { name: "asc" },
+    take: max,
+    include: { artist: { select: { name: true } } },
+  });
+
+  let tracksUpdated = 0;
+  for (const track of tracks) {
+    const ms = await findTrackDuration(track.artist.name, track.name);
+    if (ms) {
+      await prisma.track.update({
+        where: { id: track.id },
+        data: { durationMs: ms },
+      });
+      tracksUpdated += 1;
+    }
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+
+  return { tracksChecked: tracks.length, tracksUpdated };
 }

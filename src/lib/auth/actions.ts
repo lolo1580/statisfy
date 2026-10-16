@@ -3,20 +3,13 @@
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { prisma } from "../db";
-import { hashPassword, verifyPassword } from "../password";
+import { hashPassword, verifyPasswordOrDummy } from "../password";
 import { createSession, deleteSession } from "./session";
 import { clientIp, resetTokens, takeToken } from "./rate-limit";
 import { registrationAllowed } from "../settings";
 import { findUsableInvitation } from "../invitations";
 import { logEvent } from "../log";
 import { getI18n } from "@/i18n/server";
-
-/**
- * Hash scrypt factice (coût de calcul identique) utilisé quand l'email est
- * inconnu, afin de ne pas révéler l'existence d'un compte par le temps de
- * réponse.
- */
-const DUMMY_PASSWORD_HASH = `scrypt$${Buffer.alloc(16, 7).toString("base64")}$${Buffer.alloc(64, 3).toString("base64")}`;
 
 export type AuthState =
   | {
@@ -54,9 +47,17 @@ export async function register(
 ): Promise<AuthState> {
   const { t } = await getI18n();
 
-  // Anti-abus : limite la création de comptes par IP.
+  // Anti-abus : limite la création de comptes par IP — ou, si l'IP n'est pas
+  // déterminable, par email (jamais par une clé constante, qui bloquerait tout
+  // le monde d'un coup).
   const ip = await clientIp();
-  if (!takeToken(`register:${ip}`, 5, 60 * 60 * 1000)) {
+  const emailForLimit = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
+  const registerKey = ip
+    ? `register-ip:${ip}`
+    : `register-email:${emailForLimit || "unknown"}`;
+  if (!takeToken(registerKey, 5, 60 * 60 * 1000)) {
     return { error: t("autherr.rateLimited", { minutes: 60 }) };
   }
 
@@ -176,14 +177,15 @@ export async function login(
     .toLowerCase();
   const password = String(formData.get("password") ?? "");
 
-  // Anti force-brute : limite par couple (IP, email) et par IP.
+  // Anti force-brute : limite par couple (IP, email) et par IP si elle est
+  // connue (sinon on ne crée pas de seau global partagé).
   const ip = await clientIp();
-  const userKey = `login:${ip}|${email}`;
-  const ipKey = `login-ip:${ip}`;
-  if (
-    !takeToken(userKey, 10, 15 * 60 * 1000) ||
-    !takeToken(ipKey, 30, 15 * 60 * 1000)
-  ) {
+  const userKey = `login:${ip ?? "-"}|${email}`;
+  const userAllowed = takeToken(userKey, 10, 15 * 60 * 1000);
+  const ipAllowed = ip
+    ? takeToken(`login-ip:${ip}`, 30, 15 * 60 * 1000)
+    : true;
+  if (!userAllowed || !ipAllowed) {
     return { error: t("autherr.rateLimited", { minutes: 15 }), values: { email } };
   }
 
@@ -194,10 +196,7 @@ export async function login(
   const user = await prisma.user.findUnique({ where: { email } });
   // Toujours exécuter scrypt (hash factice si le compte n'existe pas) : évite
   // de révéler l'existence d'un email par le temps de réponse.
-  const passwordOk = await verifyPassword(
-    password,
-    user?.passwordHash ?? DUMMY_PASSWORD_HASH,
-  );
+  const passwordOk = await verifyPasswordOrDummy(password, user?.passwordHash);
   if (!user || !passwordOk) {
     await logEvent({
       level: "warn",
@@ -211,7 +210,7 @@ export async function login(
   }
 
   resetTokens(userKey);
-  resetTokens(ipKey);
+  if (ip) resetTokens(`login-ip:${ip}`);
   await createSession(user.id);
   await logEvent({
     level: "info",

@@ -5,7 +5,7 @@ import { getOptionalAdmin, type CurrentUser } from "@/lib/auth/dal";
 import { prisma } from "@/lib/db";
 import { hasValidSyncToken } from "@/lib/auth/sync-token";
 import { clientIp, resetTokens, takeToken } from "@/lib/auth/rate-limit";
-import { verifyPassword } from "@/lib/password";
+import { verifyPasswordOrDummy } from "@/lib/password";
 
 /** Vérifie un en-tête `Authorization: Basic <email:mot de passe>`. */
 async function userFromBasic(header: string | null): Promise<CurrentUser | null> {
@@ -23,20 +23,23 @@ async function userFromBasic(header: string | null): Promise<CurrentUser | null>
     // Anti force-brute : même limiteur que la connexion (l'auth Basic ne doit
     // pas offrir un contournement du throttle du formulaire de login).
     const ip = await clientIp();
-    const userKey = `import-basic:${ip}|${email}`;
-    const ipKey = `import-basic-ip:${ip}`;
-    if (
-      !takeToken(userKey, 10, 15 * 60 * 1000) ||
-      !takeToken(ipKey, 30, 15 * 60 * 1000)
-    ) {
+    const userKey = `import-basic:${ip ?? "-"}|${email}`;
+    const userAllowed = takeToken(userKey, 10, 15 * 60 * 1000);
+    const ipAllowed = ip
+      ? takeToken(`import-basic-ip:${ip}`, 30, 15 * 60 * 1000)
+      : true;
+    if (!userAllowed || !ipAllowed) {
       return null;
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || !(await verifyPassword(password, user.passwordHash))) return null;
+    // scrypt exécuté même si l'email est inconnu (hash factice) : pas d'oracle
+    // temporel sur l'existence du compte, comme pour le formulaire de connexion.
+    const passwordOk = await verifyPasswordOrDummy(password, user?.passwordHash);
+    if (!user || !passwordOk) return null;
 
     resetTokens(userKey);
-    resetTokens(ipKey);
+    if (ip) resetTokens(`import-basic-ip:${ip}`);
     return {
       id: user.id,
       email: user.email,
