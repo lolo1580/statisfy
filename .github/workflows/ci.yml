@@ -127,3 +127,94 @@ jobs:
         if: always()
         run: docker rm -f statisfy-ci || true
 
+  # Vérifie la **mise à niveau** : on crée une base avec le schéma de la release
+  # précédente (tag le plus proche), puis on démarre la nouvelle image dessus.
+  # Attrape les régressions « vieille instance -> nouvelle version » (colonnes /
+  # tables manquantes) que le smoke test sur base vide ne voit pas.
+  upgrade:
+    name: Upgrade from previous release schema
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: statisfy
+          POSTGRES_PASSWORD: statisfy
+          POSTGRES_DB: statisfy
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U statisfy"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: "postgresql://statisfy:statisfy@localhost:5432/statisfy"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Previous release tag
+        id: prev
+        run: |
+          PREV=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          echo "tag=$PREV" >> "$GITHUB_OUTPUT"
+          if [ -n "$PREV" ]; then echo "Release précédente : $PREV"; else echo "Aucun tag : test ignoré"; fi
+
+      - name: Setup pnpm
+        if: steps.prev.outputs.tag != ''
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        if: steps.prev.outputs.tag != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        if: steps.prev.outputs.tag != ''
+        run: pnpm install --frozen-lockfile
+
+      - name: Create database with the previous schema
+        if: steps.prev.outputs.tag != ''
+        run: |
+          git show "${{ steps.prev.outputs.tag }}:prisma/schema.prisma" > /tmp/old-schema.prisma
+          pnpm exec prisma migrate diff --from-empty --to-schema /tmp/old-schema.prisma --script > /tmp/old-schema.sql
+          pnpm exec prisma db execute --url "$DATABASE_URL" --stdin < /tmp/old-schema.sql
+
+      - name: Build image
+        if: steps.prev.outputs.tag != ''
+        run: docker build -t statisfy-ci .
+
+      - name: Run new image against the old database (smoke test)
+        if: steps.prev.outputs.tag != ''
+        run: |
+          set -e
+          docker run -d --name statisfy-upgrade --network host \
+            -e DATABASE_URL="$DATABASE_URL" \
+            -e SESSION_SECRET="ci-session-secret-ci-session-secret-0123456789" \
+            -e CREDENTIALS_KEY="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" \
+            statisfy-ci
+          for i in $(seq 1 60); do
+            if curl -fsS -o /dev/null http://localhost:3000/login; then
+              echo "OK : mise à niveau depuis ${{ steps.prev.outputs.tag }} réussie"
+              exit 0
+            fi
+            if [ "$(docker inspect -f '{{.State.Running}}' statisfy-upgrade 2>/dev/null)" != "true" ]; then
+              echo "Le conteneur s'est arrêté avant de répondre."
+              break
+            fi
+            sleep 2
+          done
+          echo "--- journaux du conteneur ---"
+          docker logs statisfy-upgrade || true
+          exit 1
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f statisfy-upgrade || true
+
+
