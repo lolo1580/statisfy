@@ -70,3 +70,60 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  # Construit l'image Docker **et la démarre** contre une base Postgres, puis
+  # vérifie que l'app répond. Attrape deux classes de pannes qu'un simple
+  # `pnpm build` ne voit pas :
+  #  - build Docker cassé (contexte manquant, ex. dossier `public/` non versionné) ;
+  #  - démarrage/entrypoint cassé (schéma, migrations, variables d'env requises).
+  docker:
+    name: Docker image (build + smoke test)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: statisfy
+          POSTGRES_PASSWORD: statisfy
+          POSTGRES_DB: statisfy
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U statisfy"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t statisfy-ci .
+
+      - name: Run container and smoke test
+        run: |
+          set -e
+          docker run -d --name statisfy-ci --network host \
+            -e DATABASE_URL="postgresql://statisfy:statisfy@localhost:5432/statisfy" \
+            -e SESSION_SECRET="ci-session-secret-ci-session-secret-0123456789" \
+            -e CREDENTIALS_KEY="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" \
+            statisfy-ci
+          for i in $(seq 1 60); do
+            if curl -fsS -o /dev/null http://localhost:3000/login; then
+              echo "OK : /login répond 200"
+              exit 0
+            fi
+            if [ "$(docker inspect -f '{{.State.Running}}' statisfy-ci 2>/dev/null)" != "true" ]; then
+              echo "Le conteneur s'est arrêté avant de répondre."
+              break
+            fi
+            sleep 2
+          done
+          echo "--- journaux du conteneur ---"
+          docker logs statisfy-ci || true
+          exit 1
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f statisfy-ci || true
+
