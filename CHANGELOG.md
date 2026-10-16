@@ -7,6 +7,8 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+## [1.1.1] — 2026-10-16
+
 ### Ajouté
 
 - **Seuil de comptabilisation des écoutes (3/4)** : une écoute ne compte dans
