@@ -15,7 +15,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 services:
   statisfy:
-    image: ${STATISFY_IMAGE:-ghcr.io/lolo1580/statisfy:1.1.0}
+    image: ${STATISFY_IMAGE:-ghcr.io/lolo1580/statisfy:1.1.1}
     container_name: statisfy
     restart: unless-stopped
     init: true
