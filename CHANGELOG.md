@@ -98,16 +98,14 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Ops & performance (6ᵉ passe)
 
-- **Migrations Prisma versionnées** : le schéma est désormais géré par
-  `prisma migrate` (migration de référence + index), et l'entrypoint applique
-  `migrate deploy` au démarrage au lieu de `db push` — plus d'altération
-  implicite du schéma. Commandes : `pnpm db:migrate` /
-  `pnpm exec prisma migrate dev`.
 - **Healthcheck Docker** sur le service `statisfy` (état `healthy` fiable).
 - **Sauvegardes auto-vérifiées** : chaque dump est relu (`pg_restore --list`)
   juste après sa création ; un dump corrompu est supprimé et signalé.
-- **Recherche** : index **GIN trigram** (`pg_trgm`) sur `Artist.name` et
-  `Track.name` — la recherche « contient » n'est plus un parcours séquentiel.
+
+> Schéma : on conserve `prisma db push` au démarrage (et non `prisma migrate`).
+> Une instance existante peut être à une version ancienne quelconque ; `db push`
+> réconcilie le schéma (tables/colonnes manquantes) de façon robuste, là où une
+> migration de référence supposerait un schéma de départ connu.
 
 ### Modifié
 
