@@ -101,6 +101,13 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 - **Healthcheck Docker** sur le service `statisfy` (état `healthy` fiable).
 - **Sauvegardes auto-vérifiées** : chaque dump est relu (`pg_restore --list`)
   juste après sa création ; un dump corrompu est supprimé et signalé.
+- **Gardes-fous CI** : à chaque push/PR, l'image Docker est **construite puis
+  démarrée** contre Postgres (smoke test `GET /login`), et un test de **mise à
+  niveau** démarre la nouvelle image sur une base créée avec le schéma de la
+  **release précédente** — attrape les pannes de build Docker et de
+  démarrage/entrypoint, ainsi que les régressions « vieille instance → nouvelle
+  version » (colonnes/tables manquantes). Les tags `v*` sont protégés
+  (suppression/force-update interdits).
 
 > Schéma : on conserve `prisma db push` au démarrage (et non `prisma migrate`).
 > Une instance existante peut être à une version ancienne quelconque ; `db push`
