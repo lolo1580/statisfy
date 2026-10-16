@@ -34,7 +34,7 @@ export function SettingsNotice() {
       className={`rounded-xl border px-4 py-3 text-sm ${
         ok
           ? "border-accent/30 bg-accent-soft text-accent"
-          : "border-red-500/30 bg-red-500/10 text-red-400"
+          : "border-danger/30 bg-danger/10 text-danger"
       }`}
     >
       {t(`notice.${value}`)}

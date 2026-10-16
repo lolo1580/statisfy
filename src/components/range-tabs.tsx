@@ -42,7 +42,7 @@ export function RangeTabs({
             prefetch={false}
             className={`rounded-lg px-3.5 py-2 text-xs font-medium transition-colors ${
               active
-                ? "bg-accent text-[#04140d]"
+                ? "bg-accent text-on-accent"
                 : "text-muted hover:text-foreground"
             }`}
           >

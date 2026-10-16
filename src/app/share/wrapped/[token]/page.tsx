@@ -90,7 +90,7 @@ export default async function SharedWrappedPage({
           </select>
           <button
             type="submit"
-            className="rounded-lg bg-accent px-4 py-1.5 text-sm font-semibold text-[#04140d] transition-opacity hover:opacity-90"
+            className="rounded-lg bg-accent px-4 py-1.5 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90"
           >
             {t("recap.view")}
           </button>

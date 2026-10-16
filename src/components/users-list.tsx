@@ -90,7 +90,7 @@ export function UsersList({
                   type="button"
                   onClick={() => dismissError(member.id)}
                   title={t("settings.dismiss")}
-                  className="mt-1 text-left text-xs text-red-400"
+                  className="mt-1 text-left text-xs text-danger"
                 >
                   {rowError}
                 </button>
@@ -114,7 +114,7 @@ export function UsersList({
                   type="button"
                   onClick={() => removeUser(member)}
                   disabled={pending}
-                  className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-red-500/40 hover:text-red-400 disabled:opacity-50"
+                  className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-danger/40 hover:text-danger disabled:opacity-50"
                 >
                   {t("settings.deleteUser")}
                 </button>

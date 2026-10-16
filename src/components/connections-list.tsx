@@ -86,7 +86,7 @@ export function ConnectionsList({
                 })}
               </p>
               {connection.lastError ? (
-                <p className="mt-0.5 text-xs text-red-400">
+                <p className="mt-0.5 text-xs text-danger">
                   {connection.lastError}
                 </p>
               ) : null}
@@ -95,7 +95,7 @@ export function ConnectionsList({
                   type="button"
                   onClick={() => dismissError(connection.id)}
                   title={t("settings.dismiss")}
-                  className="mt-1 text-left text-xs text-red-400"
+                  className="mt-1 text-left text-xs text-danger"
                 >
                   {rowError}
                 </button>
@@ -107,7 +107,7 @@ export function ConnectionsList({
                 type="button"
                 onClick={() => deleteSource(connection.id)}
                 disabled={pending}
-                className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-red-500/40 hover:text-red-400 disabled:opacity-50"
+                className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-danger/40 hover:text-danger disabled:opacity-50"
               >
                 {t("settings.delete")}
               </button>

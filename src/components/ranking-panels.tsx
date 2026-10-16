@@ -66,7 +66,7 @@ function MetricSwitch({
           aria-pressed={metric === value}
           className={`rounded-md px-2 py-0.5 font-medium transition-colors ${
             metric === value
-              ? "bg-accent text-[#04140d]"
+              ? "bg-accent text-on-accent"
               : "text-muted hover:text-foreground"
           }`}
         >

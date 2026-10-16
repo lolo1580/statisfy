@@ -85,7 +85,7 @@ export default async function AdminLogsPage({
               action={clearLogs}
               fields={{}}
               message={t("admin.logClearConfirm")}
-              className="rounded-lg border border-red-500/40 px-3 py-1.5 text-xs text-red-400 transition-colors hover:bg-red-500/10"
+              className="rounded-lg border border-danger/40 px-3 py-1.5 text-xs text-danger transition-colors hover:bg-danger/10"
             >
               {t("admin.logClear")}
             </ConfirmForm>

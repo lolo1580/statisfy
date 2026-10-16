@@ -1,12 +1,15 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { RegisterForm } from "@/components/auth-forms";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import { readSession } from "@/lib/auth/session";
 import { registrationAllowed } from "@/lib/settings";
 import { findUsableInvitation } from "@/lib/invitations";
 import { prisma } from "@/lib/db";
 import { getI18n } from "@/i18n/server";
+import { THEME_COOKIE, defaultTheme, isTheme } from "@/lib/theme";
 
 export const dynamic = "force-dynamic";
 
@@ -32,10 +35,13 @@ export default async function RegisterPage({
   }
 
   const { locale, t } = await getI18n();
+  const themeCookie = (await cookies()).get(THEME_COOKIE)?.value;
+  const theme = isTheme(themeCookie) ? themeCookie : defaultTheme;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex justify-end gap-2">
+        <ThemeSwitcher current={theme} />
         <LocaleSwitcher current={locale} />
       </div>
       <div className="mb-8 text-center">

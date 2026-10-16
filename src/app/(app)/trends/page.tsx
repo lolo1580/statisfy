@@ -122,7 +122,7 @@ export default async function TrendsPage({
                 prefetch={false}
                 className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
                   active
-                    ? "bg-accent text-[#04140d]"
+                    ? "bg-accent text-on-accent"
                     : "text-muted hover:text-foreground"
                 }`}
               >

@@ -137,7 +137,7 @@ export function InvitationsList({
         <button
           type="submit"
           disabled={creating}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[#04140d] transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {creating ? <Spinner /> : null}
           {creating ? t("settings.inviteCreating") : t("settings.inviteCreate")}
@@ -145,7 +145,7 @@ export function InvitationsList({
       </form>
 
       {formError ? (
-        <p className="text-sm text-red-400">{formError}</p>
+        <p className="text-sm text-danger">{formError}</p>
       ) : null}
 
       <div className="mt-4">
@@ -184,7 +184,7 @@ export function InvitationsList({
                       type="button"
                       onClick={() => revoke(invitation.id)}
                       disabled={pending}
-                      className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-red-500/40 hover:text-red-400 disabled:opacity-50"
+                      className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-danger/40 hover:text-danger disabled:opacity-50"
                     >
                       {t("settings.revoke")}
                     </button>
@@ -208,7 +208,7 @@ export function InvitationsList({
                       type="button"
                       onClick={() => dismissError(invitation.id)}
                       title={t("settings.dismiss")}
-                      className="text-left text-xs text-red-400"
+                      className="text-left text-xs text-danger"
                     >
                       {rowError}
                     </button>

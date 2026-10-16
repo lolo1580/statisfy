@@ -72,7 +72,7 @@ export function ResetPasswordButton({ userId }: { userId: string }) {
         </span>
       ) : null}
       {state?.error ? (
-        <span className="max-w-[260px] text-right text-xs text-red-400">
+        <span className="max-w-[260px] text-right text-xs text-danger">
           {state.error}
         </span>
       ) : null}
@@ -165,7 +165,7 @@ export function RestoreForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg border border-red-500/40 px-4 py-2 text-sm text-red-400 transition-colors hover:bg-red-500/10 disabled:opacity-50"
+        className="rounded-lg border border-danger/40 px-4 py-2 text-sm text-danger transition-colors hover:bg-danger/10 disabled:opacity-50"
       >
         {pending ? t("settings.restoring") : t("settings.restoreCta")}
       </button>

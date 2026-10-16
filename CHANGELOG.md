@@ -9,6 +9,12 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Ajouté
 
+- **Thème clair / sombre** : les couleurs sont désormais des jetons
+  (`--background`, `--surface`, `--accent`, `--on-accent`, `--danger`…) résolus
+  selon `color-scheme`, avec `light-dark()` (repli sombre pour les navigateurs
+  non compatibles). Un sélecteur **Système / Clair / Sombre** (shell et pages de
+  connexion/inscription) mémorise le choix dans un cookie relu au rendu serveur —
+  donc aucun flash. En « Système », `prefers-color-scheme` prend le relais.
 - **Mises à jour optimistes** : les listes d'**invitations**, de **comptes**
   (rôle admin, suppression), de **sources connectées** et des **demandes
   d'accès Spotify** (approbation/refus avec réordonnancement, révocation)

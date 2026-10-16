@@ -7,7 +7,7 @@ import { inputClass } from "@/components/form-ui";
 
 function FieldError({ messages }: { messages?: string[] }) {
   if (!messages?.length) return null;
-  return <p className="mt-1 text-xs text-red-400">{messages[0]}</p>;
+  return <p className="mt-1 text-xs text-danger">{messages[0]}</p>;
 }
 
 export function LoginForm() {
@@ -48,11 +48,11 @@ export function LoginForm() {
           placeholder="••••••••"
         />
       </div>
-      {state?.error ? <p className="text-sm text-red-400">{state.error}</p> : null}
+      {state?.error ? <p className="text-sm text-danger">{state.error}</p> : null}
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[#04140d] transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="w-full rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         {pending ? t("auth.signingIn") : t("auth.signIn")}
       </button>
@@ -122,11 +122,11 @@ export function RegisterForm({
         />
         <FieldError messages={state?.fieldErrors?.password} />
       </div>
-      {state?.error ? <p className="text-sm text-red-400">{state.error}</p> : null}
+      {state?.error ? <p className="text-sm text-danger">{state.error}</p> : null}
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[#04140d] transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="w-full rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         {pending ? t("auth.creating") : t("auth.createAccountCta")}
       </button>

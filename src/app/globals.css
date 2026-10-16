@@ -1,15 +1,50 @@
 @import "tailwindcss";
 
+/*
+ * Thème clair / sombre. Les valeurs s'appuient sur `light-dark()` et sur
+ * `color-scheme` :
+ *   - sans `data-theme` (mode « système ») → suit la préférence de l'OS ;
+ *   - `data-theme="light"` / `data-theme="dark"` → forcent le mode.
+ * La 1ʳᵉ déclaration de chaque variable est un repli (navigateurs sans
+ * `light-dark()`) : on reste alors en sombre, jamais cassé.
+ */
 :root {
+  color-scheme: dark;
   --background: #0a0d12;
+  --background: light-dark(#f6f8fb, #0a0d12);
   --surface: #121821;
+  --surface: light-dark(#ffffff, #121821);
   --surface-2: #1a222d;
+  --surface-2: light-dark(#eef2f7, #1a222d);
   --border: #253040;
+  --border: light-dark(#dbe2ec, #253040);
   --foreground: #eef2f7;
+  --foreground: light-dark(#0f172a, #eef2f7);
   --muted: #93a1b5;
+  --muted: light-dark(#5b6b82, #93a1b5);
   --accent: #19d18a;
+  --accent: light-dark(#047857, #19d18a);
   --accent-soft: #0f3d2e;
+  --accent-soft: light-dark(#d9f5e6, #0f3d2e);
+  --on-accent: #04140d;
+  --on-accent: light-dark(#ffffff, #04140d);
+  --danger: #f87171;
+  --danger: light-dark(#b91c1c, #f87171);
   --violet: #8b7cf6;
+  --violet: light-dark(#6d5ce7, #8b7cf6);
+}
+
+/* Mode « système » : on suit la préférence de l'OS. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 /* Points de rupture supplémentaires pour les écrans très larges (21:9, 32:9). */
@@ -27,6 +62,8 @@
   --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
   --color-violet: var(--violet);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
@@ -69,5 +106,5 @@ body::before {
 
 ::selection {
   background: var(--accent);
-  color: #04140d;
+  color: var(--on-accent);
 }

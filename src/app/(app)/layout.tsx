@@ -1,11 +1,14 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { logout } from "@/lib/auth/actions";
 import { Nav } from "@/components/nav";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import { getI18n } from "@/i18n/server";
 import { appName, appVersion } from "@/lib/env";
 import { prisma } from "@/lib/db";
+import { THEME_COOKIE, defaultTheme, isTheme } from "@/lib/theme";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +19,8 @@ export default async function AppLayout({
 }) {
   const user = await getCurrentUser();
   const { locale, t } = await getI18n();
+  const themeCookie = (await cookies()).get(THEME_COOKIE)?.value;
+  const theme = isTheme(themeCookie) ? themeCookie : defaultTheme;
 
   // Badge d'action pour l'administrateur : demandes d'accès Spotify à traiter.
   const pendingRequests = user.isAdmin
@@ -43,12 +48,13 @@ export default async function AppLayout({
           />
         </form>
         <div className="flex items-center gap-3 text-sm">
+          <ThemeSwitcher current={theme} />
           <LocaleSwitcher current={locale} />
           <span className="hidden text-muted sm:inline">{user.name}</span>
           <form action={logout}>
             <button
               type="submit"
-              className="rounded-lg border border-border px-3 py-2 text-muted transition-colors hover:border-red-500/40 hover:text-red-400"
+              className="rounded-lg border border-border px-3 py-2 text-muted transition-colors hover:border-danger/40 hover:text-danger"
             >
               {t("nav.logout")}
             </button>

@@ -71,7 +71,7 @@ export default async function SettingsSourcesPage() {
         ) : canConnectSpotifyUi ? (
           <a
             href="/api/sources/spotify/start"
-            className="inline-block rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[#04140d] transition-opacity hover:opacity-90"
+            className="inline-block rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90"
           >
             {t("settings.connectSpotifyCta")}
           </a>
@@ -97,7 +97,7 @@ export default async function SettingsSourcesPage() {
             <form action={cancelSpotifyRequest}>
               <button
                 type="submit"
-                className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-red-500/40 hover:text-red-400"
+                className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-danger/40 hover:text-danger"
               >
                 {t("settings.spotifyCancel")}
               </button>
@@ -106,7 +106,7 @@ export default async function SettingsSourcesPage() {
         ) : (
           <div className="space-y-3">
             {spotifyAccess.status === "rejected" ? (
-              <p className="text-sm text-red-400">
+              <p className="text-sm text-danger">
                 {t("settings.spotifyRejected")}
               </p>
             ) : null}

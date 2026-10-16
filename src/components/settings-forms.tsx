@@ -35,7 +35,7 @@ export function SyncButton({ connectionId }: { connectionId: string }) {
         </button>
       </form>
       {state?.error ? (
-        <span className="max-w-[220px] text-right text-xs text-red-400">
+        <span className="max-w-[220px] text-right text-xs text-danger">
           {state.error}
         </span>
       ) : null}
@@ -69,7 +69,7 @@ export function ImportForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[#04140d] transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         {pending ? t("settings.importing") : t("settings.importCta")}
       </button>
@@ -98,7 +98,7 @@ export function YourSpotifyImportForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[#04140d] transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         {pending ? t("settings.importing") : t("settings.importCta")}
       </button>
@@ -164,7 +164,7 @@ export function SpotifyRequestForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[#04140d] transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {pending
             ? t("settings.spotifyRequesting")

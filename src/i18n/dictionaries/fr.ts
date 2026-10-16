@@ -16,6 +16,12 @@ export const fr: Dictionary = {
   "shell.searchPlaceholder": "Rechercher…",
   "shell.spotifyAttribution": "Données et visuels musicaux fournis par Spotify.",
 
+  // Thème
+  "theme.label": "Thème",
+  "theme.system": "Système",
+  "theme.light": "Clair",
+  "theme.dark": "Sombre",
+
   // Authentication
   "auth.tagline": "Vos statistiques d'écoute, chez vous.",
   "auth.email": "Adresse e-mail",

@@ -68,7 +68,7 @@ export function Badge({
   const tones: Record<string, string> = {
     neutral: "bg-surface-2 text-muted border-border",
     accent: "bg-accent-soft text-accent border-accent/30",
-    danger: "bg-red-500/10 text-red-400 border-red-500/30",
+    danger: "bg-danger/10 text-danger border-danger/30",
     violet: "bg-violet/10 text-violet border-violet/30",
   };
   return (

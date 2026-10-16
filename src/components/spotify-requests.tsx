@@ -138,7 +138,7 @@ export function SpotifyRequests({
                       type="button"
                       onClick={() => dismissError(request.id)}
                       title={t("settings.dismiss")}
-                      className="mt-1 text-left text-xs text-red-400"
+                      className="mt-1 text-left text-xs text-danger"
                     >
                       {rowError}
                     </button>
@@ -159,7 +159,7 @@ export function SpotifyRequests({
                         type="button"
                         onClick={() => reject(request.id)}
                         disabled={syncing}
-                        className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-red-500/40 hover:text-red-400 disabled:opacity-50"
+                        className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-danger/40 hover:text-danger disabled:opacity-50"
                       >
                         {t("settings.spotifyReject")}
                       </button>
@@ -169,7 +169,7 @@ export function SpotifyRequests({
                       type="button"
                       onClick={() => revoke(request.id, request.name)}
                       disabled={syncing}
-                      className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-red-500/40 hover:text-red-400 disabled:opacity-50"
+                      className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-danger/40 hover:text-danger disabled:opacity-50"
                     >
                       {t("settings.spotifyRevoke")}
                     </button>

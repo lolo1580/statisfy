@@ -13,7 +13,7 @@ export function Feedback({
   state: { error?: string; message?: string } | undefined;
 }) {
   if (!state) return null;
-  if (state.error) return <p className="text-sm text-red-400">{state.error}</p>;
+  if (state.error) return <p className="text-sm text-danger">{state.error}</p>;
   if (state.message)
     return <p className="text-sm text-accent">{state.message}</p>;
   return null;
