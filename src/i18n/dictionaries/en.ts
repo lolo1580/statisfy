@@ -7,9 +7,7 @@ export type Dictionary = Record<string, string>;
 export const en: Dictionary = {
   // Navigation & shell
   "nav.overview": "Overview",
-  "nav.rankings": "Rankings",
   "nav.compare": "Compare",
-  "nav.trends": "Trends",
   "nav.recap": "Recap",
   "nav.history": "History",
   "nav.settings": "Settings",
@@ -100,10 +98,8 @@ export const en: Dictionary = {
     "No data yet. Head to Settings to connect a source or import your Spotify history.",
 
   // Rankings
-  "top.title": "Rankings",
   "top.topTracks": "Most played tracks",
   "top.topArtists": "Most played artists",
-  "top.topAlbums": "Most played albums",
 
   // Compare
   "compare.title": "Compare periods",
@@ -119,17 +115,6 @@ export const en: Dictionary = {
   "compare.sameShape":
     "Pick two periods of the same type (two months or two years) to overlay them.",
   "compare.noData": "No plays for this period.",
-
-  // Trends
-  "trends.title": "Trends",
-  "trends.w7": "7 days",
-  "trends.w30": "30 days",
-  "trends.w90": "90 days",
-  "trends.w365": "1 year",
-  "trends.noRising": "No rising items in this window.",
-  "trends.noFalling": "No falling items in this window.",
-  "trends.noPrevious": "No previous period to compare with.",
-  "trends.link": "See all trends",
 
   // History
   "history.title": "History",
@@ -399,11 +384,7 @@ export const en: Dictionary = {
   // Generic
   "generic.noData": "No data.",
 
-  // Trends, heatmap & backups
-  "dash.trends": "Trends",
-  "dash.trendsSubtitle": "vs previous {days} days",
-  "dash.rising": "Rising",
-  "dash.falling": "Falling",
+  // Heatmap & backups
   "history.heatmap": "Yearly activity",
   "history.heatmapSubtitle": "Daily plays over the last 12 months",
   "status.backups": "Backups",
@@ -433,12 +414,11 @@ export const en: Dictionary = {
     "For your full history, import your Spotify data export (Privacy). The import is idempotent — re-running it creates no duplicates.",
   "onboard.step4.title": "Explore",
   "onboard.step4.body":
-    "Browse Rankings, Compare periods, Trends and your Recap. Have fun!",
+    "Browse the Compare periods, your Recap and the History. Have fun!",
   "checklist.title": "Getting started",
   "checklist.subtitle": "A few steps to get the most out of Statisfy",
   "checklist.connect": "Connect Spotify",
   "checklist.import": "Import your history",
-  "checklist.explore": "Explore your rankings",
   "checklist.hide": "Hide",
 
   // Admin area

@@ -30,7 +30,7 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
   Une écoute ne compte que si **au moins 3/4 de la piste** a été écouté (durée
   inconnue → comptée) ; **seuil réglable** dans l'administration.
 - **Bascule « écoutes / temps »** : sur les panneaux de classement (Tableau de
-  bord et Classements), un switch par panneau change l'affichage **et le tri**,
+  bord et Comparateur), un switch par panneau change l'affichage **et le tri**,
   instantanément.
 - **Graphiques interactifs** : grille, axes (durées) et infobulle au survol
   (date complète + temps d'écoute).
@@ -59,11 +59,7 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
   dans le fuseau du compte ; **défaut : aujourd'hui**).
 - **Multilingue** : anglais (par défaut) et français, avec sélecteur de langue
   dans l'interface (dates et nombres localisés).
-- **Tendances & heatmap** : heatmap annuelle façon GitHub et comparaison entre
-  deux périodes (artistes en hausse / en baisse).
-- **Page Tendances** : vue dédiée (`/trends`) comparant deux fenêtres consécutives
-  (7/30/90 j, 1 an) pour les **artistes, titres et albums** en hausse et en
-  baisse.
+- **Heatmap** : activité annuelle façon GitHub (écoutes par jour sur 12 mois).
 - **Sauvegardes** : copie automatique de la base (rotation configurable) +
   endpoint dédié.
 - **Déduplication robuste** : une écoute n'est jamais comptée deux fois.
@@ -448,16 +444,15 @@ prisma/
   schema.prisma        # Modèles (User, Play, Track, Artist, Album, Job, ...)
   seed.ts              # Données de démonstration
 src/
-  app/                 # Routes : login, dashboard, top, compare, trends, wrapped,
-                       # history, status, search, artist/[id], track/[id],
-                       # settings, api
+  app/                 # Routes : login, dashboard, compare, wrapped, history,
+                       # status, search, artist/[id], track/[id], settings, api
   components/          # UI (cartes, graphiques SVG, navigation, formulaires)
   i18n/                # Dictionnaires (EN par défaut, FR) + helpers serveur
   lib/
     auth/              # Sessions, DAL, actions d'authentification
     sources/           # Adaptateur Spotify, import, enrichissement, état OAuth
     sync/              # Moteur d'ingestion idempotent + orchestration
-    stats.ts           # Requêtes d'agrégation (dont tendances)
+    stats.ts           # Requêtes d'agrégation
     backup.ts          # Sauvegardes PostgreSQL (pg_dump + rotation)
     period.ts          # Périodes du récapitulatif
     crypto.ts          # Chiffrement des identifiants

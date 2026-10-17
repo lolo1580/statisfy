@@ -30,6 +30,14 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   (`src/components/optimistic.tsx`) ; les Server Actions concernées renvoient
   désormais un résultat `{ ok, error }` pour signaler les échecs.
 
+### Supprimé
+
+- **Pages Classements (`/top`) et Tendances (`/trends`)** : supprimées, ainsi
+  que leurs entrées de navigation et la carte « Tendances » du Tableau de bord.
+  Les classements restent disponibles sur le Tableau de bord et le Comparateur.
+  Le code associé (`getTrends`/`getArtistTrends` dans `stats.ts`, helper
+  `computeTrends` dans `src/lib/trends.ts`) est retiré.
+
 ## [1.1.1] — 2026-10-16
 
 ### Ajouté

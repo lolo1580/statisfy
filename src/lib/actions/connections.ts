@@ -181,7 +181,6 @@ export async function enrichImages(
     const result = await enrichMissingImages(user.id, { max: 80 });
     revalidatePath("/settings/sources");
     revalidatePath("/dashboard");
-    revalidatePath("/top");
     revalidatePath("/history");
     return {
       ok: true,

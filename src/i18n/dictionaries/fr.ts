@@ -4,9 +4,7 @@ import type { Dictionary } from "./en";
 export const fr: Dictionary = {
   // Navigation & shell
   "nav.overview": "Vue d'ensemble",
-  "nav.rankings": "Classements",
   "nav.compare": "Comparateur",
-  "nav.trends": "Tendances",
   "nav.recap": "Récapitulatif",
   "nav.history": "Historique",
   "nav.settings": "Réglages",
@@ -97,10 +95,8 @@ export const fr: Dictionary = {
     "Aucune donnée pour l'instant. Rendez-vous dans Réglages pour connecter une source ou importer votre historique Spotify.",
 
   // Rankings
-  "top.title": "Classements",
   "top.topTracks": "Titres les plus écoutés",
   "top.topArtists": "Artistes les plus écoutés",
-  "top.topAlbums": "Albums les plus écoutés",
 
   // Compare
   "compare.title": "Comparer des périodes",
@@ -116,17 +112,6 @@ export const fr: Dictionary = {
   "compare.sameShape":
     "Choisissez deux périodes de même type (deux mois ou deux années) pour les superposer.",
   "compare.noData": "Aucune écoute sur cette période.",
-
-  // Trends
-  "trends.title": "Tendances",
-  "trends.w7": "7 j",
-  "trends.w30": "30 j",
-  "trends.w90": "90 j",
-  "trends.w365": "1 an",
-  "trends.noRising": "Aucune hausse sur cette fenêtre.",
-  "trends.noFalling": "Aucune baisse sur cette fenêtre.",
-  "trends.noPrevious": "Pas de période précédente à comparer.",
-  "trends.link": "Toutes les tendances",
 
   // History
   "history.title": "Historique",
@@ -397,11 +382,7 @@ export const fr: Dictionary = {
   // Generic
   "generic.noData": "Aucune donnée.",
 
-  // Tendances, heatmap & sauvegardes
-  "dash.trends": "Tendances",
-  "dash.trendsSubtitle": "vs {days} jours précédents",
-  "dash.rising": "En hausse",
-  "dash.falling": "En baisse",
+  // Heatmap & sauvegardes
   "history.heatmap": "Activité annuelle",
   "history.heatmapSubtitle": "Écoutes par jour sur 12 mois",
   "status.backups": "Sauvegardes",
@@ -430,12 +411,11 @@ export const fr: Dictionary = {
     "Pour l'historique complet, importez votre export de données Spotify (Confidentialité). L'import est idempotent : le relancer ne crée pas de doublon.",
   "onboard.step4.title": "Explorer",
   "onboard.step4.body":
-    "Parcourez les Classements, le Comparateur, les Tendances et votre Récapitulatif. Bonne exploration !",
+    "Parcourez le Comparateur, votre Récapitulatif et l'Historique. Bonne exploration !",
   "checklist.title": "Bien démarrer",
   "checklist.subtitle": "Quelques étapes pour profiter de Statisfy",
   "checklist.connect": "Connecter Spotify",
   "checklist.import": "Importer votre historique",
-  "checklist.explore": "Explorer vos classements",
   "checklist.hide": "Masquer",
 
   // Espace d'administration

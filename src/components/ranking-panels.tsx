@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Badge, Cover, EmptyState } from "@/components/ui";
+import { Cover, EmptyState } from "@/components/ui";
 import { RankBars } from "@/components/charts";
 import { useI18n } from "@/components/i18n-provider";
 import { formatDuration, formatNumber } from "@/lib/format";
@@ -27,16 +27,6 @@ export type ArtistItem = {
   name: string;
   imageUrl: string | null;
   genres: string[];
-  plays: number;
-  msPlayed: number;
-};
-
-export type AlbumItem = {
-  id: string;
-  name: string;
-  artistId: string;
-  artistName: string;
-  imageUrl: string | null;
   plays: number;
   msPlayed: number;
 };
@@ -215,55 +205,6 @@ export function TopArtistsPanel({
                 <span className="text-xs text-muted">
                   {metricValue(metric, artist, locale)}
                 </span>
-              </Link>
-            </li>
-          ))}
-        </ol>
-      )}
-    </div>
-  );
-}
-
-/** Classement d'albums avec bascule écoutes / temps. */
-export function TopAlbumsPanel({
-  title,
-  itemsByPlays,
-  itemsByTime,
-  query,
-  empty,
-}: {
-  title: string;
-  itemsByPlays: AlbumItem[];
-  itemsByTime: AlbumItem[];
-  query: string;
-  empty?: string;
-}) {
-  const { locale, t } = useI18n();
-  const [metric, setMetric] = useState<Metric>("time");
-  const items = pickRanking(metric, itemsByPlays, itemsByTime);
-
-  return (
-    <div>
-      <PanelHeader title={title} metric={metric} onChange={setMetric} />
-      {items.length === 0 ? (
-        <EmptyState>{empty ?? t("generic.noData")}</EmptyState>
-      ) : (
-        <ol className="space-y-3">
-          {items.map((album, index) => (
-            <li key={album.id}>
-              <Link
-                href={`/artist/${album.artistId}${query ? `?${query}` : ""}`}
-                className="flex items-center gap-3 rounded-lg p-1 transition-colors hover:bg-surface-2"
-              >
-                <span className="w-4 text-sm text-muted">{index + 1}</span>
-                <Cover src={album.imageUrl} alt={album.name} size={40} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{album.name}</p>
-                  <p className="truncate text-xs text-muted">
-                    {album.artistName}
-                  </p>
-                </div>
-                <Badge>{metricValue(metric, album, locale)}</Badge>
               </Link>
             </li>
           ))}

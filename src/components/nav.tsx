@@ -7,9 +7,7 @@ import { useI18n } from "@/components/i18n-provider";
 
 const LINKS = [
   { href: "/dashboard", key: "nav.overview" },
-  { href: "/top", key: "nav.rankings" },
   { href: "/compare", key: "nav.compare" },
-  { href: "/trends", key: "nav.trends" },
   { href: "/wrapped", key: "nav.recap" },
   { href: "/history", key: "nav.history" },
   { href: "/settings", key: "nav.settings" },

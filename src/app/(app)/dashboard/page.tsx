@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/dal";
 import {
-  getArtistTrends,
   getOverview,
   getTimelineStats,
   getTopArtists,
@@ -13,7 +12,7 @@ import {
 import { RangeTabs } from "@/components/range-tabs";
 import { parseRange } from "@/lib/range";
 import { AreaChart } from "@/components/charts";
-import { Badge, Card, Cover, EmptyState, SectionTitle, StatCard } from "@/components/ui";
+import { Card, EmptyState, SectionTitle, StatCard } from "@/components/ui";
 import { TopArtistsPanel, TopGenresPanel, TopTracksPanel } from "@/components/ranking-panels";
 import { formatDuration, formatNumber } from "@/lib/format";
 import { getI18n } from "@/i18n/server";
@@ -92,7 +91,6 @@ export default async function DashboardPage({
     topArtistsByTime,
     topGenresByPlays,
     topGenresByTime,
-    trends,
     anyPlays,
     spotifyConnection,
     importedPlay,
@@ -106,7 +104,6 @@ export default async function DashboardPage({
     getTopArtists(user.id, filters, 10, "time"),
     getTopGenres(user.id, filters, 10),
     getTopGenres(user.id, filters, 10, "time"),
-    getArtistTrends(user.id, filters, 4),
     hasAnyPlays(user.id),
     prisma.sourceConnection.findFirst({
       where: { userId: user.id, type: "spotify" },
@@ -198,11 +195,6 @@ export default async function DashboardPage({
               href="/settings/import"
               label={t("checklist.import")}
             />
-            <ChecklistItem
-              done={false}
-              href="/top"
-              label={t("checklist.explore")}
-            />
           </ul>
         </Card>
       ) : null}
@@ -281,82 +273,6 @@ export default async function DashboardPage({
               />
             </Card>
           </div>
-
-          {trends.hasPrevious &&
-          (trends.rising.length > 0 || trends.falling.length > 0) ? (
-            <Card>
-              <SectionTitle
-                title={t("dash.trends")}
-                subtitle={t("dash.trendsSubtitle", { days: parsed.days ?? "" })}
-                action={
-                  <Link
-                    href="/trends"
-                    className="text-sm text-accent hover:underline"
-                  >
-                    {t("trends.link")}
-                  </Link>
-                }
-              />
-              <div className="grid gap-6 sm:grid-cols-2">
-                <div>
-                  <p className="mb-2 text-xs uppercase tracking-wider text-muted">
-                    {t("dash.rising")}
-                  </p>
-                  <ul className="space-y-1">
-                    {trends.rising.map((artist) => (
-                      <li key={artist.id}>
-                        <Link
-                          href={`/artist/${artist.id}`}
-                          className="flex items-center gap-3 rounded-lg p-1.5 transition-colors hover:bg-surface-2"
-                        >
-                          <Cover
-                            src={artist.imageUrl}
-                            alt={artist.name}
-                            size={34}
-                            rounded="rounded-full"
-                          />
-                          <span className="min-w-0 flex-1 truncate text-sm">
-                            {artist.name}
-                          </span>
-                          <Badge tone="accent">
-                            +{formatNumber(artist.delta, locale)}
-                          </Badge>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="mb-2 text-xs uppercase tracking-wider text-muted">
-                    {t("dash.falling")}
-                  </p>
-                  <ul className="space-y-1">
-                    {trends.falling.map((artist) => (
-                      <li key={artist.id}>
-                        <Link
-                          href={`/artist/${artist.id}`}
-                          className="flex items-center gap-3 rounded-lg p-1.5 transition-colors hover:bg-surface-2"
-                        >
-                          <Cover
-                            src={artist.imageUrl}
-                            alt={artist.name}
-                            size={34}
-                            rounded="rounded-full"
-                          />
-                          <span className="min-w-0 flex-1 truncate text-sm">
-                            {artist.name}
-                          </span>
-                          <Badge tone="danger">
-                            {formatNumber(artist.delta, locale)}
-                          </Badge>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </Card>
-          ) : null}
         </>
       )}
     </div>

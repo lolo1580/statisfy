@@ -29,7 +29,7 @@ to be **easy to deploy**, **fast** and **pleasant to explore**.
   genres, daily listening, hourly breakdown, recent plays. A play counts only if
   at least **3/4 of the track** was listened to (unknown duration → counted);
   **configurable threshold** in the admin area.
-- **Plays / time toggle**: on the ranking panels (Dashboard and Rankings), a
+- **Plays / time toggle**: on the ranking panels (Dashboard and Compare), a
   per-panel switch changes the display **and the sorting**, instantly.
 - **Interactive charts**: grid, axes (durations) and hover tooltip (full date +
   listening time).
@@ -54,10 +54,7 @@ to be **easy to deploy**, **fast** and **pleasant to explore**.
   account's timezone; **default: today**).
 - **Multilingual**: English (default) and French, with a language switcher in
   the UI (localized dates and numbers).
-- **Trends & heatmap**: GitHub-style yearly heatmap and comparison between two
-  periods (rising / falling artists).
-- **Trends page**: dedicated `/trends` view comparing two consecutive windows
-  (7/30/90 days, 1 year) for rising and falling **artists, tracks and albums**.
+- **Heatmap**: GitHub-style yearly activity (plays per day over 12 months).
 - **Backups**: automatic database copy (configurable rotation) + dedicated
   endpoint.
 - **Robust deduplication**: a play is never counted twice.
@@ -434,16 +431,15 @@ prisma/
   schema.prisma        # Models (User, Play, Track, Artist, Album, Job, ...)
   seed.ts              # Demo data
 src/
-  app/                 # Routes: login, dashboard, top, compare, trends, wrapped,
-                       # history, status, search, artist/[id], track/[id],
-                       # settings, api
+  app/                 # Routes: login, dashboard, compare, wrapped, history,
+                       # status, search, artist/[id], track/[id], settings, api
   components/          # UI (cards, SVG charts, navigation, forms)
   i18n/                # Dictionaries (EN by default, FR) + server helpers
   lib/
     auth/              # Sessions, DAL, auth actions
     sources/           # Spotify adapter, import, enrichment, OAuth state
     sync/              # Idempotent ingestion engine + orchestration
-    stats.ts           # Aggregation queries (including trends)
+    stats.ts           # Aggregation queries
     backup.ts          # PostgreSQL backups (pg_dump + rotation)
     period.ts          # Recap periods
     crypto.ts          # Credential encryption
