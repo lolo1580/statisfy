@@ -124,6 +124,16 @@ export const en: Dictionary = {
   "history.recent": "Last 50 plays",
   "history.noPlays": "No plays recorded.",
 
+  // Records & streaks
+  "records.title": "Records & streaks",
+  "records.subtitle": "Across your whole history",
+  "records.currentStreak": "Current streak",
+  "records.longestStreak": "Longest streak",
+  "records.activeDays": "Active days",
+  "records.busiestDay": "Busiest day",
+  "records.days": "days",
+  "records.allTime": "All time",
+
   // Recap (Wrapped)
   "recap.title": "Recap",
   "recap.periodMonth": "month",

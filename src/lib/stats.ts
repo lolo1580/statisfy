@@ -3,6 +3,7 @@ import 'server-only'
 import { prisma } from './db'
 import { Prisma } from '../generated/prisma/client'
 import { dayKey, hourOf } from './format'
+import { computeRecords, type ListeningRecords } from './records'
 
 /**
  * Filtres applicables aux agrégations.
@@ -904,5 +905,14 @@ export async function getPlayingYears(userId: string): Promise<number[]> {
     years.push(year)
   }
   return years
+}
+
+/** Records sur tout l'historique : séries, jours actifs, jour le plus intense. */
+export async function getRecords(
+  userId: string,
+  timeZone: string,
+): Promise<ListeningRecords> {
+  const daily = await getDailyStats(userId, timeZone, { days: null })
+  return computeRecords(daily, dayKey(new Date(), timeZone))
 }
 

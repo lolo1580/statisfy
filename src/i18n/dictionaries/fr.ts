@@ -121,6 +121,16 @@ export const fr: Dictionary = {
   "history.recent": "50 dernières écoutes",
   "history.noPlays": "Aucune écoute enregistrée.",
 
+  // Records & séries
+  "records.title": "Records & séries",
+  "records.subtitle": "Sur l'ensemble de votre historique",
+  "records.currentStreak": "Série en cours",
+  "records.longestStreak": "Meilleure série",
+  "records.activeDays": "Jours actifs",
+  "records.busiestDay": "Jour le plus actif",
+  "records.days": "jours",
+  "records.allTime": "Depuis le début",
+
   // Recap (Wrapped)
   "recap.title": "Récapitulatif",
   "recap.periodMonth": "mois",

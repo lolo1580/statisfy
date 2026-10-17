@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/dal";
 import {
   getOverview,
+  getRecords,
   getTimelineStats,
   getTopArtists,
   getTopGenres,
@@ -14,7 +15,7 @@ import { parseRange } from "@/lib/range";
 import { AreaChart } from "@/components/charts";
 import { Card, EmptyState, SectionTitle, StatCard } from "@/components/ui";
 import { TopArtistsPanel, TopGenresPanel, TopTracksPanel } from "@/components/ranking-panels";
-import { formatDuration, formatNumber } from "@/lib/format";
+import { formatDate, formatDuration, formatNumber } from "@/lib/format";
 import { getI18n } from "@/i18n/server";
 import { prisma } from "@/lib/db";
 import { dismissChecklist } from "@/lib/actions/onboarding";
@@ -61,6 +62,27 @@ function ChecklistItem({
   );
 }
 
+/** Indicateur compact de la bande « Records & séries ». */
+function RecordStat({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+}) {
+  return (
+    <div>
+      <p className="text-xs font-medium uppercase tracking-wider text-muted">
+        {label}
+      </p>
+      <p className="mt-1 text-xl font-semibold tracking-tight">{value}</p>
+      {hint ? <p className="mt-0.5 text-xs text-muted">{hint}</p> : null}
+    </div>
+  );
+}
+
 export default async function DashboardPage({
   searchParams,
 }: PageProps<"/dashboard">) {
@@ -92,6 +114,7 @@ export default async function DashboardPage({
     topGenresByPlays,
     topGenresByTime,
     anyPlays,
+    records,
     spotifyConnection,
     importedPlay,
     onboarding,
@@ -105,6 +128,7 @@ export default async function DashboardPage({
     getTopGenres(user.id, filters, 10),
     getTopGenres(user.id, filters, 10, "time"),
     hasAnyPlays(user.id),
+    getRecords(user.id, user.timezone),
     prisma.sourceConnection.findFirst({
       where: { userId: user.id, type: "spotify" },
       select: { id: true },
@@ -234,6 +258,47 @@ export default async function DashboardPage({
         )
       ) : (
         <>
+          <Card>
+            <SectionTitle
+              title={t("records.title")}
+              subtitle={t("records.subtitle")}
+            />
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              <RecordStat
+                label={t("records.currentStreak")}
+                value={formatNumber(records.currentStreak, locale)}
+                hint={t("records.days")}
+              />
+              <RecordStat
+                label={t("records.longestStreak")}
+                value={formatNumber(records.longestStreak, locale)}
+                hint={t("records.days")}
+              />
+              <RecordStat
+                label={t("records.activeDays")}
+                value={formatNumber(records.activeDays, locale)}
+                hint={t("records.allTime")}
+              />
+              <RecordStat
+                label={t("records.busiestDay")}
+                value={
+                  records.busiestDay
+                    ? formatDuration(records.busiestDay.msPlayed, locale)
+                    : "—"
+                }
+                hint={
+                  records.busiestDay
+                    ? formatDate(
+                        new Date(`${records.busiestDay.day}T00:00:00Z`),
+                        "UTC",
+                        locale,
+                      )
+                    : undefined
+                }
+              />
+            </div>
+          </Card>
+
           <Card>
             <SectionTitle
               title={t("dash.overTime")}
