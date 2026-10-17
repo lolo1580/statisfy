@@ -27,14 +27,14 @@
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "bson": "^7.3.3",
-    "dotenv": "^18.0.6",
+    "dotenv": "^18.0.7",
     "fflate": "^0.8.3",
     "jose": "^6.2.12",
     "next": "16.4.0",
     "prisma": "^7.10.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
@@ -48,7 +48,7 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.4"
   },
   "packageManager": "pnpm@12.10.1"
 }
