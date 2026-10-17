@@ -907,6 +907,64 @@ export async function getPlayingYears(userId: string): Promise<number[]> {
   return years
 }
 
+// --- Redécouvertes, records & habitudes ------------------------------------
+
+export type RediscoveredArtist = TopArtist & { lastPlayedAt: Date }
+
+/**
+ * Artistes « oubliés » : beaucoup écoutés par le passé mais plus depuis
+ * `afterDays`. Toujours calculé sur **tout** l'historique (indépendant de la
+ * période sélectionnée), car c'est un conseil de réécoute, pas une stat de période.
+ */
+export async function getRediscoveries(
+  userId: string,
+  options: { afterDays?: number; minPlays?: number; limit?: number } = {},
+): Promise<RediscoveredArtist[]> {
+  const { afterDays = 60, minPlays = 5, limit = 5 } = options
+  const cutoff = new Date(Date.now() - afterDays * DAY_MS)
+
+  const groups = await prisma.play.groupBy({
+    by: ['artistId'],
+    where: { userId, counted: true },
+    _count: { _all: true },
+    _sum: { msPlayed: true },
+    _max: { playedAt: true },
+  })
+
+  const forgotten = groups
+    .filter(
+      (row) =>
+        row._max.playedAt !== null &&
+        row._max.playedAt < cutoff &&
+        row._count._all >= minPlays,
+    )
+    .sort((a, b) => (b._sum.msPlayed ?? 0) - (a._sum.msPlayed ?? 0))
+    .slice(0, limit)
+
+  if (forgotten.length === 0) return []
+
+  const artists = await prisma.artist.findMany({
+    where: { id: { in: forgotten.map((row) => row.artistId) } },
+  })
+  const byId = new Map(artists.map((artist) => [artist.id, artist]))
+
+  return forgotten.flatMap((row) => {
+    const artist = byId.get(row.artistId)
+    if (!artist || !row._max.playedAt) return []
+    return [
+      {
+        id: artist.id,
+        name: artist.name,
+        plays: row._count._all,
+        msPlayed: row._sum.msPlayed ?? 0,
+        imageUrl: artist.imageUrl,
+        genres: parseGenres(artist.genres),
+        lastPlayedAt: row._max.playedAt,
+      },
+    ]
+  })
+}
+
 /** Records sur tout l'historique : séries, jours actifs, jour le plus intense. */
 export async function getRecords(
   userId: string,

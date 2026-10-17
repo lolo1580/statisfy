@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth/dal";
 import {
   getOverview,
   getRecords,
+  getRediscoveries,
   getTimelineStats,
   getTopArtists,
   getTopGenres,
@@ -13,7 +14,7 @@ import {
 import { RangeTabs } from "@/components/range-tabs";
 import { parseRange } from "@/lib/range";
 import { AreaChart } from "@/components/charts";
-import { Card, EmptyState, SectionTitle, StatCard } from "@/components/ui";
+import { Card, Cover, EmptyState, SectionTitle, StatCard } from "@/components/ui";
 import { TopArtistsPanel, TopGenresPanel, TopTracksPanel } from "@/components/ranking-panels";
 import { formatDate, formatDuration, formatNumber } from "@/lib/format";
 import { getI18n } from "@/i18n/server";
@@ -115,6 +116,7 @@ export default async function DashboardPage({
     topGenresByTime,
     anyPlays,
     records,
+    rediscoveries,
     spotifyConnection,
     importedPlay,
     onboarding,
@@ -129,6 +131,7 @@ export default async function DashboardPage({
     getTopGenres(user.id, filters, 10, "time"),
     hasAnyPlays(user.id),
     getRecords(user.id, user.timezone),
+    getRediscoveries(user.id),
     prisma.sourceConnection.findFirst({
       where: { userId: user.id, type: "spotify" },
       select: { id: true },
@@ -338,6 +341,48 @@ export default async function DashboardPage({
               />
             </Card>
           </div>
+
+          <Card>
+            <SectionTitle
+              title={t("dash.rediscover")}
+              subtitle={t("dash.rediscoverSubtitle")}
+            />
+            {rediscoveries.length === 0 ? (
+              <EmptyState>{t("dash.rediscoverEmpty")}</EmptyState>
+            ) : (
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 3xl:grid-cols-5">
+                {rediscoveries.map((artist) => (
+                  <li key={artist.id}>
+                    <Link
+                      href={`/artist/${artist.id}`}
+                      className="flex items-center gap-3 rounded-xl border border-border p-2 transition-colors hover:border-accent/40"
+                    >
+                      <Cover
+                        src={artist.imageUrl}
+                        alt={artist.name}
+                        size={40}
+                        rounded="rounded-full"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {artist.name}
+                        </p>
+                        <p className="truncate text-xs text-muted">
+                          {t("dash.rediscoverLast", {
+                            date: formatDate(
+                              artist.lastPlayedAt,
+                              user.timezone,
+                              locale,
+                            ),
+                          })}
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
         </>
       )}
     </div>

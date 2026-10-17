@@ -96,6 +96,10 @@ export const en: Dictionary = {
   "dash.avgPerDay": "avg/day",
   "dash.empty":
     "No data yet. Head to Settings to connect a source or import your Spotify history.",
+  "dash.rediscover": "Rediscoveries",
+  "dash.rediscoverSubtitle": "Loved before, worth another listen",
+  "dash.rediscoverLast": "Last played: {date}",
+  "dash.rediscoverEmpty": "Nothing to rediscover right now.",
 
   // Rankings
   "top.topTracks": "Most played tracks",
