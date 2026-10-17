@@ -127,6 +127,8 @@ export const en: Dictionary = {
   "history.hourlySubtitle": "Average per active day, over the selected period",
   "history.recent": "Last 50 plays",
   "history.noPlays": "No plays recorded.",
+  "history.weekdayHour": "Day and hour",
+  "history.weekdayHourSubtitle": "Plays by weekday and local hour",
 
   // Records & streaks
   "records.title": "Records & streaks",

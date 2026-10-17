@@ -124,6 +124,8 @@ export const fr: Dictionary = {
   "history.hourlySubtitle": "Moyenne par jour actif, sur la période sélectionnée",
   "history.recent": "50 dernières écoutes",
   "history.noPlays": "Aucune écoute enregistrée.",
+  "history.weekdayHour": "Jour et heure",
+  "history.weekdayHourSubtitle": "Écoutes par jour de la semaine et heure locale",
 
   // Records & séries
   "records.title": "Records & séries",

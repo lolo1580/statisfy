@@ -4,11 +4,17 @@ import {
   getDailyStats,
   getRecentPlays,
   getTimelineStats,
+  getWeeklyHourStats,
   type StatsRange,
 } from "@/lib/stats";
 import { RangeTabs } from "@/components/range-tabs";
 import { parseRange } from "@/lib/range";
-import { AreaChart, BarsChart, Heatmap } from "@/components/charts";
+import {
+  AreaChart,
+  BarsChart,
+  Heatmap,
+  WeekdayHourHeatmap,
+} from "@/components/charts";
 import { Card, Cover, EmptyState, SectionTitle } from "@/components/ui";
 import { formatDateTime, formatDuration } from "@/lib/format";
 import { getI18n } from "@/i18n/server";
@@ -37,10 +43,11 @@ export default async function HistoryPage({
     to: parsed.to,
   };
 
-  const [timeline, recent, heatmap] = await Promise.all([
+  const [timeline, recent, heatmap, weeklyHour] = await Promise.all([
     getTimelineStats(user.id, user.timezone, filters),
     getRecentPlays(user.id, filters, 50),
     getDailyStats(user.id, user.timezone, { days: 371 }),
+    getWeeklyHourStats(user.id, user.timezone, filters),
   ]);
   const { daily, hourly } = timeline;
 
@@ -91,6 +98,14 @@ export default async function HistoryPage({
             };
           })}
         />
+      </Card>
+
+      <Card>
+        <SectionTitle
+          title={t("history.weekdayHour")}
+          subtitle={t("history.weekdayHourSubtitle")}
+        />
+        <WeekdayHourHeatmap grid={weeklyHour.grid} max={weeklyHour.max} />
       </Card>
 
       <Card>

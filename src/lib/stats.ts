@@ -2,7 +2,7 @@ import 'server-only'
 
 import { prisma } from './db'
 import { Prisma } from '../generated/prisma/client'
-import { dayKey, hourOf } from './format'
+import { dayKey, getTimezoneOffsetMs, hourOf } from './format'
 import { computeRecords, type ListeningRecords } from './records'
 
 /**
@@ -972,5 +972,33 @@ export async function getRecords(
 ): Promise<ListeningRecords> {
   const daily = await getDailyStats(userId, timeZone, { days: null })
   return computeRecords(daily, dayKey(new Date(), timeZone))
+}
+
+export type WeeklyHourHeatmap = { grid: number[][]; max: number }
+
+/**
+ * Répartition des écoutes par **jour de la semaine × heure locale** (lundi = 0),
+ * pour la période demandée. Une seule lecture des tranches de 15 min.
+ */
+export async function getWeeklyHourStats(
+  userId: string,
+  timeZone: string,
+  range: StatsRange,
+): Promise<WeeklyHourHeatmap> {
+  const buckets = await getTimeBuckets(userId, range)
+  const grid = Array.from({ length: 7 }, () => new Array<number>(24).fill(0))
+
+  for (const bucket of buckets) {
+    const date = bucketDate(bucket.bucket)
+    const local = new Date(date.getTime() + getTimezoneOffsetMs(timeZone, date))
+    const dow = (local.getUTCDay() + 6) % 7
+    grid[dow][local.getUTCHours()] += bucket.plays
+  }
+
+  let max = 0
+  for (const row of grid) {
+    for (const value of row) if (value > max) max = value
+  }
+  return { grid, max }
 }
 

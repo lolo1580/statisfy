@@ -688,3 +688,67 @@ export function Heatmap({
     </div>
   );
 }
+
+/**
+ * Heatmap 7×24 : intensité des écoutes par **jour de la semaine × heure locale**
+ * (lundi = 0). `grid[dow][hour]` contient un nombre d'écoutes.
+ */
+export function WeekdayHourHeatmap({
+  grid,
+  max,
+}: {
+  grid: number[][];
+  max: number;
+}) {
+  const { locale, t } = useI18n();
+  if (max <= 0) {
+    return <div className="text-sm text-muted">{t("chart.noData")}</div>;
+  }
+
+  // 2024-01-01 est un lundi : sert de référence pour des libellés localisés.
+  const weekday = (dow: number) =>
+    new Intl.DateTimeFormat(locale, {
+      weekday: "short",
+      timeZone: "UTC",
+    }).format(new Date(Date.UTC(2024, 0, 1 + dow)));
+
+  const color = (value: number) => {
+    if (value <= 0) return "var(--surface-2)";
+    const level = Math.min(4, Math.ceil((value / max) * 4));
+    const alpha = [0.25, 0.45, 0.7, 1][level - 1] ?? 1;
+    return `rgba(25, 209, 138, ${alpha})`;
+  };
+
+  return (
+    <div className="overflow-x-auto pb-1">
+      <div className="mb-1 flex items-center gap-[3px]">
+        <span className="w-8 shrink-0" />
+        {Array.from({ length: 24 }, (_, hour) => (
+          <span
+            key={hour}
+            className="w-4 shrink-0 text-center text-[9px] text-muted"
+          >
+            {hour % 6 === 0 ? `${hour}h` : ""}
+          </span>
+        ))}
+      </div>
+      <div className="space-y-[3px]">
+        {grid.map((row, dow) => (
+          <div key={dow} className="flex items-center gap-[3px]">
+            <span className="w-8 shrink-0 text-[10px] uppercase text-muted">
+              {weekday(dow)}
+            </span>
+            {row.map((value, hour) => (
+              <div
+                key={hour}
+                title={`${weekday(dow)} ${hour}h — ${t("dash.playsCount", { count: value })}`}
+                className="h-4 w-4 shrink-0 rounded-sm"
+                style={{ background: color(value) }}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
