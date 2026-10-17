@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/dal";
 import {
   getDailyStats,
+  getListeningBehavior,
   getRecentPlays,
   getTimelineStats,
   getWeeklyHourStats,
@@ -13,15 +14,43 @@ import {
   AreaChart,
   BarsChart,
   Heatmap,
+  RankBars,
   WeekdayHourHeatmap,
 } from "@/components/charts";
 import { Card, Cover, EmptyState, SectionTitle } from "@/components/ui";
-import { formatDateTime, formatDuration } from "@/lib/format";
+import { formatDateTime, formatDuration, formatNumber } from "@/lib/format";
 import { getI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
 
 const dayLabel = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(2, 4)}`;
+
+/** Petit indicateur de pourcentage (saut, aléatoire, hors ligne). */
+function RateStat({
+  label,
+  rate,
+  locale,
+}: {
+  label: string;
+  rate: number | null;
+  locale: string;
+}) {
+  const display =
+    rate === null
+      ? "—"
+      : new Intl.NumberFormat(locale, {
+          style: "percent",
+          maximumFractionDigits: 0,
+        }).format(rate);
+  return (
+    <div>
+      <p className="text-xs font-medium uppercase tracking-wider text-muted">
+        {label}
+      </p>
+      <p className="mt-1 text-xl font-semibold tracking-tight">{display}</p>
+    </div>
+  );
+}
 
 export default async function HistoryPage({
   searchParams,
@@ -43,11 +72,12 @@ export default async function HistoryPage({
     to: parsed.to,
   };
 
-  const [timeline, recent, heatmap, weeklyHour] = await Promise.all([
+  const [timeline, recent, heatmap, weeklyHour, behavior] = await Promise.all([
     getTimelineStats(user.id, user.timezone, filters),
     getRecentPlays(user.id, filters, 50),
     getDailyStats(user.id, user.timezone, { days: 371 }),
     getWeeklyHourStats(user.id, user.timezone, filters),
+    getListeningBehavior(user.id),
   ]);
   const { daily, hourly } = timeline;
 
@@ -107,6 +137,51 @@ export default async function HistoryPage({
         />
         <WeekdayHourHeatmap grid={weeklyHour.grid} max={weeklyHour.max} />
       </Card>
+
+      {behavior.sample > 0 ? (
+        <Card>
+          <SectionTitle
+            title={t("history.behavior")}
+            subtitle={t("history.behaviorSubtitle")}
+          />
+          <div className="grid grid-cols-3 gap-4">
+            <RateStat
+              label={t("history.skipRate")}
+              rate={behavior.skippedRate}
+              locale={locale}
+            />
+            <RateStat
+              label={t("history.shuffleRate")}
+              rate={behavior.shuffleRate}
+              locale={locale}
+            />
+            <RateStat
+              label={t("history.offlineRate")}
+              rate={behavior.offlineRate}
+              locale={locale}
+            />
+          </div>
+          {behavior.platforms.length > 0 ? (
+            <div className="mt-5">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted">
+                {t("history.topPlatforms")}
+              </p>
+              <RankBars
+                items={behavior.platforms.map((p) => ({
+                  label: p.platform,
+                  value: p.plays,
+                  display: formatNumber(p.plays, locale),
+                }))}
+              />
+            </div>
+          ) : null}
+          <p className="mt-4 text-xs text-muted">
+            {t("history.behaviorSample", {
+              count: formatNumber(behavior.sample, locale),
+            })}
+          </p>
+        </Card>
+      ) : null}
 
       <Card>
         <SectionTitle title={t("history.recent")} />

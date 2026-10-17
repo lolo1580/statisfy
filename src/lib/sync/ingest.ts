@@ -326,6 +326,14 @@ export async function ingestPlays(
     counted: boolean
     source: string
     context: string | null
+    platform: string | null
+    country: string | null
+    skipped: boolean | null
+    shuffle: boolean | null
+    offline: boolean | null
+    incognito: boolean | null
+    reasonStart: string | null
+    reasonEnd: string | null
     dedupKey: string
   }> = []
 
@@ -363,6 +371,14 @@ export async function ingestPlays(
       counted: isPlayCounted(msPlayed, durationMs, ratio),
       source: play.origin ?? play.provider,
       context: play.context ?? null,
+      platform: play.platform ?? null,
+      country: play.country ?? null,
+      skipped: play.skipped ?? null,
+      shuffle: play.shuffle ?? null,
+      offline: play.offline ?? null,
+      incognito: play.incognito ?? null,
+      reasonStart: play.reasonStart ?? null,
+      reasonEnd: play.reasonEnd ?? null,
       dedupKey,
     })
   }

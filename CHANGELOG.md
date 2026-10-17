@@ -29,6 +29,19 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   `src/lib/optimistic.ts` et le hook `useOptimisticList`
   (`src/components/optimistic.tsx`) ; les Server Actions concernées renvoient
   désormais un résultat `{ ok, error }` pour signaler les échecs.
+- **Redécouvertes, records & habitudes d'écoute** : le tableau de bord gagne une
+  section **Redécouvertes** (artistes écoutés autrefois puis délaissés, à
+  réécouter) et une bande **Records & séries** (série en cours, meilleure série,
+  jours actifs, journée la plus intense). La page Historique gagne une
+  **heatmap 7×24** (jour de la semaine × heure locale) et, pour les historiques
+  **étendus** importés, une carte **Habitudes d'écoute** (taux d'écoutes
+  zappées, mode aléatoire, hors ligne, appareils les plus utilisés). Nouvelles
+  colonnes `Play` renseignées à l'import : `platform`, `country`, `skipped`,
+  `shuffle`, `offline`, `incognito`, `reasonStart`, `reasonEnd` (l'export
+  classique et la sync live ne les fournissent pas). ⚠️ Les écoutes déjà en base
+  ne sont pas rétro-remplies par un simple réimport (la déduplication les
+  ignore) : `pnpm db:backfill-play-metadata <export.zip>` renseigne ces colonnes
+  sans réimporter.
 
 ### Supprimé
 

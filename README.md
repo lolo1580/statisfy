@@ -55,6 +55,13 @@ to be **easy to deploy**, **fast** and **pleasant to explore**.
 - **Multilingual**: English (default) and French, with a language switcher in
   the UI (localized dates and numbers).
 - **Heatmap**: GitHub-style yearly activity (plays per day over 12 months).
+- **7×24 heatmap**: plays by weekday and local hour, on the History page.
+- **Rediscoveries & records**: a "Rediscoveries" section (artists loved before
+  then neglected, worth another listen) and a "Records & streaks" strip (day
+  streaks, longest streak, active days, busiest day) on the dashboard.
+- **Listening habits**: when the **extended** Spotify history has been imported,
+  the History page shows the **skip** rate, **shuffle** usage, **offline**
+  listening and the most used **devices**.
 - **Backups**: automatic database copy (configurable rotation) + dedicated
   endpoint.
 - **Robust deduplication**: a play is never counted twice.

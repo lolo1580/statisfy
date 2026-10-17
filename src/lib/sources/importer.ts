@@ -106,6 +106,16 @@ export function parseSpotifyHistory(text: string): RawPlay[] {
       ? uri.split(':').pop() || undefined
       : undefined
 
+    // Métadonnées de comportement : présentes uniquement dans l'export étendu.
+    const platform = isExtended ? firstString(record.platform) : undefined
+    const country = isExtended ? firstString(record.conn_country) : undefined
+    const skipped = isExtended ? firstBoolean(record.skipped) : undefined
+    const shuffle = isExtended ? firstBoolean(record.shuffle) : undefined
+    const offline = isExtended ? firstBoolean(record.offline) : undefined
+    const incognito = isExtended ? firstBoolean(record.incognito_mode) : undefined
+    const reasonStart = isExtended ? firstString(record.reason_start) : undefined
+    const reasonEnd = isExtended ? firstString(record.reason_end) : undefined
+
     plays.push({
       provider: 'spotify',
       origin: 'import',
@@ -116,6 +126,14 @@ export function parseSpotifyHistory(text: string): RawPlay[] {
       playedAt,
       msPlayed: msPlayed ?? undefined,
       context: 'import',
+      platform,
+      country,
+      skipped,
+      shuffle,
+      offline,
+      incognito,
+      reasonStart,
+      reasonEnd,
     })
   }
 
@@ -165,4 +183,8 @@ function firstString(value: unknown): string | undefined {
 
 function firstNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
+}
+
+function firstBoolean(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined
 }

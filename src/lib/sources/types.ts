@@ -31,6 +31,15 @@ export type RawPlay = {
   playedAt: Date
   msPlayed?: number
   context?: string
+  /** Métadonnées de l'export étendu Spotify (facultatives). */
+  platform?: string
+  country?: string
+  skipped?: boolean
+  shuffle?: boolean
+  offline?: boolean
+  incognito?: boolean
+  reasonStart?: string
+  reasonEnd?: string
 }
 
 export type SyncContext = {

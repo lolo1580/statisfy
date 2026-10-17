@@ -60,6 +60,15 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
 - **Multilingue** : anglais (par défaut) et français, avec sélecteur de langue
   dans l'interface (dates et nombres localisés).
 - **Heatmap** : activité annuelle façon GitHub (écoutes par jour sur 12 mois).
+- **Heatmap 7×24** : répartition des écoutes par jour de la semaine et heure
+  locale, sur la page Historique.
+- **Redécouvertes & records** : section « Redécouvertes » (artistes écoutés
+  autrefois puis délaissés, à réécouter) et « Records & séries » (jours
+  d'affilée, meilleure série, jours actifs, journée la plus intense) sur le
+  tableau de bord.
+- **Habitudes d'écoute** : quand l'historique Spotify **étendu** a été importé,
+  la page Historique affiche le taux d'écoutes **zappées**, l'usage du **mode
+  aléatoire**, l'écoute **hors ligne** et les **appareils** les plus utilisés.
 - **Sauvegardes** : copie automatique de la base (rotation configurable) +
   endpoint dédié.
 - **Déduplication robuste** : une écoute n'est jamais comptée deux fois.

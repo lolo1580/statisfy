@@ -157,6 +157,16 @@ model Play {
   counted  Boolean  @default(true)
   source   String
   context  String? // playlist, album, radio...
+  // Métadonnées de l'export étendu Spotify (facultatives : absentes en sync live
+  // et sur les écoutes importées avant l'ajout de ces colonnes).
+  platform    String?
+  country     String?
+  skipped     Boolean?
+  shuffle     Boolean?
+  offline     Boolean?
+  incognito   Boolean?
+  reasonStart String?
+  reasonEnd   String?
   dedupKey String
   createdAt DateTime @default(now())
 

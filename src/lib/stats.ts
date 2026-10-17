@@ -1002,3 +1002,50 @@ export async function getWeeklyHourStats(
   return { grid, max }
 }
 
+export type ListeningBehavior = {
+  /** Nombre d'écoutes porteuses des métadonnées (export étendu). */
+  sample: number
+  skippedRate: number | null
+  shuffleRate: number | null
+  offlineRate: number | null
+  platforms: { platform: string; plays: number }[]
+}
+
+/**
+ * Habitudes d'écoute issues de l'export étendu Spotify (appareil, saut, aléatoire,
+ * hors ligne). Ne renvoie que des valeurs présentes : `null` si la colonne est
+ * absente (échantillon nul).
+ */
+export async function getListeningBehavior(
+  userId: string,
+): Promise<ListeningBehavior> {
+  const where: Prisma.PlayWhereInput = {
+    userId,
+    counted: true,
+    platform: { not: null },
+  }
+  const [sample, skipped, shuffled, offline, platforms] = await Promise.all([
+    prisma.play.count({ where }),
+    prisma.play.count({ where: { ...where, skipped: true } }),
+    prisma.play.count({ where: { ...where, shuffle: true } }),
+    prisma.play.count({ where: { ...where, offline: true } }),
+    prisma.play.groupBy({
+      by: ['platform'],
+      where,
+      _count: { _all: true },
+    }),
+  ])
+
+  const rate = (value: number) => (sample > 0 ? value / sample : null)
+
+  return {
+    sample,
+    skippedRate: rate(skipped),
+    shuffleRate: rate(shuffled),
+    offlineRate: rate(offline),
+    platforms: platforms
+      .map((row) => ({ platform: row.platform ?? '—', plays: row._count._all }))
+      .sort((a, b) => b.plays - a.plays)
+      .slice(0, 5),
+  }
+}

@@ -129,6 +129,13 @@ export const en: Dictionary = {
   "history.noPlays": "No plays recorded.",
   "history.weekdayHour": "Day and hour",
   "history.weekdayHourSubtitle": "Plays by weekday and local hour",
+  "history.behavior": "Listening habits",
+  "history.behaviorSubtitle": "From your extended history imports",
+  "history.skipRate": "Skipped plays",
+  "history.shuffleRate": "Shuffle",
+  "history.offlineRate": "Offline",
+  "history.topPlatforms": "Devices",
+  "history.behaviorSample": "{count} plays analysed",
 
   // Records & streaks
   "records.title": "Records & streaks",

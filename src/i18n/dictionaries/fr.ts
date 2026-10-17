@@ -126,6 +126,13 @@ export const fr: Dictionary = {
   "history.noPlays": "Aucune écoute enregistrée.",
   "history.weekdayHour": "Jour et heure",
   "history.weekdayHourSubtitle": "Écoutes par jour de la semaine et heure locale",
+  "history.behavior": "Habitudes d'écoute",
+  "history.behaviorSubtitle": "D'après vos imports d'historique étendu",
+  "history.skipRate": "Écoutes zappées",
+  "history.shuffleRate": "Mode aléatoire",
+  "history.offlineRate": "Hors ligne",
+  "history.topPlatforms": "Appareils",
+  "history.behaviorSample": "{count} écoutes analysées",
 
   // Records & séries
   "records.title": "Records & séries",
