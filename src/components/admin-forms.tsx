@@ -30,8 +30,10 @@ export function CopyField({ value, label }: { value: string; label?: string }) {
   };
 
   return (
-    <div className="flex items-center gap-2">
-      {label ? <span className="text-xs text-muted">{label}</span> : null}
+    <div className="flex flex-wrap items-center gap-2">
+      {label ? (
+        <span className="w-full text-xs text-muted sm:w-auto">{label}</span>
+      ) : null}
       <input
         readOnly
         value={value}
@@ -41,7 +43,7 @@ export function CopyField({ value, label }: { value: string; label?: string }) {
       <button
         type="button"
         onClick={copy}
-        className="shrink-0 rounded-lg border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-accent/40 hover:text-accent"
+        className="shrink-0 whitespace-nowrap rounded-lg border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-accent/40 hover:text-accent"
       >
         {copied ? t("settings.copied") : t("settings.copy")}
       </button>

@@ -667,7 +667,7 @@ export function Heatmap({
 
   return (
     <div className="overflow-x-auto pb-1">
-      <div className="flex gap-[3px]">
+      <div className="flex w-max gap-[3px] sm:mx-auto">
         {weeks.map((column, columnIndex) => (
           <div key={columnIndex} className="flex flex-col gap-[3px]">
             {column.map((cell, cellIndex) =>
@@ -675,11 +675,11 @@ export function Heatmap({
                 <div
                   key={cellIndex}
                   title={`${cell.day} — ${t("dash.playsCount", { count: cell.plays })}`}
-                  className="h-3 w-3 rounded-sm"
+                  className="h-3 w-3 rounded-sm sm:h-3.5 sm:w-3.5"
                   style={{ background: color(cell.plays) }}
                 />
               ) : (
-                <div key={cellIndex} className="h-3 w-3" />
+                <div key={cellIndex} className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               ),
             )}
           </div>
@@ -721,33 +721,35 @@ export function WeekdayHourHeatmap({
 
   return (
     <div className="overflow-x-auto pb-1">
-      <div className="mb-1 flex items-center gap-[3px]">
-        <span className="w-8 shrink-0" />
-        {Array.from({ length: 24 }, (_, hour) => (
-          <span
-            key={hour}
-            className="w-4 shrink-0 text-center text-[9px] text-muted"
-          >
-            {hour % 6 === 0 ? `${hour}h` : ""}
-          </span>
-        ))}
-      </div>
-      <div className="space-y-[3px]">
-        {grid.map((row, dow) => (
-          <div key={dow} className="flex items-center gap-[3px]">
-            <span className="w-8 shrink-0 text-[10px] uppercase text-muted">
-              {weekday(dow)}
+      <div className="w-max sm:mx-auto">
+        <div className="mb-1 flex items-center gap-[3px]">
+          <span className="w-8 shrink-0" />
+          {Array.from({ length: 24 }, (_, hour) => (
+            <span
+              key={hour}
+              className="w-4 shrink-0 text-center text-[9px] text-muted sm:w-6"
+            >
+              {hour % 6 === 0 ? `${hour}h` : ""}
             </span>
-            {row.map((value, hour) => (
-              <div
-                key={hour}
-                title={`${weekday(dow)} ${hour}h — ${t("dash.playsCount", { count: value })}`}
-                className="h-4 w-4 shrink-0 rounded-sm"
-                style={{ background: color(value) }}
-              />
-            ))}
-          </div>
-        ))}
+          ))}
+        </div>
+        <div className="space-y-[3px]">
+          {grid.map((row, dow) => (
+            <div key={dow} className="flex items-center gap-[3px]">
+              <span className="w-8 shrink-0 text-[10px] uppercase text-muted">
+                {weekday(dow)}
+              </span>
+              {row.map((value, hour) => (
+                <div
+                  key={hour}
+                  title={`${weekday(dow)} ${hour}h — ${t("dash.playsCount", { count: value })}`}
+                  className="h-4 w-4 shrink-0 rounded-sm sm:h-6 sm:w-6"
+                  style={{ background: color(value) }}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

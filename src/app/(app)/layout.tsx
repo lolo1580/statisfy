@@ -33,7 +33,7 @@ export default async function AppLayout({
 
   return (
     <div className="mx-auto w-full max-w-6xl px-5 py-6 sm:px-8 xl:max-w-7xl 3xl:max-w-[1720px] 4xl:max-w-[2000px]">
-      <header className="relative mb-8 flex flex-wrap items-center justify-between gap-4">
+      <header className="relative mb-6 flex flex-wrap items-center justify-between gap-3 sm:mb-8 sm:gap-4">
         <Link
           href="/dashboard"
           className="flex items-center gap-2 text-lg font-semibold tracking-tight"
@@ -41,11 +41,16 @@ export default async function AppLayout({
           <span aria-hidden>🎧</span>
           {appName}
         </Link>
-        <Nav pendingCount={pendingRequests} isAdmin={user.isAdmin} />
+        <Nav
+          pendingCount={pendingRequests}
+          isAdmin={user.isAdmin}
+          theme={theme}
+          locale={locale}
+        />
         <div className="order-last w-full sm:order-none sm:max-w-2xl sm:flex-1">
           <CommandPalette isAdmin={user.isAdmin} />
         </div>
-        <div className="flex items-center gap-3 text-sm">
+        <div className="hidden items-center gap-3 text-sm md:flex">
           <ThemeSwitcher current={theme} />
           <LocaleSwitcher current={locale} />
           <form action={logout}>

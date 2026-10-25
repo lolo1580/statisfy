@@ -72,6 +72,13 @@
 html {
   height: 100%;
   background-color: var(--background);
+  scrollbar-color: var(--border) transparent;
+}
+
+input[type="checkbox"],
+input[type="radio"],
+progress {
+  accent-color: var(--accent);
 }
 
 body {
@@ -107,4 +114,22 @@ body::before {
 ::selection {
   background: var(--accent);
   color: var(--on-accent);
+}
+
+/* Anneau de focus cohérent avec l'accent, y compris pour la navigation clavier. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Respecte la préférence système : pas d'animations décoratives inutiles. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

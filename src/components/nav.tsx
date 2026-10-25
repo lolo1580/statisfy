@@ -4,7 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useI18n } from "@/components/i18n-provider";
+import { LocaleSwitcher } from "@/components/locale-switcher";
+import { ThemeSwitcher } from "@/components/theme-switcher";
+import { logout } from "@/lib/auth/actions";
 import { isActivePath } from "@/lib/nav";
+import type { Theme } from "@/lib/theme";
+import type { Locale } from "@/i18n/config";
 
 const LINKS = [
   { href: "/dashboard", key: "nav.overview" },
@@ -17,9 +22,13 @@ const LINKS = [
 export function Nav({
   pendingCount = 0,
   isAdmin = false,
+  theme,
+  locale,
 }: {
   pendingCount?: number;
   isAdmin?: boolean;
+  theme: Theme;
+  locale: Locale;
 }) {
   const pathname = usePathname();
   const { t } = useI18n();
@@ -117,7 +126,7 @@ export function Nav({
       {open ? (
         <nav
           id="mobile-nav"
-          className="absolute right-0 top-full z-40 mt-2 w-56 rounded-xl border border-border bg-surface p-2 shadow-xl md:hidden"
+          className="absolute right-0 top-full z-40 mt-2 w-64 rounded-xl border border-border bg-surface p-2 shadow-xl md:hidden"
         >
           <div className="flex flex-col gap-0.5">
             {links.map((link) => {
@@ -139,6 +148,20 @@ export function Nav({
                 </Link>
               );
             })}
+          </div>
+          <div className="mt-2 border-t border-border pt-2">
+            <div className="flex items-center justify-between gap-2 px-1 py-1">
+              <ThemeSwitcher current={theme} />
+              <LocaleSwitcher current={locale} />
+            </div>
+            <form action={logout} className="mt-1">
+              <button
+                type="submit"
+                className="w-full rounded-lg border border-border px-3 py-2 text-left text-sm text-muted transition-colors hover:border-danger/40 hover:text-danger"
+              >
+                {t("nav.logout")}
+              </button>
+            </form>
           </div>
         </nav>
       ) : null}

@@ -74,6 +74,13 @@ export default async function SharedProfilePage({
     <main className="mx-auto w-full max-w-6xl px-5 py-6 sm:px-8">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
+          <Link
+            href="/"
+            className="mb-3 inline-flex items-center gap-2 text-sm font-semibold tracking-tight transition-colors hover:text-accent"
+          >
+            <span aria-hidden>🎧</span>
+            {appName}
+          </Link>
           <p className="text-xs uppercase tracking-wider text-muted">
             {t("profile.kicker")}
           </p>
@@ -105,70 +112,78 @@ export default async function SharedProfilePage({
         />
       </div>
 
-      {config.topArtists ? (
-        <Card className="mt-6">
-          <SectionTitle title={t("dash.topArtists")} />
-          {artists.length === 0 ? (
-            <EmptyState>{t("dash.noArtists")}</EmptyState>
-          ) : (
-            <ol className="space-y-2">
-              {artists.map((artist, index) => (
-                <li key={artist.id} className="flex items-center gap-3">
-                  <span className="w-5 text-right text-sm text-muted">
-                    {index + 1}
-                  </span>
-                  <Cover
-                    src={artist.imageUrl}
-                    alt={artist.name}
-                    size={40}
-                    rounded="rounded-full"
-                  />
-                  <span className="min-w-0 flex-1 truncate font-medium">
-                    {artist.name}
-                  </span>
-                  <span className="text-sm text-muted">
-                    {t("dash.playsCount", {
-                      count: formatNumber(artist.plays, locale),
-                    })}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          )}
-        </Card>
-      ) : null}
+      {config.topArtists || config.topTracks ? (
+        <div
+          className={`mt-6 grid gap-6 ${
+            config.topArtists && config.topTracks ? "lg:grid-cols-2" : ""
+          }`}
+        >
+          {config.topArtists ? (
+            <Card>
+              <SectionTitle title={t("dash.topArtists")} />
+              {artists.length === 0 ? (
+                <EmptyState>{t("dash.noArtists")}</EmptyState>
+              ) : (
+                <ol className="space-y-2">
+                  {artists.map((artist, index) => (
+                    <li key={artist.id} className="flex items-center gap-3">
+                      <span className="w-5 text-right text-sm text-muted">
+                        {index + 1}
+                      </span>
+                      <Cover
+                        src={artist.imageUrl}
+                        alt={artist.name}
+                        size={40}
+                        rounded="rounded-full"
+                      />
+                      <span className="min-w-0 flex-1 truncate font-medium">
+                        {artist.name}
+                      </span>
+                      <span className="text-sm text-muted">
+                        {t("dash.playsCount", {
+                          count: formatNumber(artist.plays, locale),
+                        })}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </Card>
+          ) : null}
 
-      {config.topTracks ? (
-        <Card className="mt-6">
-          <SectionTitle title={t("dash.topTracks")} />
-          {tracks.length === 0 ? (
-            <EmptyState>{t("dash.noTracks")}</EmptyState>
-          ) : (
-            <ol className="space-y-2">
-              {tracks.map((track, index) => (
-                <li key={track.id} className="flex items-center gap-3">
-                  <span className="w-5 text-right text-sm text-muted">
-                    {index + 1}
-                  </span>
-                  <Cover src={track.imageUrl} alt={track.name} size={40} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium">
-                      {track.name}
-                    </span>
-                    <span className="block truncate text-xs text-muted">
-                      {track.artistName}
-                    </span>
-                  </span>
-                  <span className="text-sm text-muted">
-                    {t("dash.playsCount", {
-                      count: formatNumber(track.plays, locale),
-                    })}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          )}
-        </Card>
+          {config.topTracks ? (
+            <Card>
+              <SectionTitle title={t("dash.topTracks")} />
+              {tracks.length === 0 ? (
+                <EmptyState>{t("dash.noTracks")}</EmptyState>
+              ) : (
+                <ol className="space-y-2">
+                  {tracks.map((track, index) => (
+                    <li key={track.id} className="flex items-center gap-3">
+                      <span className="w-5 text-right text-sm text-muted">
+                        {index + 1}
+                      </span>
+                      <Cover src={track.imageUrl} alt={track.name} size={40} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium">
+                          {track.name}
+                        </span>
+                        <span className="block truncate text-xs text-muted">
+                          {track.artistName}
+                        </span>
+                      </span>
+                      <span className="text-sm text-muted">
+                        {t("dash.playsCount", {
+                          count: formatNumber(track.plays, locale),
+                        })}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </Card>
+          ) : null}
+        </div>
       ) : null}
 
       {config.recentPlays ? (

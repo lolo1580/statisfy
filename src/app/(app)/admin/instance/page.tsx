@@ -47,69 +47,71 @@ export default async function AdminInstancePage() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <SectionTitle
-          title={t("admin.registrationTitle")}
-          subtitle={t("admin.registrationSubtitle")}
-        />
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-muted">
-            {t("settings.registration", {
-              state: registrationEnabled
-                ? t("settings.allowed")
-                : t("settings.disabled"),
-            })}
-          </p>
-          <form action={setRegistration}>
-            <input
-              type="hidden"
-              name="enabled"
-              value={registrationEnabled ? "false" : "true"}
-            />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <SectionTitle
+            title={t("admin.registrationTitle")}
+            subtitle={t("admin.registrationSubtitle")}
+          />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted">
+              {t("settings.registration", {
+                state: registrationEnabled
+                  ? t("settings.allowed")
+                  : t("settings.disabled"),
+              })}
+            </p>
+            <form action={setRegistration}>
+              <input
+                type="hidden"
+                name="enabled"
+                value={registrationEnabled ? "false" : "true"}
+              />
+              <button
+                type="submit"
+                className="rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:border-accent/40 hover:text-accent"
+              >
+                {registrationEnabled
+                  ? t("settings.disableReg")
+                  : t("settings.enableReg")}
+              </button>
+            </form>
+          </div>
+        </Card>
+
+        <Card>
+          <SectionTitle
+            title={t("admin.thresholdTitle")}
+            subtitle={t("admin.thresholdSubtitle")}
+          />
+          <form
+            action={setMinListenRatio}
+            className="flex flex-wrap items-end gap-3"
+          >
+            <label className="flex flex-col gap-1 text-xs text-muted">
+              {t("admin.thresholdLabel")}
+              <span className="flex items-center gap-2">
+                <input
+                  type="number"
+                  name="percent"
+                  min={0}
+                  max={100}
+                  step={5}
+                  defaultValue={Math.round(minListenRatio * 100)}
+                  className="w-24 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-foreground outline-none focus:border-accent"
+                />
+                <span>%</span>
+              </span>
+            </label>
             <button
               type="submit"
               className="rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:border-accent/40 hover:text-accent"
             >
-              {registrationEnabled
-                ? t("settings.disableReg")
-                : t("settings.enableReg")}
+              {t("admin.thresholdSave")}
             </button>
           </form>
-        </div>
-      </Card>
-
-      <Card>
-        <SectionTitle
-          title={t("admin.thresholdTitle")}
-          subtitle={t("admin.thresholdSubtitle")}
-        />
-        <form
-          action={setMinListenRatio}
-          className="flex flex-wrap items-end gap-3"
-        >
-          <label className="flex flex-col gap-1 text-xs text-muted">
-            {t("admin.thresholdLabel")}
-            <span className="flex items-center gap-2">
-              <input
-                type="number"
-                name="percent"
-                min={0}
-                max={100}
-                step={5}
-                defaultValue={Math.round(minListenRatio * 100)}
-                className="w-24 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-foreground outline-none focus:border-accent"
-              />
-              <span>%</span>
-            </span>
-          </label>
-          <button
-            type="submit"
-            className="rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:border-accent/40 hover:text-accent"
-          >
-            {t("admin.thresholdSave")}
-          </button>
-        </form>
-      </Card>
+        </Card>
+      </div>
 
       <Card>
         <SectionTitle

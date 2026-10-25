@@ -158,7 +158,7 @@ export function CommandPalette({ isAdmin = false }: { isAdmin?: boolean }) {
           </svg>
           <span className="truncate">{t("palette.trigger")}</span>
         </span>
-        <kbd className="shrink-0 rounded border border-border px-1.5 py-0.5 text-[10px] text-muted">
+        <kbd className="hidden shrink-0 rounded border border-border px-1.5 py-0.5 text-[10px] text-muted sm:inline">
           Ctrl K
         </kbd>
       </button>

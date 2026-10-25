@@ -182,19 +182,19 @@ export default async function ComparePage({
       delta: percentChange(overviewA.totalMs, overviewB.totalMs),
     },
     {
-      label: t("recap.plays"),
+      label: t("dash.metricPlays"),
       a: formatNumber(overviewA.totalPlays, locale),
       b: formatNumber(overviewB.totalPlays, locale),
       delta: percentChange(overviewA.totalPlays, overviewB.totalPlays),
     },
     {
-      label: t("recap.artists"),
+      label: t("dash.artists"),
       a: formatNumber(overviewA.distinctArtists, locale),
       b: formatNumber(overviewB.distinctArtists, locale),
       delta: percentChange(overviewA.distinctArtists, overviewB.distinctArtists),
     },
     {
-      label: t("recap.tracks"),
+      label: t("dash.tracks"),
       a: formatNumber(overviewA.distinctTracks, locale),
       b: formatNumber(overviewB.distinctTracks, locale),
       delta: percentChange(overviewA.distinctTracks, overviewB.distinctTracks),

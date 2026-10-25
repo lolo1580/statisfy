@@ -101,16 +101,18 @@ export default async function HistoryPage({
         <Heatmap days={heatmap.map((d) => ({ day: d.day, plays: d.plays }))} />
       </Card>
 
-      <Card>
-        <SectionTitle title={t("history.daily")} />
-        <AreaChart
-          points={daily.map((d) => ({
-            label: dayLabel(d.day),
-            value: d.msPlayed,
-            title: dayTitle(d.day),
-          }))}
-        />
-      </Card>
+      {parsed.key !== "today" ? (
+        <Card>
+          <SectionTitle title={t("history.daily")} />
+          <AreaChart
+            points={daily.map((d) => ({
+              label: dayLabel(d.day),
+              value: d.msPlayed,
+              title: dayTitle(d.day),
+            }))}
+          />
+        </Card>
+      ) : null}
 
       <Card>
         <SectionTitle
