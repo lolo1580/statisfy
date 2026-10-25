@@ -49,7 +49,7 @@ export default async function SearchPage({
       ) : !hasResults ? (
         <EmptyState>{t("search.noResults", { query })}</EmptyState>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Card>
             <SectionTitle
               title={t("search.artists")}

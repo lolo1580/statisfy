@@ -68,7 +68,7 @@ export function RumForm({
         {t("admin.rumEnable")}
       </label>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="space-y-1 text-xs text-muted sm:col-span-2">
           <span>{t("admin.rumUrl")}</span>
           <input
@@ -144,7 +144,7 @@ export function RumForm({
         <summary className="cursor-pointer text-sm font-medium">
           {t("admin.rumAdvanced")}
         </summary>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="space-y-1 text-xs text-muted">
             <span>{t("admin.rumApplicationId")}</span>
             <input

@@ -124,7 +124,7 @@ export default async function ArtistPage({
         </Card>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <SectionTitle title={t("top.topTracks")} />
           {detail.topTracks.length === 0 ? (
@@ -162,7 +162,7 @@ export default async function ArtistPage({
           {detail.topAlbums.length === 0 ? (
             <EmptyState>{t("generic.noData")}</EmptyState>
           ) : (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {detail.topAlbums.map((album) => (
                 <div key={album.id} className="min-w-0">
                   <Cover

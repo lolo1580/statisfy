@@ -200,7 +200,7 @@ export default async function HistoryPage({
                 <div className="min-w-0 flex-1">
                   <Link
                     href={`/track/${play.trackId}`}
-                    className="truncate text-sm font-medium hover:text-accent"
+                    className="block truncate text-sm font-medium hover:text-accent"
                   >
                     {play.trackName}
                   </Link>

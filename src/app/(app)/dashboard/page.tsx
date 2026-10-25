@@ -305,7 +305,7 @@ export default async function DashboardPage({
             <AreaChart points={overTimePoints} />
           </Card>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <Card>
               <TopTracksPanel
                 title={t("dash.topTracks")}
@@ -345,7 +345,7 @@ export default async function DashboardPage({
             {rediscoveries.length === 0 ? (
               <EmptyState>{t("dash.rediscoverEmpty")}</EmptyState>
             ) : (
-              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 3xl:grid-cols-5">
+              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 3xl:grid-cols-5">
                 {rediscoveries.map((artist) => (
                   <li key={artist.id}>
                     <Link

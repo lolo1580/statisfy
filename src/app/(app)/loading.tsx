@@ -22,7 +22,7 @@ export default async function AppLoading() {
           />
         ))}
       </div>
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="h-72 animate-pulse rounded-2xl border border-border bg-surface/70" />
         <div className="h-72 animate-pulse rounded-2xl border border-border bg-surface/70" />
       </div>

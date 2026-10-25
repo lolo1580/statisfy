@@ -188,7 +188,7 @@ export async function WrappedContent({
             )}
           </Card>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard
               label={t("recap.busiestDay")}
               value={
@@ -232,7 +232,7 @@ export async function WrappedContent({
             />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card>
               <SectionTitle
                 title={t("recap.yourArtists")}
@@ -241,7 +241,7 @@ export async function WrappedContent({
               {topArtists.length === 0 ? (
                 <EmptyState>{t("generic.noData")}</EmptyState>
               ) : (
-                <div className="grid grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                   {topArtists.map((artist) => (
                     <MaybeLink
                       key={artist.id}
@@ -285,7 +285,7 @@ export async function WrappedContent({
             </Card>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card>
               <SectionTitle
                 title={t("recap.yourTracks")}
@@ -326,7 +326,7 @@ export async function WrappedContent({
               {topAlbums.length === 0 ? (
                 <EmptyState>{t("generic.noData")}</EmptyState>
               ) : (
-                <div className="grid grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                   {topAlbums.map((album) => (
                     <div key={album.id} className="min-w-0">
                       <Cover

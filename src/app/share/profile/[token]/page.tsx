@@ -90,7 +90,7 @@ export default async function SharedProfilePage({
         <RangeTabs basePath={basePath} current={parsed.key} />
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           label={t("dash.listeningTime")}
           value={formatDuration(overview.totalMs, locale)}
@@ -114,7 +114,7 @@ export default async function SharedProfilePage({
 
       {config.topArtists || config.topTracks ? (
         <div
-          className={`mt-6 grid gap-6 ${
+          className={`mt-6 grid grid-cols-1 gap-6 ${
             config.topArtists && config.topTracks ? "lg:grid-cols-2" : ""
           }`}
         >

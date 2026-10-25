@@ -277,28 +277,34 @@ export default async function ComparePage({
           <Card>
             <SectionTitle title={t("compare.summary")} />
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[480px] text-sm">
+              <table className="w-full text-xs sm:text-sm">
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-wider text-muted">
-                    <th className="py-2 pr-4 font-medium">
+                    <th className="py-2 pr-2 font-medium sm:pr-4">
                       {t("compare.metric")}
                     </th>
-                    <th className="py-2 pr-4 font-medium text-accent">{labelA}</th>
-                    <th className="py-2 pr-4 font-medium text-violet">{labelB}</th>
+                    <th className="py-2 pr-2 font-medium text-accent sm:pr-4">
+                      {labelA}
+                    </th>
+                    <th className="py-2 pr-2 font-medium text-violet sm:pr-4">
+                      {labelB}
+                    </th>
                     <th className="py-2 font-medium">{t("compare.delta")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {metrics.map((metric) => (
                     <tr key={metric.label} className="border-t border-border">
-                      <td className="py-2.5 pr-4 text-muted">{metric.label}</td>
-                      <td className="py-2.5 pr-4 font-medium text-accent">
+                      <td className="py-2.5 pr-2 text-muted sm:pr-4">
+                        {metric.label}
+                      </td>
+                      <td className="whitespace-nowrap py-2.5 pr-2 font-medium text-accent sm:pr-4">
                         {metric.a}
                       </td>
-                      <td className="py-2.5 pr-4 font-medium text-violet">
+                      <td className="whitespace-nowrap py-2.5 pr-2 font-medium text-violet sm:pr-4">
                         {metric.b}
                       </td>
-                      <td className="py-2.5">
+                      <td className="whitespace-nowrap py-2.5">
                         <DeltaBadge value={metric.delta} />
                       </td>
                     </tr>
@@ -317,7 +323,7 @@ export default async function ComparePage({
               <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">
                 {t("top.topArtists")}
               </h3>
-              <div className="grid gap-6 lg:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <Card>
                   <TopArtistsPanel
                     title={labelA}
@@ -343,7 +349,7 @@ export default async function ComparePage({
               <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">
                 {t("top.topTracks")}
               </h3>
-              <div className="grid gap-6 lg:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <Card>
                   <TopTracksPanel
                     title={labelA}
@@ -371,7 +377,7 @@ export default async function ComparePage({
               <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">
                 {t("dash.genres")}
               </h3>
-              <div className="grid gap-6 lg:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <Card>
                   <TopGenresPanel
                     title={labelA}
