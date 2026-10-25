@@ -13,7 +13,7 @@ updates:
           - "minor"
           - "patch"
     # Prisma (CLI) et son client doivent être mis à jour manuellement ensemble
-    # (génération du client + `db push`) : on ignore les majeures.
+    # (génération du client + migrations) : on ignore les majeures.
     ignore:
       - dependency-name: "prisma"
         update-types: ["version-update:semver-major"]

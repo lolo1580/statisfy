@@ -7,6 +7,9 @@ allowBuilds:
   # mais présent dans le graphe de dépendances.
   better-sqlite3: true
   unrs-resolver: true
+  # `swagger-ui-dist` tire `@scarf/scarf`, dont le postinstall envoie de la
+  # télémétrie : on le désactive explicitement.
+  "@scarf/scarf": false
 
 # Correctifs de sécurité : ces paquets ne sont tirés que par le CLI Prisma
 # (transitifs) et sont épinglés à des versions vulnérables par Prisma 7.10.

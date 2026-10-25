@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
   // dépendances réellement utilisées (l'image Docker passe de ~1,5 Go à
   // quelques centaines de Mo). Démarré par `node server.js`.
   output: "standalone",
+  // La page `/api-docs` charge Swagger UI depuis `node_modules` via une route
+  // handler : la sortie autonome doit embarquer ces fichiers explicitement.
+  outputFileTracingIncludes: {
+    "/api/**": ["./node_modules/swagger-ui-dist/**/*"],
+  },
   // Dashboard fortement dynamique (base de données + cookies) : on reste sur
   // le modèle de cache classique plutôt que Cache Components.
   cacheComponents: false,
@@ -15,6 +20,8 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "128mb",
     },
+    // Mise à niveau de sécurité Next.js suivie par l'agent (16.4.0 → 16.4.2).
+    agentUpgrade: "security",
   },
   turbopack: {
     rules: {
@@ -33,6 +40,13 @@ const nextConfig: NextConfig = {
       { key: "X-Frame-Options", value: "DENY" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
       { key: "X-DNS-Prefetch-Control", value: "off" },
+      // À ne poser qu'en HTTPS : les navigateurs ignorent l'en-tête en clair.
+      // Pas de `includeSubDomains` (l'instance peut cohabiter avec d'autres
+      // services du même domaine).
+      {
+        key: "Strict-Transport-Security",
+        value: "max-age=31536000",
+      },
       {
         key: "Permissions-Policy",
         value: "camera=(), microphone=(), geolocation=()",

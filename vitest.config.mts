@@ -21,5 +21,13 @@ export default defineConfig({
     environment: "node",
     include: ["test/**/*.test.ts"],
     setupFiles: ["./test/setup.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json-summary"],
+      // Le cœur métier est dans `src/lib` ; les fichiers purement
+      // infrastructure (connexion DB, client généré) sont exclus.
+      include: ["src/lib/**/*.ts", "src/i18n/**/*.ts"],
+      exclude: ["src/lib/db.ts", "src/generated/**"],
+    },
   },
 });

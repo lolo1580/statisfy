@@ -25,6 +25,7 @@ export function proxy(request: NextRequest) {
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     "connect-src 'self'",
+    "worker-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -48,7 +49,8 @@ export const config = {
     {
       // On ignore les routes API et les fichiers statiques : ils n'ont pas
       // besoin de CSP, et on évite de recalculer un nonce pour rien.
-      source: "/((?!api|_next/static|_next/image|favicon.ico).*)",
+      // `api(?:/|$)` (et non `api`) pour que `/api-docs` conserve bien le CSP.
+      source: "/((?!api(?:/|$)|_next/static|_next/image|favicon.ico).*)",
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },

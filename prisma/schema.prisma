@@ -39,11 +39,24 @@ model User {
   // Jeton de partage public du récapitulatif (`null` = partage désactivé).
   wrappedShareToken String?
 
+  // Jeton de lecture des statistiques (`GET /api/public/stats`).
+  // `null` = API désactivée pour ce compte. Index simple (et non unique) :
+  // `prisma db push`, lancé au démarrage du conteneur, refuserait d'ajouter une
+  // contrainte unique sur une base existante sans `--accept-data-loss`.
+  // L'unicité est garantie à la génération (32 octets aléatoires + vérification).
+  statsApiToken String?
+
+  // Partage public (opt-in) du profil « live » et sections exposées (JSON).
+  profileShareToken  String?
+  profileShareConfig String?
+
   // Didacticiel : accueil affiché une seule fois, checklist masquée manuellement.
   onboardedAt       DateTime?
   checklistHiddenAt DateTime?
 
   @@index([wrappedShareToken])
+  @@index([statsApiToken])
+  @@index([profileShareToken])
 
   sessions    Session[]
   connections SourceConnection[]

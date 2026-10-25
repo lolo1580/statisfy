@@ -60,16 +60,79 @@ jobs:
         run: pnpm audit --prod --audit-level high
 
       - name: Validate Prisma schema
-        run: pnpm db:push
+        # Applique les migrations sur la base vide du service, puis vérifie
+        # qu'aucune dérive ne subsiste entre les migrations et `schema.prisma`.
+        run: |
+          pnpm db:migrate
+          pnpm exec prisma migrate diff \
+            --from-config-datasource \
+            --to-schema prisma/schema.prisma \
+            --exit-code
 
       - name: Lint
         run: pnpm lint
 
       - name: Test
-        run: pnpm test
+        run: pnpm test:coverage
 
       - name: Build
         run: pnpm build
+
+  # Tests de bout en bout : crée une base dédiée (`statisfy_e2e`), la migre,
+  # lance le serveur de développement et vérifie les parcours critiques.
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://statisfy:statisfy@localhost:5432/statisfy"
+      E2E_DATABASE_URL: "postgresql://statisfy:statisfy@localhost:5432/statisfy_e2e"
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: statisfy
+          POSTGRES_PASSWORD: statisfy
+          POSTGRES_DB: statisfy
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U statisfy"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
 
   # Construit l'image Docker **et la démarre** contre une base Postgres, puis
   # vérifie que l'app répond. Attrape deux classes de pannes qu'un simple
