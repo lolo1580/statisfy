@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseRange } from "@/lib/range";
+import { isRangePreference, parseRange } from "@/lib/range";
 
 describe("parseRange", () => {
   it("utilise « aujourd'hui » par défaut", () => {
@@ -42,5 +42,23 @@ describe("parseRange", () => {
       expect(p.days).toBeGreaterThanOrEqual(1);
       expect(p.from).toBeInstanceOf(Date);
     }
+  });
+});
+
+describe("isRangePreference", () => {
+  it("accepte les périodes connues", () => {
+    for (const key of ["today", "week", "month", "year", "all", "30"]) {
+      expect(isRangePreference(key)).toBe(true);
+    }
+  });
+
+  it("refuse les valeurs invalides", () => {
+    expect(isRangePreference(undefined)).toBe(false);
+    expect(isRangePreference(null)).toBe(false);
+    expect(isRangePreference("")).toBe(false);
+    expect(isRangePreference("abc")).toBe(false);
+    expect(isRangePreference("0")).toBe(false);
+    expect(isRangePreference("-5")).toBe(false);
+    expect(isRangePreference("999999")).toBe(false);
   });
 });

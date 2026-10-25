@@ -3,6 +3,7 @@ import {
   dayKey,
   formatDuration,
   formatNumber,
+  formatRelative,
   getTimezoneOffsetMs,
   hourOf,
   startOfLocalDay,
@@ -12,6 +13,23 @@ import {
 } from "@/lib/format";
 
 const HOUR = 3_600_000;
+
+describe("formatRelative", () => {
+  const now = new Date("2026-10-25T12:00:00.000Z");
+
+  it("formate les durées passées", () => {
+    expect(
+      formatRelative(new Date("2026-10-25T11:58:00.000Z"), "fr", now),
+    ).toContain("2");
+    expect(
+      formatRelative(new Date("2026-10-25T11:58:00.000Z"), "en", now),
+    ).toContain("2");
+  });
+
+  it("gère l'instant présent", () => {
+    expect(formatRelative(now, "en", now)).toBe("now");
+  });
+});
 
 describe("formatDuration", () => {
   it("gère les valeurs nulles ou négatives", () => {

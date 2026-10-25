@@ -5,14 +5,15 @@ import {
   getRecords,
   getRediscoveries,
   getTimelineStats,
-  getTopArtists,
-  getTopGenres,
-  getTopTracks,
+  getTopArtistsBoth,
+  getTopGenresBoth,
+  getTopTracksBoth,
   hasAnyPlays,
   type StatsRange,
 } from "@/lib/stats";
 import { RangeTabs } from "@/components/range-tabs";
 import { parseRange } from "@/lib/range";
+import { resolveRangeParam } from "@/lib/range-preference";
 import { AreaChart } from "@/components/charts";
 import { Card, Cover, EmptyState, SectionTitle, StatCard } from "@/components/ui";
 import { TopArtistsPanel, TopGenresPanel, TopTracksPanel } from "@/components/ranking-panels";
@@ -95,7 +96,7 @@ export default async function DashboardPage({
     );
   const params = await searchParams;
   const parsed = parseRange(
-    typeof params.range === "string" ? params.range : undefined,
+    await resolveRangeParam(params.range),
     user.timezone,
   );
   const filters: StatsRange = {
@@ -108,12 +109,9 @@ export default async function DashboardPage({
   const [
     overview,
     timeline,
-    topTracksByPlays,
-    topTracksByTime,
-    topArtistsByPlays,
-    topArtistsByTime,
-    topGenresByPlays,
-    topGenresByTime,
+    topTracks,
+    topArtists,
+    topGenres,
     anyPlays,
     records,
     rediscoveries,
@@ -123,12 +121,9 @@ export default async function DashboardPage({
   ] = await Promise.all([
     getOverview(user.id, filters),
     getTimelineStats(user.id, user.timezone, filters),
-    getTopTracks(user.id, filters, 10),
-    getTopTracks(user.id, filters, 10, "time"),
-    getTopArtists(user.id, filters, 10),
-    getTopArtists(user.id, filters, 10, "time"),
-    getTopGenres(user.id, filters, 10),
-    getTopGenres(user.id, filters, 10, "time"),
+    getTopTracksBoth(user.id, filters, 10),
+    getTopArtistsBoth(user.id, filters, 10),
+    getTopGenresBoth(user.id, filters, 10),
     hasAnyPlays(user.id),
     getRecords(user.id, user.timezone),
     getRediscoveries(user.id),
@@ -314,8 +309,8 @@ export default async function DashboardPage({
             <Card>
               <TopTracksPanel
                 title={t("dash.topTracks")}
-                itemsByPlays={topTracksByPlays}
-                itemsByTime={topTracksByTime}
+                itemsByPlays={topTracks.plays}
+                itemsByTime={topTracks.time}
                 query={query}
                 empty={t("dash.noTracks")}
               />
@@ -324,8 +319,8 @@ export default async function DashboardPage({
             <Card>
               <TopArtistsPanel
                 title={t("dash.topArtists")}
-                itemsByPlays={topArtistsByPlays}
-                itemsByTime={topArtistsByTime}
+                itemsByPlays={topArtists.plays}
+                itemsByTime={topArtists.time}
                 query={query}
                 empty={t("dash.noArtists")}
               />
@@ -335,8 +330,8 @@ export default async function DashboardPage({
               <TopGenresPanel
                 title={t("dash.genres")}
                 subtitle={t("dash.genresWeighted")}
-                itemsByPlays={topGenresByPlays}
-                itemsByTime={topGenresByTime}
+                itemsByPlays={topGenres.plays}
+                itemsByTime={topGenres.time}
                 empty={t("dash.genresUnavailable")}
               />
             </Card>

@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/dal";
 import { getTrackDetail, type StatsRange } from "@/lib/stats";
 import { RangeTabs } from "@/components/range-tabs";
 import { parseRange } from "@/lib/range";
+import { resolveRangeParam } from "@/lib/range-preference";
 import { AreaChart } from "@/components/charts";
 import {
   Badge,
@@ -32,10 +33,7 @@ export default async function TrackPage({
     );
   const { id } = await params;
   const sp = await searchParams;
-  const parsed = parseRange(
-    typeof sp.range === "string" ? sp.range : undefined,
-    user.timezone,
-  );
+  const parsed = parseRange(await resolveRangeParam(sp.range), user.timezone);
   const filters: StatsRange = {
     days: parsed.days,
     from: parsed.from,

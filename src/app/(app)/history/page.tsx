@@ -10,6 +10,7 @@ import {
 } from "@/lib/stats";
 import { RangeTabs } from "@/components/range-tabs";
 import { parseRange } from "@/lib/range";
+import { resolveRangeParam } from "@/lib/range-preference";
 import {
   AreaChart,
   BarsChart,
@@ -63,7 +64,7 @@ export default async function HistoryPage({
     );
   const params = await searchParams;
   const parsed = parseRange(
-    typeof params.range === "string" ? params.range : undefined,
+    await resolveRangeParam(params.range),
     user.timezone,
   );
   const filters: StatsRange = {

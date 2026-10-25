@@ -200,3 +200,23 @@ export function formatDate(
     timeZone,
   }).format(date);
 }
+
+/**
+ * Durée relative compacte (« il y a 2 minutes », « 2 minutes ago »).
+ * Utilisée pour les états “dernier événement / dernière erreur”.
+ */
+export function formatRelative(
+  date: Date,
+  locale: string = "en",
+  now: Date = new Date(),
+): string {
+  const diff = date.getTime() - now.getTime();
+  const abs = Math.abs(diff);
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  if (abs < 60_000) return rtf.format(Math.round(diff / 1_000), "second");
+  if (abs < 3_600_000) return rtf.format(Math.round(diff / 60_000), "minute");
+  if (abs < 86_400_000) {
+    return rtf.format(Math.round(diff / 3_600_000), "hour");
+  }
+  return rtf.format(Math.round(diff / 86_400_000), "day");
+}

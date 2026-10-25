@@ -19,6 +19,22 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /** Borne haute du paramètre `?range=<jours>` (évite une boucle de pré-remplissage). */
 const MAX_DAYS = 3660;
 
+/** Cookie mémorisant la dernière période sélectionnée dans l'application. */
+export const RANGE_COOKIE = "statisfy_range";
+export const RANGE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+const PREFERENCE_KEYS = new Set(["today", "week", "month", "year", "all"]);
+
+/** Vérifie qu'une valeur de cookie correspond à une période valide. */
+export function isRangePreference(
+  value: string | null | undefined,
+): boolean {
+  if (!value) return false;
+  if (PREFERENCE_KEYS.has(value)) return true;
+  const days = Number(value);
+  return Number.isInteger(days) && days > 0 && days <= MAX_DAYS;
+}
+
 /** Nombre de jours locaux entiers entre `from` (minuit local) et aujourd'hui, inclus. */
 function elapsedDays(from: Date, timeZone: string, now: Date): number {
   const today = startOfLocalDay(timeZone, now);
