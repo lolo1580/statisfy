@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useI18n } from "@/components/i18n-provider";
+import { isActivePath } from "@/lib/nav";
 
 const LINKS = [
   { href: "/dashboard", key: "nav.overview" },
@@ -23,6 +24,28 @@ export function Nav({
   const pathname = usePathname();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  const mobileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (
+        mobileRef.current &&
+        !mobileRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
 
   const links = isAdmin
     ? [...LINKS, { href: "/admin", key: "nav.admin" }]
@@ -43,7 +66,7 @@ export function Nav({
       {/* Barre horizontale (à partir de md) */}
       <nav className="hidden items-center gap-1 md:flex">
         {links.map((link) => {
-          const active = pathname === link.href;
+          const active = isActivePath(pathname, link.href);
           return (
             <Link
               key={link.href}
@@ -62,8 +85,9 @@ export function Nav({
         })}
       </nav>
 
-      {/* Bouton « hamburger » (mobile) */}
-      <button
+      {/* Bouton « hamburger » et menu (mobile) */}
+      <div ref={mobileRef} className="relative md:contents">
+        <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
@@ -97,7 +121,7 @@ export function Nav({
         >
           <div className="flex flex-col gap-0.5">
             {links.map((link) => {
-              const active = pathname === link.href;
+              const active = isActivePath(pathname, link.href);
               return (
                 <Link
                   key={link.href}
@@ -118,6 +142,7 @@ export function Nav({
           </div>
         </nav>
       ) : null}
+      </div>
     </>
   );
 }

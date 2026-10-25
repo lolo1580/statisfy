@@ -3,9 +3,12 @@ import { cookies } from "next/headers";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { logout } from "@/lib/auth/actions";
 import { Nav } from "@/components/nav";
+import { CommandPalette } from "@/components/command-palette";
+import { OpenObserveRum } from "@/components/openobserve-rum";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { getI18n } from "@/i18n/server";
+import { getRumConfig, toClientRumConfig } from "@/lib/rum";
 import { appName, appVersion } from "@/lib/env";
 import { prisma } from "@/lib/db";
 import { THEME_COOKIE, defaultTheme, isTheme } from "@/lib/theme";
@@ -21,6 +24,7 @@ export default async function AppLayout({
   const { locale, t } = await getI18n();
   const themeCookie = (await cookies()).get(THEME_COOKIE)?.value;
   const theme = isTheme(themeCookie) ? themeCookie : defaultTheme;
+  const rum = await getRumConfig();
 
   // Badge d'action pour l'administrateur : demandes d'accès Spotify à traiter.
   const pendingRequests = user.isAdmin
@@ -38,15 +42,9 @@ export default async function AppLayout({
           {appName}
         </Link>
         <Nav pendingCount={pendingRequests} isAdmin={user.isAdmin} />
-        <form action="/search" className="order-last w-full sm:order-none sm:w-56">
-          <input
-            type="search"
-            name="q"
-            placeholder={t("shell.searchPlaceholder")}
-            aria-label={t("shell.searchPlaceholder")}
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted/70 focus:border-accent"
-          />
-        </form>
+        <div className="order-last w-full sm:order-none sm:max-w-2xl sm:flex-1">
+          <CommandPalette isAdmin={user.isAdmin} />
+        </div>
         <div className="flex items-center gap-3 text-sm">
           <ThemeSwitcher current={theme} />
           <LocaleSwitcher current={locale} />
@@ -60,6 +58,7 @@ export default async function AppLayout({
           </form>
         </div>
       </header>
+      <OpenObserveRum config={rum ? toClientRumConfig(rum) : null} />
       {children}
       <footer className="mt-12 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4 text-xs text-muted">
         <a
@@ -70,7 +69,15 @@ export default async function AppLayout({
         >
           {t("shell.spotifyAttribution")}
         </a>
-        <span title={`${appName} ${appVersion}`}>v{appVersion}</span>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/api-docs"
+            className="transition-colors hover:text-accent"
+          >
+            {t("apiDocs.title")}
+          </Link>
+          <span title={`${appName} ${appVersion}`}>v{appVersion}</span>
+        </div>
       </footer>
     </div>
   );

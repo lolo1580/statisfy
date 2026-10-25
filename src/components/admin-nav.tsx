@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useI18n } from "@/components/i18n-provider";
+import { isActivePath } from "@/lib/nav";
 
 const LINKS = [
   { href: "/admin", key: "admin.nav.overview" },
@@ -24,7 +25,7 @@ export function AdminNav({ pendingCount = 0 }: { pendingCount?: number }) {
       className="flex flex-wrap gap-1 border-b border-border pb-3"
     >
       {LINKS.map((link) => {
-        const active = pathname === link.href;
+        const active = isActivePath(pathname, link.href);
         return (
           <Link
             key={link.href}

@@ -9,20 +9,23 @@ import {
 import { restoreBackup, type RestoreState } from "@/lib/actions/backup";
 import { testLogSink, type LogTestState } from "@/lib/actions/logs";
 import { useI18n } from "@/components/i18n-provider";
+import { useToast } from "@/components/toast";
 import { Feedback, inputClass } from "@/components/form-ui";
 
 /** Champ en lecture seule avec bouton « Copier » (lien d'invitation). */
 export function CopyField({ value, label }: { value: string; label?: string }) {
   const { t } = useI18n();
+  const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
+      toast(t("settings.copied"));
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Le champ reste sélectionnable manuellement.
+      toast(t("settings.copyFailed"), "error");
     }
   };
 
