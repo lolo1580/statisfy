@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState } from "react";
 import {
   enrichImages,
   importHistory,
@@ -14,6 +14,11 @@ import {
 } from "@/lib/actions/spotify-access";
 import { useI18n } from "@/components/i18n-provider";
 import { Feedback, inputClass } from "@/components/form-ui";
+import {
+  ImportProgressBar,
+  newImportRunId,
+  useImportProgress,
+} from "@/components/import-progress";
 
 export function SyncButton({ connectionId }: { connectionId: string }) {
   const { t } = useI18n();
@@ -54,9 +59,22 @@ export function ImportForm() {
     importHistory,
     undefined,
   );
+  const runIdRef = useRef<HTMLInputElement>(null);
+  const [runId, setRunId] = useState("");
+  const job = useImportProgress(pending, runId);
 
   return (
-    <form action={action} className="space-y-3">
+    <form
+      action={action}
+      className="space-y-3"
+      onSubmit={() => {
+        // Nouvel identifiant à chaque soumission : le client peut suivre le job.
+        const id = newImportRunId();
+        setRunId(id);
+        if (runIdRef.current) runIdRef.current.value = id;
+      }}
+    >
+      <input ref={runIdRef} type="hidden" name="runId" defaultValue="" />
       <input
         type="file"
         name="files"
@@ -65,6 +83,7 @@ export function ImportForm() {
         className="block w-full cursor-pointer rounded-lg border border-dashed border-border bg-surface-2 px-3 py-6 text-sm text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent-soft file:px-3 file:py-1.5 file:text-accent"
       />
       <p className="text-xs text-muted">{t("settings.importHint")}</p>
+      {pending ? <ImportProgressBar job={job} /> : null}
       <Feedback state={state} />
       <button
         type="submit"
@@ -83,9 +102,21 @@ export function YourSpotifyImportForm() {
     importYourSpotify,
     undefined,
   );
+  const runIdRef = useRef<HTMLInputElement>(null);
+  const [runId, setRunId] = useState("");
+  const job = useImportProgress(pending, runId);
 
   return (
-    <form action={action} className="space-y-3">
+    <form
+      action={action}
+      className="space-y-3"
+      onSubmit={() => {
+        const id = newImportRunId();
+        setRunId(id);
+        if (runIdRef.current) runIdRef.current.value = id;
+      }}
+    >
+      <input ref={runIdRef} type="hidden" name="runId" defaultValue="" />
       <input
         type="file"
         name="files"
@@ -94,6 +125,7 @@ export function YourSpotifyImportForm() {
         className="block w-full cursor-pointer rounded-lg border border-dashed border-border bg-surface-2 px-3 py-6 text-sm text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent-soft file:px-3 file:py-1.5 file:text-accent"
       />
       <p className="text-xs text-muted">{t("settings.yourspotifyHint")}</p>
+      {pending ? <ImportProgressBar job={job} /> : null}
       <Feedback state={state} />
       <button
         type="submit"

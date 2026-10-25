@@ -28,6 +28,15 @@ export type SettingsState =
     }
   | undefined;
 
+/**
+ * Identifiant de suivi d'import fourni par le formulaire (UUID). Permet au
+ * client d'interroger `/api/jobs/<id>` pendant que l'action s'exécute.
+ */
+function importJobId(formData: FormData): string | undefined {
+  const raw = String(formData.get("runId") ?? "").trim();
+  return /^[A-Za-z0-9-]{8,64}$/.test(raw) ? raw : undefined;
+}
+
 export async function deleteConnection(
   formData: FormData,
 ): Promise<MutationOutcome> {
@@ -91,7 +100,9 @@ export async function importHistory(
   }
 
   try {
-    const result = await runImport(user.id, payload);
+    const result = await runImport(user.id, payload, {
+      jobId: importJobId(formData),
+    });
     if (result.total === 0) return { error: t("err.noHistory") };
 
     // Complète les pochettes manquantes (les imports n'en contiennent pas).
@@ -153,7 +164,9 @@ export async function importYourSpotify(
     if ((counts.infos ?? 0) === 0) return { error: t("ys.err.noInfos") };
 
     const { plays } = mapYourSpotifyData(data);
-    const result = await runPlaysIngest(user.id, plays);
+    const result = await runPlaysIngest(user.id, plays, {
+      jobId: importJobId(formData),
+    });
 
     revalidatePath("/settings/import");
     revalidatePath("/dashboard");

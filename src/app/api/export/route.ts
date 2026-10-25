@@ -1,12 +1,11 @@
 import { getOptionalUser } from "@/lib/auth/dal";
 import { prisma } from "@/lib/db";
-import { csvCell } from "@/lib/csv";
+import { CSV_HEADER, playToCsvRow } from "@/lib/csv-export";
 import { takeToken } from "@/lib/rate-limit-store";
 
 export const dynamic = "force-dynamic";
 
 const BATCH = 1000;
-const HEADER = "played_at,ms_played,track,artist,album,source\n";
 
 /**
  * Export CSV de tout l'historique de l'utilisateur connecté.
@@ -28,7 +27,7 @@ export async function GET() {
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      controller.enqueue(encoder.encode(HEADER));
+      controller.enqueue(encoder.encode(CSV_HEADER));
       let cursor: string | undefined;
       try {
         for (;;) {
@@ -43,16 +42,7 @@ export async function GET() {
 
           let chunk = "";
           for (const play of plays) {
-            chunk += `${[
-              play.playedAt.toISOString(),
-              play.msPlayed,
-              play.track.name,
-              play.track.artist.name,
-              play.track.album?.name ?? "",
-              play.source,
-            ]
-              .map(csvCell)
-              .join(",")}\n`;
+            chunk += playToCsvRow(play);
           }
           controller.enqueue(encoder.encode(chunk));
 

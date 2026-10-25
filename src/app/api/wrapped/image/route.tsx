@@ -14,6 +14,7 @@ import {
 import { formatPeriodLabel, parseWrappedPeriod } from "@/lib/period";
 import { formatDuration, formatNumber } from "@/lib/format";
 import { getI18n } from "@/i18n/server";
+import { takeToken } from "@/lib/rate-limit-store";
 
 export const dynamic = "force-dynamic";
 
@@ -361,6 +362,14 @@ export async function GET(request: NextRequest) {
   const user = await getOptionalUser();
   if (!user) {
     return new Response("Unauthorized", { status: 401 });
+  }
+  // Génération coûteuse (3 agrégations + rendu d'image + pochettes distantes) :
+  // on borne les appels par compte pour éviter un déni de service interne.
+  if (!takeToken(`wrapped-image:${user.id}`, 30, 60 * 1000)) {
+    return new Response("Too many requests", {
+      status: 429,
+      headers: { "Retry-After": "60" },
+    });
   }
   const { locale, t } = await getI18n();
   const params = new URL(request.url).searchParams;

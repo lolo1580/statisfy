@@ -6,7 +6,15 @@ import { getAdapter } from '../sources/registry'
 import { parseSpotifyHistoryFiles } from '../sources/importer'
 import type { RawPlay } from '../sources/types'
 import { logEvent } from '../log'
-import { ingestPlays, type IngestResult } from './ingest'
+import { sendWebhook } from '../webhook'
+import { ingestPlays, type IngestResult, type IngestProgress } from './ingest'
+
+/** Options d'import : suivi d'avancement côté client (job + progression). */
+export type RunImportOptions = {
+  /** Identifiant de job fourni par le client (UUID) pour interroger l'avancement. */
+  jobId?: string
+  onProgress?: (progress: IngestProgress) => void | Promise<void>
+}
 
 /** Connexions en cours de synchronisation (verrou par connexion). */
 const inFlight = new Set<string>()
@@ -120,6 +128,21 @@ async function runSync(connectionId: string): Promise<IngestResult> {
       // Aucune nouvelle écoute : on ne garde pas de job (cron fréquent).
       await prisma.job.delete({ where: { id: job.id } }).catch(() => undefined)
     }
+    // Un webhook par synchronisation contenant des nouveautés (pas à chaque
+    // passage du cron sans changement).
+    if (result.inserted > 0) {
+      await sendWebhook('sync.completed', {
+        title: 'Statisfy — synchronization',
+        message: `🎧 ${result.inserted} new play(s) synced from ${connection.displayName}.`,
+        userId: connection.userId,
+        data: {
+          connection: connection.displayName,
+          source: connection.type,
+          inserted: result.inserted,
+          total: plays.length,
+        },
+      })
+    }
     return result
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erreur inconnue'
@@ -156,6 +179,16 @@ async function runSync(connectionId: string): Promise<IngestResult> {
         error: message,
       },
     })
+    await sendWebhook('sync.failed', {
+      title: 'Statisfy — synchronization failed',
+      message: `⚠️ Sync failed for ${connection.displayName}: ${message}`,
+      userId: connection.userId,
+      data: {
+        connection: connection.displayName,
+        source: connection.type,
+        error: message,
+      },
+    })
     throw error
   }
 }
@@ -164,14 +197,36 @@ async function runSync(connectionId: string): Promise<IngestResult> {
 export async function runImport(
   userId: string,
   files: Array<{ name: string; data: Uint8Array }>,
+  options: RunImportOptions = {},
 ): Promise<IngestResult & { files: number }> {
-  const job = await prisma.job.create({
-    data: { userId, type: 'import', status: 'running', startedAt: new Date() },
-  })
+  const base = { userId, type: 'import', status: 'running', startedAt: new Date() }
+  // L'id fourni par le client peut déjà exister (double soumission) : on retombe
+  // alors sur un id aléatoire ; l'import reste valide, seul le suivi est perdu.
+  const job = await prisma.job
+    .create({ data: options.jobId ? { ...base, id: options.jobId } : base })
+    .catch(() => prisma.job.create({ data: base }))
 
   try {
     const { plays, files: parsedFiles } = parseSpotifyHistoryFiles(files)
-    const result = await ingestPlays(userId, plays)
+    // Le total est connu après l'analyse : la barre passe d'indéterminée à
+    // « n / total ».
+    await prisma.job
+      .update({ where: { id: job.id }, data: { total: plays.length } })
+      .catch(() => undefined)
+
+    const result = await ingestPlays(userId, plays, async (progress) => {
+      await prisma.job
+        .update({
+          where: { id: job.id },
+          data: {
+            total: progress.total,
+            processed: progress.processed,
+            inserted: progress.inserted,
+          },
+        })
+        .catch(() => undefined)
+      await options.onProgress?.(progress)
+    })
 
     await prisma.job.update({
       where: { id: job.id },
@@ -181,6 +236,16 @@ export async function runImport(
         processed: plays.length,
         inserted: result.inserted,
         finishedAt: new Date(),
+      },
+    })
+    await sendWebhook('import.completed', {
+      title: 'Statisfy — import',
+      message: `📥 ${result.inserted} play(s) imported from ${parsedFiles} file(s).`,
+      userId,
+      data: {
+        inserted: result.inserted,
+        total: plays.length,
+        files: parsedFiles,
       },
     })
     return { ...result, files: parsedFiles }
@@ -196,6 +261,12 @@ export async function runImport(
       message: "Échec de l'import",
       userId,
       meta: { error: message },
+    })
+    await sendWebhook('import.failed', {
+      title: 'Statisfy — import failed',
+      message: `⚠️ Import failed: ${message}`,
+      userId,
+      data: { error: message },
     })
     throw error
   }
@@ -235,12 +306,29 @@ export async function syncAllDue(
 export async function runPlaysIngest(
   userId: string,
   plays: RawPlay[],
+  options: RunImportOptions = {},
 ): Promise<IngestResult> {
-  const job = await prisma.job.create({
-    data: { userId, type: 'import', status: 'running', startedAt: new Date() },
-  })
+  const base = { userId, type: 'import', status: 'running', startedAt: new Date() }
+  const job = await prisma.job
+    .create({ data: options.jobId ? { ...base, id: options.jobId } : base })
+    .catch(() => prisma.job.create({ data: base }))
   try {
-    const result = await ingestPlays(userId, plays)
+    await prisma.job
+      .update({ where: { id: job.id }, data: { total: plays.length } })
+      .catch(() => undefined)
+    const result = await ingestPlays(userId, plays, async (progress) => {
+      await prisma.job
+        .update({
+          where: { id: job.id },
+          data: {
+            total: progress.total,
+            processed: progress.processed,
+            inserted: progress.inserted,
+          },
+        })
+        .catch(() => undefined)
+      await options.onProgress?.(progress)
+    })
     await prisma.job.update({
       where: { id: job.id },
       data: {
@@ -250,6 +338,12 @@ export async function runPlaysIngest(
         inserted: result.inserted,
         finishedAt: new Date(),
       },
+    })
+    await sendWebhook('import.completed', {
+      title: 'Statisfy — import',
+      message: `📥 ${result.inserted} play(s) imported.`,
+      userId,
+      data: { inserted: result.inserted, total: plays.length },
     })
     return result
   } catch (error) {
@@ -264,6 +358,12 @@ export async function runPlaysIngest(
       message: "Échec de l'import",
       userId,
       meta: { error: message },
+    })
+    await sendWebhook('import.failed', {
+      title: 'Statisfy — import failed',
+      message: `⚠️ Import failed: ${message}`,
+      userId,
+      data: { error: message },
     })
     throw error
   }

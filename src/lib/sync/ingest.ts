@@ -15,7 +15,20 @@ export type IngestResult = {
   skipped: number
 }
 
+/** Avancement d'un import (pour la barre de progression côté UI). */
+export type IngestProgress = {
+  processed: number
+  total: number
+  inserted: number
+}
+
+export type IngestProgressHandler = (
+  progress: IngestProgress,
+) => void | Promise<void>
+
 const CHUNK_SIZE = 400
+/** Fréquence des notifications d'avancement (en écoutes traitées). */
+const PROGRESS_EVERY = 500
 
 function mergeGenres(existing: string | null, incoming?: string[]): string | null {
   if (!incoming?.length) return existing
@@ -50,6 +63,7 @@ function isUniqueViolation(error: unknown): boolean {
 export async function ingestPlays(
   userId: string,
   plays: RawPlay[],
+  onProgress?: IngestProgressHandler,
 ): Promise<IngestResult> {
   if (plays.length === 0) return { total: 0, inserted: 0, skipped: 0 }
 
@@ -337,7 +351,12 @@ export async function ingestPlays(
     dedupKey: string
   }> = []
 
-  for (const raw of plays) {
+  let inserted = 0
+  for (let index = 0; index < plays.length; index += 1) {
+    if (onProgress && index > 0 && index % PROGRESS_EVERY === 0) {
+      await onProgress({ processed: index, total: plays.length, inserted })
+    }
+    const raw = plays[index]
     const trackName = raw.trackName?.trim()
     const artistName = raw.artistName?.trim()
     if (!trackName || !artistName) continue
@@ -383,7 +402,10 @@ export async function ingestPlays(
     })
   }
 
-  let inserted = 0
+  if (onProgress) {
+    await onProgress({ processed: plays.length, total: plays.length, inserted })
+  }
+
   for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
     const chunk = rows.slice(i, i + CHUNK_SIZE)
     const keys = chunk.map((r) => r.dedupKey)
@@ -410,6 +432,10 @@ export async function ingestPlays(
         }
       }
     }
+  }
+
+  if (onProgress) {
+    await onProgress({ processed: plays.length, total: plays.length, inserted })
   }
 
   return { total: rows.length, inserted, skipped: rows.length - inserted }

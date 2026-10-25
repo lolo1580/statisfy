@@ -12,8 +12,12 @@ import { THEME_COOKIE, defaultTheme, isTheme } from "@/lib/theme";
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: PageProps<"/login">) {
   if (await readSession()) redirect("/dashboard");
+  const params = await searchParams;
+  const accountDeleted = params.deleted === "1";
   const canRegister = await registrationAllowed();
   const { locale, t } = await getI18n();
   const themeCookie = (await cookies()).get(THEME_COOKIE)?.value;
@@ -31,6 +35,11 @@ export default async function LoginPage() {
         <p className="mt-1 text-sm text-muted">{t("auth.tagline")}</p>
       </div>
       <div className="rounded-2xl border border-border bg-surface/70 p-6 backdrop-blur">
+        {accountDeleted ? (
+          <p className="mb-4 rounded-lg border border-accent/30 bg-accent-soft px-3 py-2 text-sm text-accent">
+            {t("auth.accountDeleted")}
+          </p>
+        ) : null}
         <LoginForm />
       </div>
       {canRegister ? (
