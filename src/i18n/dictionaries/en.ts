@@ -14,8 +14,30 @@ export const en: Dictionary = {
   "nav.menu": "Menu",
   "nav.logout": "Sign out",
   "nav.pendingRequests": "{count} pending Spotify request(s)",
+
+  // Command palette
+  "palette.placeholder": "Search or jump to…",
+  "palette.trigger": "Search…",
+  "palette.searchFor": "Search library for “{query}”",
+  "palette.noResults": "No matching page.",
+  "palette.navigate": "↑↓ navigate",
+  "palette.open": "↵ open",
+  "palette.close": "esc close",
   "shell.searchPlaceholder": "Search…",
   "shell.spotifyAttribution": "Music data and artwork provided by Spotify.",
+  "common.loading": "Loading…",
+
+  // Error & not-found pages
+  "error.title": "Something went wrong",
+  "error.body":
+    "An unexpected error occurred while rendering this page. You can try again.",
+  "error.digest": "Reference: {digest}",
+  "error.retry": "Try again",
+  "error.home": "Back to the dashboard",
+  "notFound.title": "Page not found",
+  "notFound.body":
+    "This page does not exist, or you no longer have access to it.",
+  "notFound.home": "Back to the dashboard",
 
   // Theme
   "theme.label": "Theme",
@@ -28,6 +50,7 @@ export const en: Dictionary = {
 
   // Authentication
   "auth.tagline": "Your listening stats, at home.",
+  "auth.accountDeleted": "Your account has been permanently deleted.",
   "auth.email": "Email address",
   "auth.emailPlaceholder": "you@example.com",
   "auth.password": "Password",
@@ -224,6 +247,8 @@ export const en: Dictionary = {
     "Spotify data export (.zip) or the Streaming_History_Audio_*.json / StreamingHistory*.json files. Multiple files accepted.",
   "settings.importCta": "Import",
   "settings.importing": "Importing…",
+  "settings.importAnalyzing": "Analyzing the file…",
+  "settings.importProgress": "{done} / {total} plays ({percent}%)",
   "settings.visuals": "Artwork",
   "settings.visualsSubtitle": "Album covers and artist photos",
   "settings.enrich": "Enrich artwork",
@@ -247,6 +272,19 @@ export const en: Dictionary = {
   "settings.enableReg": "Allow registrations",
   "settings.export": "Export",
   "settings.exportHint": "Download your data",
+  "settings.dataTab.export": "Export",
+  "settings.dataTab.sharing": "Sharing",
+  "settings.dataTab.api": "API",
+  "settings.dataTab.danger": "Danger zone",
+  "settings.qrCode": "QR code",
+  "settings.danger": "Danger zone",
+  "settings.deleteAccountHint":
+    "Permanently deletes your account, your listening history, sources and share links. This cannot be undone.",
+  "settings.deleteAccountConfirm":
+    "I understand that my account and all my data will be permanently deleted.",
+  "settings.deleteAccountPassword": "Confirm with your password",
+  "settings.deleteAccountCta": "Delete my account permanently",
+  "settings.deleting": "Deleting…",
   "settings.exportCsv": "History (CSV)",
   "settings.exportDb": "Database (.dump)",
 
@@ -285,6 +323,7 @@ export const en: Dictionary = {
   "settings.revoke": "Revoke",
   "settings.copy": "Copy",
   "settings.copied": "Copied!",
+  "settings.copyFailed": "Could not copy.",
 
   // Spotify access requests
   "settings.spotifyAccount": "Spotify account (email or ID)",
@@ -326,7 +365,55 @@ export const en: Dictionary = {
   "settings.shareLink": "Public link:",
   "settings.confirmUnshare":
     "Disable the public link? Existing links will stop working.",
+
+  // Public profile
+  "settings.profileShare": "Public profile",
+  "settings.profileShareSubtitle": "Public read-only link to your stats",
+  "settings.profileShareHint":
+    "Choose which sections are visible. Anyone with the link can view them.",
+  "settings.profileShareHintOff":
+    "Share a public link to your stats (period of your choice). You can disable it or regenerate the token at any time.",
+  "settings.profileShareTopArtists": "Top artists",
+  "settings.profileShareTopTracks": "Top tracks",
+  "settings.profileShareRecent": "Recent plays",
+  "settings.profileShareHeatmap": "Yearly activity",
+  "settings.profileShareSave": "Save sections",
+  "settings.confirmProfileUnshare":
+    "Disable the public profile? Existing links will stop working.",
+  "profile.kicker": "Shared profile",
+  "profile.subtitle": "Read-only listening statistics.",
+  "profile.recent": "Recent plays",
+
+  // Stats API
+  "settings.api": "API & integrations",
+  "settings.apiSubtitle": "Read-only stats for your dashboards",
+  "settings.apiHint":
+    "Enable a token to query your stats from Homepage, Grafana or a script. The token grants access to aggregates only, never to your raw history.",
+  "settings.apiHintActive":
+    "The token is active. Anyone holding it can read your stats: regenerate it if it leaked.",
+  "settings.apiEnable": "Enable API",
+  "settings.apiDisable": "Disable API",
+  "settings.apiRegenerate": "Regenerate token",
+  "settings.apiEndpoint": "Endpoint:",
+  "settings.apiCard": "SVG card (Markdown):",
+  "settings.apiDocs": "Swagger (OpenAPI) documentation",
+  "settings.confirmApiDisable":
+    "Disable the API? Widgets and scripts using this token will stop working.",
+
+  // API documentation
+  "apiDocs.kicker": "Integrations",
+  "apiDocs.title": "API documentation",
+  "apiDocs.subtitle":
+    "Interactive API reference for {name}. Protected routes require a token (Settings → Personal data).",
+  "apiDocs.openSpec": "OpenAPI specification (JSON)",
+  "apiDocs.back": "Back to Statisfy",
+  "apiDocs.loading": "Loading Swagger UI…",
+  "apiDocs.loadError":
+    "Could not load Swagger UI. The specification is still available at",
+
   "share.kicker": "Shared recap",
+  "share.ogDescription":
+    "{name} — {period}: {plays} plays and {time} listened.",
   "share.footer": "Made with {name}",
 
   // Settings / connection action messages
@@ -346,6 +433,10 @@ export const en: Dictionary = {
   "err.actionFailed": "The action failed. Please try again.",
   "err.forbidden": "Not allowed.",
   "err.userNotFound": "User not found.",
+  "err.passwordRequired": "Enter your password.",
+  "err.wrongPassword": "Incorrect password.",
+  "err.deleteConfirm": "Check the confirmation box to continue.",
+  "err.tooManyAttempts": "Too many attempts. Try again later.",
   "err.spotifyAccountRequired": "Enter your Spotify account.",
   "msg.spotifyRequested":
     "Request sent. An administrator will validate it.",
@@ -467,6 +558,101 @@ export const en: Dictionary = {
   "admin.thresholdSubtitle": "A play counts only if at least this share of the track was listened to. 0% counts everything.",
   "admin.thresholdLabel": "Minimum listened",
   "admin.thresholdSave": "Save and recount",
+
+  // Outgoing webhooks
+  "admin.webhookTitle": "Outgoing webhooks",
+  "admin.webhookSubtitle": "Get notified when a sync or import completes",
+  "admin.webhookUrl": "Webhook URL",
+  "admin.webhookUrlPlaceholder":
+    "https://discord.com/api/webhooks/… or https://ntfy.sh/topic",
+  "admin.webhookSecret": "Signing secret (optional)",
+  "admin.webhookHint":
+    "Discord, ntfy, Home Assistant and n8n are detected automatically. Otherwise a generic JSON payload is sent. The optional secret signs the raw body with HMAC-SHA256 (X-Statisfy-Signature). Leave the URL empty to disable.",
+  "admin.webhookSave": "Save webhook",
+  "admin.webhookSaving": "Saving…",
+  "admin.webhookSaved": "Webhook saved.",
+  "admin.webhookCleared": "Webhook disabled.",
+  "admin.webhookTest": "Send test",
+  "admin.webhookTesting": "Sending…",
+  "admin.webhookTestSent": "Test sent.",
+  "admin.webhookTestFailed": "Test failed. Check the URL and the event log.",
+  "admin.webhookNoUrl": "Save a webhook URL first.",
+  "admin.webhookInvalidUrl": "Invalid URL (http or https required).",
+  "admin.webhookSecretTooLong": "The secret is too long (200 characters max).",
+  "admin.webhookTestTitle": "Statisfy test",
+  "admin.webhookTestMessage":
+    "This is a test webhook from your Statisfy instance.",
+
+  // Real User Monitoring
+  "admin.rumTitle": "Real User Monitoring",
+  "admin.rumSubtitle": "OpenObserve browser SDK",
+  "admin.rumEnabled":
+    "Enabled → {site} (org “{org}”, sampling {rate}%).",
+  "admin.rumDisabled":
+    "Not configured. Fill in the form below to enable RUM.",
+  "admin.rumEnable": "Enable RUM",
+  "admin.rumUrl": "OpenObserve URL",
+  "admin.rumUrlPlaceholder": "http://192.168.1.10:5080",
+  "admin.rumOrg": "Organization",
+  "admin.rumToken": "RUM client token",
+  "admin.rumTokenHint":
+    "From Ingestion → RUM in OpenObserve. Stored server-side: events are relayed by Statisfy and the token is never sent to visitors.",
+  "admin.rumApplicationId": "Application ID",
+  "admin.rumService": "Service name",
+  "admin.rumEnv": "Environment",
+  "admin.rumSampleRate": "Session sampling (%)",
+  "admin.rumPrivacy": "Privacy level",
+  "admin.rumPrivacyMaskInput": "Mask user input (recommended)",
+  "admin.rumPrivacyMask": "Mask everything",
+  "admin.rumPrivacyAllow": "Allow",
+  "admin.rumPersistence": "Session persistence",
+  "admin.rumPersistenceMemory": "Memory (no durable cookie)",
+  "admin.rumPersistenceCookie": "Cookie",
+  "admin.rumPersistenceLocalStorage": "Local storage",
+  "admin.rumPersistenceHint":
+    "Memory starts a new session on each page load.",
+  "admin.rumTrackResources": "Track resources",
+  "admin.rumTrackLongTasks": "Track long tasks",
+  "admin.rumTrackInteractions": "Track interactions",
+  "admin.rumSave": "Save RUM settings",
+  "admin.rumSaving": "Saving…",
+  "admin.rumSaved": "RUM settings saved.",
+  "admin.rumForcedOff":
+    "RUM is force-disabled by OPENOBSERVE_RUM_ENABLED=false. Remove that environment variable to enable it.",
+  "admin.rumUrlRequired": "Enter the OpenObserve URL.",
+  "admin.rumTokenRequired": "Enter the RUM client token.",
+  "admin.rumInvalidUrl": "Invalid URL (http or https required).",
+  "admin.rumInvalidRate": "Sampling must be between 0 and 100.",
+  "admin.rumReplaySampleRate": "Session replay sampling (%)",
+  "admin.rumLogs": "Collect browser logs & errors",
+  "admin.rumForwardErrors": "Forward errors to logs",
+  "admin.rumStartReplay": "Start session replay",
+  "admin.rumReplayWarning":
+    "Session replay records page content. It is automatically paused on Settings and Admin pages.",
+  "admin.rumInvalidReplayRate": "Replay sampling must be between 0 and 100.",
+  "admin.rumAdvanced": "Advanced options",
+  "admin.rumTokenKeep":
+    "Token saved ({hint}). Leave the field empty to keep it, or enter a new token.",
+  "admin.rumPrivacyAllowWarning":
+    "“Allow” records page content and input values: use only if you really need it.",
+  "admin.rumTest": "Test connection",
+  "admin.rumTesting": "Testing…",
+  "admin.rumTestHint": "Sends one small test event.",
+  "admin.rumTestSuccess":
+    "Connection OK — OpenObserve accepted the test event.",
+  "admin.rumTestAuth":
+    "Authentication failed (HTTP {status}). Check the RUM token.",
+  "admin.rumTestNotFound":
+    "Endpoint not found (HTTP 404). Check the URL and organization.",
+  "admin.rumTestFailed": "OpenObserve returned HTTP {status}.",
+  "admin.rumTestNetwork":
+    "Could not reach OpenObserve from the server. Check the URL and network access.",
+  "admin.rumTestRejected": "OpenObserve rejected the test event.",
+  "admin.rumLastEvent": "Last event received: {when} ({track}).",
+  "admin.rumNoEvent": "No event received yet.",
+  "admin.rumLastError": "Last error: {when} (HTTP {status}).",
+  "admin.rumLastErrorNetwork": "Last error: {when} (network error).",
+  "admin.rumOpen": "Open OpenObserve",
   "settings.completionRate": "{percent}% of plays reached the listening threshold.",
   "admin.backupTitle": "Backup & restore",
   "admin.backupSubtitle": "Export or replace the database",

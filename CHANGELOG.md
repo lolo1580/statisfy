@@ -9,6 +9,73 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Ajouté
 
+- **Palette de commandes (`⌘K` / `Ctrl+K`)** : navigation rapide vers les
+  pages, l'administration et la documentation, avec recherche directe dans la
+  bibliothèque.
+- **Notifications toast** : retour global pour les copies de liens et les
+  actions RUM, avec empilement et fermeture automatique.
+- **Données personnelles en onglets** : export, partage (récap + profil public),
+  API et zone de danger sont désormais séparés par section.
+- **QR codes de partage** : génération serveur d'un QR code pour les liens du
+  récapitulatif et du profil public.
+- **PWA** : manifeste installable, icônes générées (192/512/apple) et mode
+  `standalone` (sans cache hors ligne pour ne pas exposer de données privées).
+- **Période mémorisée** : la dernière plage choisie (`today`, `week`, `month`,
+  `year`, `all` ou un nombre de jours) est conservée dans un cookie et réutilisée
+  sur toutes les pages (tableau de bord, historique, artistes, titres) quand
+  aucun `?range=` n'est présent.
+- **Aperçu social du wrapped** : les pages partagées exposent désormais des
+  métadonnées Open Graph/Twitter et une image 1200×630 générée par
+  `/api/wrapped/og` (nom, période, temps d'écoute, écoutes, top artiste/titre).
+- **Real User Monitoring (SDK OpenObserve)** : intégration des SDK navigateur
+  `@openobserve/browser-rum` et `@openobserve/browser-logs` (sessions, vues, Core
+  Web Vitals, logs et erreurs), configurables depuis **Administration →
+  Instance** (URL, organisation, jeton, échantillonnage, confidentialité,
+  trackers, replay, logs) et désactivables via l'interface ou
+  `OPENOBSERVE_RUM_ENABLED=false`. Les événements passent par un relais
+  same-origin `/api/rum` : le jeton reste côté serveur et le CSP demeure
+  `connect-src 'self'`. Valeurs par défaut orientées vie privée
+  (`mask-user-input`, persistance mémoire, replay désactivé), DNT/GPC respectés.
+- **Profil public** : page en lecture seule (opt-in) `/share/profile/<jeton>`,
+  avec sections au choix (top artistes, top titres, dernières écoutes, heatmap
+  annuelle) et sélecteur de période. Jeton révocable depuis « Données
+  personnelles ».
+- **Carte SVG & webhooks** : badge SVG intégrable
+  (`/api/public/stats/card.svg`) et notifications sortantes Discord, ntfy,
+  Home Assistant ou n8n à la fin d'une synchronisation ou d'un import, avec
+  signature HMAC-SHA256 facultative.
+- **Prisma Migrate & tests E2E** : le schéma est désormais versionné dans
+  `prisma/migrations` (baseline de la v1.1.1 + migration courante, baseline
+  automatique des bases existantes au démarrage du conteneur). Les parcours
+  critiques (inscription, API, carte, profil public) sont couverts par
+  Playwright (`pnpm test:e2e`).
+- **API publique de statistiques** : `GET /api/public/stats` expose en lecture
+  seule les agrégats d'un compte (période paramétrable, totaux, fenêtres
+  aujourd'hui / 7 j / 30 j, top artiste et piste) pour alimenter un widget de
+  tableau de bord (ex. Homepage `customapi`). Jeton propre au compte, activé ou
+  révoqué depuis « Données personnelles », utilisable en `Authorization: Bearer`
+  ou en `?token=`. Limiteur de débit et cache court inclus.
+- **Documentation Swagger** : page `/api-docs` (Swagger UI servi localement,
+  sans CDN) et spécification OpenAPI 3.1 sur `/api/docs/openapi.json`, couvrant
+  les routes publiques, d'import, d'export et d'administration.
+- **Suppression autonome du compte** : depuis « Données personnelles », chaque
+  personne peut supprimer définitivement son compte (confirmation explicite +
+  mot de passe, sessions et données supprimées en cascade, dernier
+  administrateur protégé). Redirection vers la connexion avec un message de
+  confirmation.
+- **Progression des imports** : une barre de progression suit l'import en temps
+  réel (`Job` + `GET /api/jobs/<id>`, interrogé toutes les 2 s), avec un état
+  indéterminé pendant l'analyse du fichier puis « n / total écoutes ».
+- **Pages d'erreur et de chargement** : frontières `error.tsx` (shell et
+  racine), `global-error.tsx`, `not-found.tsx` localisées, et un squelette
+  `loading.tsx` pendant la navigation — plus de page d'erreur générique de Next
+  ni de 404 sans navigation.
+- **Export CSV enrichi** : l'historique exporté inclut désormais le contexte,
+  la plateforme, le pays, les indicateurs `skipped` / `shuffle` / `offline` /
+  `incognito` et les raisons de début/fin d'écoute.
+- **Recherche indexée** : index GIN trigrammes sur `Artist.name` et
+  `Track.name` (`prisma/indexes.sql`, `pnpm db:indexes`, rejoué au démarrage du
+  conteneur) — les recherches `%motif%` ne font plus de parcours complet.
 - **Import d'historique** : lien direct vers la page « Confidentialité » de
   Spotify pour demander l'« historique d'écoute étendu » (`Extended streaming
   history`). Le sélecteur de langue passe de menu déroulant à des **boutons
@@ -42,6 +109,25 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   ne sont pas rétro-remplies par un simple réimport (la déduplication les
   ignore) : `pnpm db:backfill-play-metadata <export.zip>` renseigne ces colonnes
   sans réimporter.
+
+### Modifié
+
+- **Durcissement RUM** : SDK chargé uniquement dans l'espace authentifié,
+  URLs normalisées (query/hash/IDs/jetons), URLs `/settings` et `/admin`
+  rédigées et leurs logs ignorés, replay mis en pause sur ces pages, relais
+  `/api/rum` limité aux requêtes same-origin et corps plafonnés (256 Ko
+  RUM/logs, 5 Mo replay).
+- **Dépendances** : Next.js **16.4.0 → 16.4.2** (correctif de sécurité qui
+  bloquait `next build`), `eslint-config-next` aligné, et
+  `experimental.agentUpgrade` réglé sur `security`.
+- **Tableau de bord** : les classements « écoutes » et « temps » de chaque
+  entité sont calculés en **une seule agrégation** (fonctions de fenêtrage
+  PostgreSQL) au lieu de deux, et les entités ne sont lues qu'une fois.
+- **Sécurité** : en-tête `Strict-Transport-Security` (HSTS) et limitation de
+  débit sur la génération d'images du récapitulatif (`/api/wrapped/image`).
+- **Tests** : couverture de `src/lib/stats.ts` (agrégations, fuseaux, genres,
+  redécouvertes, habitudes, classements doubles) ; `pnpm test:coverage` et le
+  rapport de couverture sont exécutés en CI.
 
 ### Supprimé
 

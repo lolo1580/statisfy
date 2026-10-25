@@ -11,8 +11,30 @@ export const fr: Dictionary = {
   "nav.menu": "Menu",
   "nav.logout": "Déconnexion",
   "nav.pendingRequests": "{count} demande(s) Spotify en attente",
+
+  // Palette de commandes
+  "palette.placeholder": "Rechercher ou aller à…",
+  "palette.trigger": "Rechercher…",
+  "palette.searchFor": "Rechercher « {query} » dans la bibliothèque",
+  "palette.noResults": "Aucune page correspondante.",
+  "palette.navigate": "↑↓ naviguer",
+  "palette.open": "↵ ouvrir",
+  "palette.close": "échap fermer",
   "shell.searchPlaceholder": "Rechercher…",
   "shell.spotifyAttribution": "Données et visuels musicaux fournis par Spotify.",
+  "common.loading": "Chargement…",
+
+  // Erreurs & page introuvable
+  "error.title": "Une erreur est survenue",
+  "error.body":
+    "Une erreur inattendue est survenue pendant l'affichage de cette page. Vous pouvez réessayer.",
+  "error.digest": "Référence : {digest}",
+  "error.retry": "Réessayer",
+  "error.home": "Retour au tableau de bord",
+  "notFound.title": "Page introuvable",
+  "notFound.body":
+    "Cette page n'existe pas, ou vous n'y avez plus accès.",
+  "notFound.home": "Retour au tableau de bord",
 
   // Thème
   "theme.label": "Thème",
@@ -25,6 +47,7 @@ export const fr: Dictionary = {
 
   // Authentication
   "auth.tagline": "Vos statistiques d'écoute, chez vous.",
+  "auth.accountDeleted": "Votre compte a été définitivement supprimé.",
   "auth.email": "Adresse e-mail",
   "auth.emailPlaceholder": "vous@exemple.com",
   "auth.password": "Mot de passe",
@@ -222,6 +245,8 @@ export const fr: Dictionary = {
     "Export de données Spotify (.zip) ou les fichiers Streaming_History_Audio_*.json / StreamingHistory*.json. Plusieurs fichiers acceptés.",
   "settings.importCta": "Importer",
   "settings.importing": "Import en cours…",
+  "settings.importAnalyzing": "Analyse du fichier…",
+  "settings.importProgress": "{done} / {total} écoutes ({percent} %)",
   "settings.visuals": "Visuels",
   "settings.visualsSubtitle": "Pochettes d'albums et photos d'artistes",
   "settings.enrich": "Enrichir les visuels",
@@ -245,6 +270,19 @@ export const fr: Dictionary = {
   "settings.enableReg": "Autoriser les inscriptions",
   "settings.export": "Export",
   "settings.exportHint": "Télécharger vos données",
+  "settings.dataTab.export": "Export",
+  "settings.dataTab.sharing": "Partage",
+  "settings.dataTab.api": "API",
+  "settings.dataTab.danger": "Zone de danger",
+  "settings.qrCode": "QR code",
+  "settings.danger": "Zone de danger",
+  "settings.deleteAccountHint":
+    "Supprime définitivement votre compte, votre historique d'écoute, vos sources et vos liens de partage. Action irréversible.",
+  "settings.deleteAccountConfirm":
+    "Je comprends que mon compte et toutes mes données seront définitivement supprimés.",
+  "settings.deleteAccountPassword": "Confirmez avec votre mot de passe",
+  "settings.deleteAccountCta": "Supprimer définitivement mon compte",
+  "settings.deleting": "Suppression…",
   "settings.exportCsv": "Historique (CSV)",
   "settings.exportDb": "Base de données (.dump)",
 
@@ -283,6 +321,7 @@ export const fr: Dictionary = {
   "settings.revoke": "Révoquer",
   "settings.copy": "Copier",
   "settings.copied": "Copié !",
+  "settings.copyFailed": "Impossible de copier.",
 
   // Demandes d'accès Spotify
   "settings.spotifyAccount": "Compte Spotify (e-mail ou identifiant)",
@@ -324,7 +363,57 @@ export const fr: Dictionary = {
   "settings.shareLink": "Lien public :",
   "settings.confirmUnshare":
     "Désactiver le lien public ? Les liens existants cesseront de fonctionner.",
+
+  // Profil public
+  "settings.profileShare": "Profil public",
+  "settings.profileShareSubtitle":
+    "Lien public en lecture seule vers vos statistiques",
+  "settings.profileShareHint":
+    "Choisissez les sections visibles. Toute personne disposant du lien peut les consulter.",
+  "settings.profileShareHintOff":
+    "Partagez un lien public vers vos statistiques (période au choix). Vous pouvez le désactiver ou régénérer le jeton à tout moment.",
+  "settings.profileShareTopArtists": "Top artistes",
+  "settings.profileShareTopTracks": "Top titres",
+  "settings.profileShareRecent": "Dernières écoutes",
+  "settings.profileShareHeatmap": "Activité annuelle",
+  "settings.profileShareSave": "Enregistrer les sections",
+  "settings.confirmProfileUnshare":
+    "Désactiver le profil public ? Les liens existants cesseront de fonctionner.",
+  "profile.kicker": "Profil partagé",
+  "profile.subtitle": "Statistiques d'écoute partagées en lecture seule.",
+  "profile.recent": "Dernières écoutes",
+
+  // API de statistiques
+  "settings.api": "API & intégrations",
+  "settings.apiSubtitle":
+    "Statistiques en lecture seule pour vos tableaux de bord",
+  "settings.apiHint":
+    "Activez un jeton pour interroger vos statistiques depuis Homepage, Grafana ou un script. Le jeton donne accès aux agrégats, jamais à votre historique brut.",
+  "settings.apiHintActive":
+    "Le jeton est actif. Quiconque le possède peut lire vos statistiques : régénérez-le s'il a fuité.",
+  "settings.apiEnable": "Activer l'API",
+  "settings.apiDisable": "Désactiver l'API",
+  "settings.apiRegenerate": "Régénérer le jeton",
+  "settings.apiEndpoint": "Point d'accès :",
+  "settings.apiCard": "Carte SVG (Markdown) :",
+  "settings.apiDocs": "Documentation Swagger (OpenAPI)",
+  "settings.confirmApiDisable":
+    "Désactiver l'API ? Les widgets et scripts utilisant ce jeton cesseront de fonctionner.",
+
+  // Documentation API
+  "apiDocs.kicker": "Intégrations",
+  "apiDocs.title": "Documentation de l'API",
+  "apiDocs.subtitle":
+    "Référence interactive de l'API de {name}. Les routes protégées nécessitent un jeton (Réglages → Données personnelles).",
+  "apiDocs.openSpec": "Spécification OpenAPI (JSON)",
+  "apiDocs.back": "Retour à Statisfy",
+  "apiDocs.loading": "Chargement de Swagger UI…",
+  "apiDocs.loadError":
+    "Impossible de charger Swagger UI. La spécification reste disponible sur",
+
   "share.kicker": "Récapitulatif partagé",
+  "share.ogDescription":
+    "{name} — {period} : {plays} écoutes et {time} d'écoute.",
   "share.footer": "Réalisé avec {name}",
 
   // Settings / connection action messages
@@ -344,6 +433,10 @@ export const fr: Dictionary = {
   "err.actionFailed": "Échec de l'action. Veuillez réessayer.",
   "err.forbidden": "Action non autorisée.",
   "err.userNotFound": "Utilisateur introuvable.",
+  "err.passwordRequired": "Saisissez votre mot de passe.",
+  "err.wrongPassword": "Mot de passe incorrect.",
+  "err.deleteConfirm": "Cochez la case de confirmation pour continuer.",
+  "err.tooManyAttempts": "Trop de tentatives. Réessayez plus tard.",
   "err.spotifyAccountRequired": "Indiquez votre compte Spotify.",
   "msg.spotifyRequested":
     "Demande envoyée. Un administrateur va la valider.",
@@ -464,6 +557,105 @@ export const fr: Dictionary = {
   "admin.thresholdSubtitle": "Une écoute ne compte que si au moins cette part de la piste a été écoutée. 0 % : tout compte.",
   "admin.thresholdLabel": "Écoute minimale",
   "admin.thresholdSave": "Enregistrer et recalculer",
+
+  // Webhooks sortants
+  "admin.webhookTitle": "Webhooks sortants",
+  "admin.webhookSubtitle":
+    "Être notifié à la fin d'une synchronisation ou d'un import",
+  "admin.webhookUrl": "URL du webhook",
+  "admin.webhookUrlPlaceholder":
+    "https://discord.com/api/webhooks/… ou https://ntfy.sh/mon-sujet",
+  "admin.webhookSecret": "Secret de signature (facultatif)",
+  "admin.webhookHint":
+    "Discord, ntfy, Home Assistant et n8n sont détectés automatiquement. Sinon, un JSON générique est envoyé. Le secret facultatif signe le corps brut en HMAC-SHA256 (X-Statisfy-Signature). Laissez l'URL vide pour désactiver.",
+  "admin.webhookSave": "Enregistrer le webhook",
+  "admin.webhookSaving": "Enregistrement…",
+  "admin.webhookSaved": "Webhook enregistré.",
+  "admin.webhookCleared": "Webhook désactivé.",
+  "admin.webhookTest": "Envoyer un test",
+  "admin.webhookTesting": "Envoi…",
+  "admin.webhookTestSent": "Test envoyé.",
+  "admin.webhookTestFailed":
+    "Échec du test. Vérifiez l'URL et le journal d'événements.",
+  "admin.webhookNoUrl": "Enregistrez d'abord une URL de webhook.",
+  "admin.webhookInvalidUrl": "URL invalide (http ou https requis).",
+  "admin.webhookSecretTooLong":
+    "Le secret est trop long (200 caractères maximum).",
+  "admin.webhookTestTitle": "Test Statisfy",
+  "admin.webhookTestMessage":
+    "Ceci est un webhook de test envoyé par votre instance Statisfy.",
+
+  // Real User Monitoring
+  "admin.rumTitle": "Real User Monitoring",
+  "admin.rumSubtitle": "SDK navigateur OpenObserve",
+  "admin.rumEnabled":
+    "Activé → {site} (org « {org} », échantillonnage {rate} %).",
+  "admin.rumDisabled":
+    "Non configuré. Remplissez le formulaire ci-dessous pour activer le RUM.",
+  "admin.rumEnable": "Activer le RUM",
+  "admin.rumUrl": "URL OpenObserve",
+  "admin.rumUrlPlaceholder": "http://192.168.1.10:5080",
+  "admin.rumOrg": "Organisation",
+  "admin.rumToken": "Jeton client RUM",
+  "admin.rumTokenHint":
+    "Depuis Ingestion → RUM dans OpenObserve. Stocké côté serveur : les événements sont relayés par Statisfy et le jeton n'est jamais envoyé aux visiteurs.",
+  "admin.rumApplicationId": "ID d'application",
+  "admin.rumService": "Nom du service",
+  "admin.rumEnv": "Environnement",
+  "admin.rumSampleRate": "Échantillonnage des sessions (%)",
+  "admin.rumPrivacy": "Niveau de confidentialité",
+  "admin.rumPrivacyMaskInput": "Masquer les saisies (recommandé)",
+  "admin.rumPrivacyMask": "Tout masquer",
+  "admin.rumPrivacyAllow": "Tout autoriser",
+  "admin.rumPersistence": "Persistance de session",
+  "admin.rumPersistenceMemory": "Mémoire (aucun cookie durable)",
+  "admin.rumPersistenceCookie": "Cookie",
+  "admin.rumPersistenceLocalStorage": "Stockage local",
+  "admin.rumPersistenceHint":
+    "Le mode mémoire démarre une nouvelle session à chaque chargement.",
+  "admin.rumTrackResources": "Suivre les ressources",
+  "admin.rumTrackLongTasks": "Suivre les tâches longues",
+  "admin.rumTrackInteractions": "Suivre les interactions",
+  "admin.rumSave": "Enregistrer le RUM",
+  "admin.rumSaving": "Enregistrement…",
+  "admin.rumSaved": "Configuration RUM enregistrée.",
+  "admin.rumForcedOff":
+    "Le RUM est forcé désactivé par OPENOBSERVE_RUM_ENABLED=false. Retirez cette variable pour l'activer.",
+  "admin.rumUrlRequired": "Renseignez l'URL OpenObserve.",
+  "admin.rumTokenRequired": "Renseignez le jeton client RUM.",
+  "admin.rumInvalidUrl": "URL invalide (http ou https requis).",
+  "admin.rumInvalidRate": "L'échantillonnage doit être compris entre 0 et 100.",
+  "admin.rumReplaySampleRate": "Échantillonnage du replay (%)",
+  "admin.rumLogs": "Collecter les logs et erreurs navigateur",
+  "admin.rumForwardErrors": "Transmettre les erreurs aux logs",
+  "admin.rumStartReplay": "Démarrer l'enregistrement de sessions",
+  "admin.rumReplayWarning":
+    "Le replay enregistre le contenu des pages. Il est automatiquement mis en pause sur Réglages et Administration.",
+  "admin.rumInvalidReplayRate":
+    "L'échantillonnage du replay doit être compris entre 0 et 100.",
+  "admin.rumAdvanced": "Options avancées",
+  "admin.rumTokenKeep":
+    "Jeton enregistré ({hint}). Laissez vide pour le conserver, ou saisissez un nouveau jeton.",
+  "admin.rumPrivacyAllowWarning":
+    "« Tout autoriser » enregistre le contenu des pages et les saisies : à utiliser vraiment si nécessaire.",
+  "admin.rumTest": "Tester la connexion",
+  "admin.rumTesting": "Test en cours…",
+  "admin.rumTestHint": "Envoie un petit événement de test.",
+  "admin.rumTestSuccess":
+    "Connexion OK — OpenObserve a accepté l'événement de test.",
+  "admin.rumTestAuth":
+    "Échec d'authentification (HTTP {status}). Vérifiez le jeton RUM.",
+  "admin.rumTestNotFound":
+    "Endpoint introuvable (HTTP 404). Vérifiez l'URL et l'organisation.",
+  "admin.rumTestFailed": "OpenObserve a répondu HTTP {status}.",
+  "admin.rumTestNetwork":
+    "Impossible de joindre OpenObserve depuis le serveur. Vérifiez l'URL et l'accès réseau.",
+  "admin.rumTestRejected": "OpenObserve a rejeté l'événement de test.",
+  "admin.rumLastEvent": "Dernier événement reçu : {when} ({track}).",
+  "admin.rumNoEvent": "Aucun événement reçu pour le moment.",
+  "admin.rumLastError": "Dernière erreur : {when} (HTTP {status}).",
+  "admin.rumLastErrorNetwork": "Dernière erreur : {when} (erreur réseau).",
+  "admin.rumOpen": "Ouvrir OpenObserve",
   "settings.completionRate": "{percent} % des écoutes ont atteint le seuil d'écoute.",
   "admin.backupTitle": "Sauvegarde & restauration",
   "admin.backupSubtitle": "Exporter ou remplacer la base de données",

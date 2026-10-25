@@ -41,7 +41,15 @@ to be **easy to deploy**, **fast** and **pleasant to explore**.
   listening time, metric deltas and parallel rankings (artists, tracks, genres).
 - **Export**: recap as a **PNG image** (square 1080×1080 or story 1080×1920) and
   **CSV** of the whole history. The recap can also be shared through a **public
-  read-only link** (enable/disable in Settings).
+  read-only link** (enable/disable in Settings), with a generated **Open
+  Graph/Twitter preview** (1200×630 image).
+- **Public profile**: opt-in read-only page with selectable sections (top
+  artists/tracks, recent plays, yearly heatmap) and a period selector.
+- **Outgoing webhooks**: notify Discord, ntfy, Home Assistant or n8n when a sync
+  or import completes, with optional HMAC-SHA256 signing.
+- **Public API & SVG card**: token-protected read-only stats
+  (`/api/public/stats`), an embeddable SVG badge and a Swagger/OpenAPI reference
+  at `/api-docs`.
 - **Status**: instance health (listening totals, last sync, uptime, database
   size, backups, recent activity) built into the **admin area** (`/admin`).
 - **Admin area & event log**: dedicated `/admin` pages (overview, users,
@@ -51,9 +59,16 @@ to be **easy to deploy**, **fast** and **pleasant to explore**.
   clearable, and optionally forwarded to an external log server (Graylog via
   GELF HTTP/UDP or syslog).
 - **Filters**: by period (today, week, month, year, all — calendar-based, in the
-  account's timezone; **default: today**).
+  account's timezone). The last selected period is remembered across pages
+  (initially today).
 - **Multilingual**: English (default) and French, with a language switcher in
   the UI (localized dates and numbers).
+- **Command palette**: `⌘K` / `Ctrl+K` to jump to any page, open the admin area
+  or search the library.
+- **PWA**: installable manifest and generated icons (192/512/apple), standalone
+  display. No offline cache, so private pages are never stored locally.
+- **Data settings tabs**: export, sharing, API and danger zone are split into
+  sections; public share links also get a server-generated **QR code**.
 - **Heatmap**: GitHub-style yearly activity (plays per day over 12 months).
 - **7×24 heatmap**: plays by weekday and local hour, on the History page.
 - **Rediscoveries & records**: a "Rediscoveries" section (artists loved before
@@ -100,7 +115,7 @@ openssl rand -base64 32   # -> CREDENTIALS_KEY
 docker compose up -d db        # PostgreSQL on localhost:$POSTGRES_PORT (default 5432)
 
 # 4. Apply the schema
-pnpm db:push
+pnpm db:migrate
 
 # 5. (optional) demo dataset
 pnpm db:seed
@@ -303,7 +318,7 @@ existing database to PostgreSQL:
 
 ```bash
 docker compose up -d db     # or point DATABASE_URL at your own PostgreSQL
-pnpm db:push                # create the schema
+pnpm db:migrate             # create the schema
 pnpm migrate:sqlite         # copy users, connections, plays… (idempotent)
 ```
 
@@ -395,6 +410,10 @@ In both cases, the import is **idempotent** (re-running creates no duplicate).
 | Route | Description |
 | --- | --- |
 | `GET /api/sync` | Sync due connections. Auth: `Bearer $SYNC_TOKEN` or admin session. |
+| `GET /api/public/stats` | Read-only stats for the token's account (`?range=30`, `Authorization: Bearer` or `?token=`). Enable the token in **Settings → Personal data**. |
+| `GET /api/public/stats/card.svg` | SVG stats card (badge) for a README or website (`?theme=light\|dark&locale=en\|fr`). |
+| `GET /api-docs` | Interactive Swagger UI (assets served by the instance, no CDN). |
+| `GET /api/docs/openapi.json` | OpenAPI 3.1 specification. |
 | `POST /api/backup` | Back up the PostgreSQL database (`pg_dump`). Auth: `Bearer $SYNC_TOKEN` or admin session. |
 | `POST /api/restore` | Restore a PostgreSQL dump (`.dump`), replacing current data. Auth: `Bearer $SYNC_TOKEN` or admin session. CLI: `pnpm db:restore <file>`. |
 | `POST /api/import/spotify-history` | Import a Spotify export (`.zip` "Extended streaming history" or `.json`). Auth: `Bearer $SYNC_TOKEN`, HTTP Basic or admin session. |
@@ -403,6 +422,9 @@ In both cases, the import is **idempotent** (re-running creates no duplicate).
 | `GET /api/export/db` | Full PostgreSQL dump (`.dump`). Auth: `Bearer $SYNC_TOKEN` or admin session. |
 | `GET /api/admin/logs/export` | Event-log export (`?format=csv\|json` + `level`, `source`, `q`, `from`, `to`). Auth: `Bearer $SYNC_TOKEN` or admin session. |
 | `GET /api/wrapped/image` | PNG image of the recap (`?year=2026&month=10`). |
+| `GET /api/wrapped/og` | Public 1200×630 Open Graph image for a shared recap (`?token=…&year=…&month=…&locale=fr`). |
+| `GET /manifest.webmanifest` | PWA manifest (installable app). |
+| `GET /api/icon?size=192\|512` | Generated PWA icon (PNG). |
 | `GET /oauth/spotify/callback` | Spotify OAuth return (to declare on Spotify's side). |
 | `GET /api/sources/spotify/start` | Starts the Spotify OAuth flow. |
 
@@ -430,6 +452,121 @@ curl -X POST -H "Authorization: Bearer $SYNC_TOKEN" \
 With a standard account, the dump is assigned to that account. With the token
 (or an admin session), it is assigned to the first administrator; use
 `?email=you@example.com` to target another account. The import is idempotent.
+
+### 📊 Dashboard widget (Homepage)
+
+Enable the API in **Settings → Personal data**, then point a
+[Homepage `customapi`](https://gethomepage.dev/widgets/services/customapi/)
+widget at the stats endpoint:
+
+```yaml
+- Statisfy:
+    widget:
+      type: customapi
+      url: https://my-domain/api/public/stats?range=30&token={{HOMEPAGE_VAR_STATISFY_TOKEN}}
+      refreshInterval: 60000
+      mappings:
+        - field: allTimeHours
+          label: Hours
+        - field: weekPlays
+          label: Plays (7d)
+        - field: topArtist
+          label: Top artist
+        - field: todayHours
+          label: Today
+```
+
+With curl:
+
+```bash
+curl -H "Authorization: Bearer $STATS_API_TOKEN" \
+  "https://my-domain/api/public/stats?range=30"
+```
+
+The full contract (all endpoints, parameters and schemas) is available at
+`/api-docs` (Swagger UI) and `/api/docs/openapi.json` (OpenAPI 3.1). The API is
+read-only, per account and revocable at any time.
+
+An SVG badge can be embedded in a README or website:
+
+```markdown
+![Statisfy](https://my-domain/api/public/stats/card.svg?token=YOUR_TOKEN&theme=dark)
+```
+
+### 🔔 Outgoing webhooks
+
+In **Admin → Instance**, set a webhook URL to be notified when a sync or import
+completes. Discord, ntfy, Home Assistant and n8n are detected automatically; any
+other URL receives a generic JSON payload. An optional secret signs the raw body
+(`X-Statisfy-Signature: sha256=…`).
+
+> The request is made by the **Statisfy server**, not the visitor's browser.
+> This allows LAN targets (Home Assistant, internal n8n), but also means an admin
+> account can reach internal services: protect admin accounts accordingly.
+
+### 📈 Real User Monitoring (OpenObserve SDK)
+
+Statisfy can load the official OpenObserve browser SDK
+(`@openobserve/browser-rum`) to send sessions, views and Core Web Vitals to
+OpenObserve's `_rumdata` stream.
+
+Configure it in **Admin → Instance**: URL, organization, RUM client token,
+application ID, service, sampling rate, privacy level and the optional trackers.
+The form includes a **Test connection** button (sends one small event and reports
+the HTTP status), keeps the saved token masked (leave the field empty to keep
+it), and groups the advanced options in a collapsible section. Settings are
+stored in the database; the `.env` variables below are only fallbacks.
+
+```bash
+# .env (optional fallbacks)
+OPENOBSERVE_RUM_ENABLED="true"          # false force-disables the SDK
+OPENOBSERVE_URL="https://openobserve.example.com"
+OPENOBSERVE_ORG="default"
+OPENOBSERVE_RUM_TOKEN="your-rum-client-token"  # Ingestion → RUM
+# OPENOBSERVE_RUM_APPLICATION_ID="statisfy"
+# OPENOBSERVE_RUM_SERVICE="statisfy"
+# OPENOBSERVE_RUM_ENV="production"
+# OPENOBSERVE_RUM_SAMPLE_RATE="100"     # 0–100
+# OPENOBSERVE_RUM_PRIVACY="mask-user-input"
+# OPENOBSERVE_RUM_PERSISTENCE="memory"  # memory = no durable cookie
+# OPENOBSERVE_RUM_TRACK_RESOURCES="false"
+# OPENOBSERVE_RUM_TRACK_LONG_TASKS="false"
+# OPENOBSERVE_RUM_TRACK_INTERACTIONS="false"
+# OPENOBSERVE_RUM_LOGS="true"            # browser logs & errors
+# OPENOBSERVE_RUM_FORWARD_ERRORS="true"
+# OPENOBSERVE_RUM_REPLAY_SAMPLE_RATE="0"
+# OPENOBSERVE_RUM_START_REPLAY="false"
+```
+
+- The SDK is loaded **after hydration**, as a separate chunk.
+- `OPENOBSERVE_RUM_ENABLED=false`, or an empty URL/token, prevents any loading.
+- Events are sent to `/api/rum` (same origin) and relayed by Statisfy: the RUM
+  token stays server-side and the CSP remains `connect-src 'self'`. RUM, logs
+  and replay payloads all go through this relay.
+- The SDK is only loaded in the **authenticated app**: public pages (login,
+  shared recaps/profiles, API docs) are not tracked.
+- URLs are normalized before sending (query/hash removed, Spotify IDs and share
+  tokens replaced); `/settings` and `/admin` URLs are redacted, their logs are
+  dropped, and session replay is automatically paused on those pages.
+- The relay refuses cross-origin requests (`Origin`/`Sec-Fetch-Site`) and limits
+  RUM/logs bodies to 256 KB (5 MB for replay).
+- Keep `mask-user-input` and replay disabled on shared/production instances.
+- OpenObserve therefore sees the **server's IP**, not the visitor's (the client
+  IP is not forwarded).
+- Browser logs and errors are enabled by default; uncheck **Collect browser
+  logs & errors** to disable them.
+- Session replay is **off by default**. Set a replay sampling rate and check
+  **Start session replay** to enable it; it is privacy-sensitive.
+- Defaults are privacy-oriented: no user identity, input masking, memory
+  persistence (no durable cookie), resources/interactions/long tasks off.
+- `Do Not Track` and `Global Privacy Control` prevent initialization.
+- Set `OPENOBSERVE_RUM_PERSISTENCE=cookie` to keep a session across page loads
+  (first-party cookie managed by the SDK).
+- The URL accepts `https://host[:port]`, `http://host[:port]` or a bare
+  `host[:port]` (HTTP is assumed for bare hosts).
+
+Data is available in OpenObserve under **RUM** (`_rumdata`); filter browser
+events with `WHERE source = 'browser'`.
 
 ## 🗂️ Project structure
 
@@ -471,6 +608,19 @@ password hashing and credential encryption):
 pnpm test        # single run
 pnpm test:watch  # watch mode
 ```
+
+End-to-end tests (Playwright) cover registration, the public API, the SVG card
+and the public profile. They recreate a dedicated `statisfy_e2e` database and
+start the development server automatically:
+
+```bash
+pnpm exec playwright install --with-deps chromium  # once
+pnpm test:e2e
+```
+
+The database schema is managed by **Prisma Migrate** (`prisma/migrations`). Use
+`pnpm db:migrate` to apply migrations, or `pnpm db:migrate:dev` when changing
+`schema.prisma` (`db push` remains available for quick local prototypes).
 
 ## ⚖️ License and legal notice
 

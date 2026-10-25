@@ -38,7 +38,8 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
   bibliothèque.
 - **Récapitulatif (« Wrapped »)** : synthèse par année ou par mois avec
   comparaison à la période précédente, jour/heure les plus actifs et artistes
-  découverts.
+  découverts. Les liens partagés exposent un **aperçu social**
+  (Open Graph/Twitter) avec une image générée 1200×630.
 - **Comparateur de périodes** : comparaison de deux périodes côte à côte, avec
   temps d'écoute superposé, écarts par indicateur et classements (artistes,
   titres, genres) en parallèle.
@@ -46,6 +47,15 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
   1080×1920) et **CSV** de tout l'historique. Le récapitulatif peut aussi être
   partagé via un **lien public en lecture seule** (activation/désactivation
   dans les Réglages).
+- **Profil public** : page en lecture seule (opt-in) avec sections au choix
+  (top artistes/titres, dernières écoutes, heatmap annuelle) et sélecteur de
+  période.
+- **Webhooks sortants** : notification Discord, ntfy, Home Assistant ou n8n à la
+  fin d'une synchronisation ou d'un import, avec signature HMAC-SHA256
+  facultative.
+- **API publique & carte SVG** : statistiques en lecture seule protégées par
+  jeton (`/api/public/stats`), badge SVG intégrable et référence Swagger/OpenAPI
+  sur `/api-docs`.
 - **Statut** : santé de l'instance (totaux d'écoute, dernière synchro, uptime,
   taille de la base, sauvegardes, activité récente) intégrée à **l'espace
   d'administration** (`/admin`).
@@ -56,9 +66,18 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
   et dates, exportable en **CSV ou JSON**, vidable, et transmissible en option à
   un serveur de logs externe (Graylog via GELF HTTP/UDP ou syslog).
 - **Filtres** : par période (aujourd'hui, semaine, mois, année, tout — calendaire,
-  dans le fuseau du compte ; **défaut : aujourd'hui**).
+  dans le fuseau du compte). La dernière période choisie est mémorisée entre les
+  pages (aujourd'hui par défaut).
 - **Multilingue** : anglais (par défaut) et français, avec sélecteur de langue
   dans l'interface (dates et nombres localisés).
+- **Palette de commandes** : `⌘K` / `Ctrl+K` pour aller à n'importe quelle page,
+  ouvrir l'administration ou rechercher dans la bibliothèque.
+- **PWA** : manifeste installable et icônes générées (192/512/apple), affichage
+  `standalone`. Pas de cache hors ligne, pour ne jamais stocker de pages privées
+  localement.
+- **Réglages « Données » en onglets** : export, partage, API et zone de danger
+  sont séparés ; les liens publics disposent aussi d'un **QR code** généré côté
+  serveur.
 - **Heatmap** : activité annuelle façon GitHub (écoutes par jour sur 12 mois).
 - **Heatmap 7×24** : répartition des écoutes par jour de la semaine et heure
   locale, sur la page Historique.
@@ -107,7 +126,7 @@ openssl rand -base64 32   # -> CREDENTIALS_KEY
 docker compose up -d db        # PostgreSQL sur localhost:$POSTGRES_PORT (5432 par défaut)
 
 # 4. Application du schéma
-pnpm db:push
+pnpm db:migrate
 
 # 5. (optionnel) jeu de données de démonstration
 pnpm db:seed
@@ -314,7 +333,7 @@ basculer une base existante vers PostgreSQL :
 
 ```bash
 docker compose up -d db     # ou pointez DATABASE_URL vers votre PostgreSQL
-pnpm db:push                # crée le schéma
+pnpm db:migrate             # crée le schéma
 pnpm migrate:sqlite         # copie utilisateurs, connexions, écoutes… (idempotent)
 pnpm db:backfill-counted    # recalcule le seuil des 3/4 sur les écoutes copiées
 ```
@@ -410,6 +429,10 @@ Dans les deux cas, l'import est **idempotent** (relancer ne crée pas de doublon
 | Route | Description |
 | --- | --- |
 | `GET /api/sync` | Synchronise les connexions dues. Auth : `Bearer $SYNC_TOKEN` ou session admin. |
+| `GET /api/public/stats` | Statistiques en lecture seule du compte (`?range=30`, `Authorization: Bearer` ou `?token=`). Jeton à activer dans **Réglages → Données personnelles**. |
+| `GET /api/public/stats/card.svg` | Carte SVG (badge) pour un README ou un site (`?theme=light\|dark&locale=en\|fr`). |
+| `GET /api-docs` | Swagger UI interactive (fichiers servis par l'instance, sans CDN). |
+| `GET /api/docs/openapi.json` | Spécification OpenAPI 3.1. |
 | `POST /api/backup` | Sauvegarde la base PostgreSQL (`pg_dump`). Auth : `Bearer $SYNC_TOKEN` ou session admin. |
 | `POST /api/restore` | Restaure un dump PostgreSQL (`.dump`), en remplaçant les données actuelles. Auth : `Bearer $SYNC_TOKEN` ou session admin. CLI : `pnpm db:restore <fichier>`. |
 | `POST /api/import/spotify-history` | Importe un export Spotify (`.zip` « Extended streaming history » ou `.json`). Auth : `Bearer $SYNC_TOKEN`, HTTP Basic ou session admin. |
@@ -418,6 +441,9 @@ Dans les deux cas, l'import est **idempotent** (relancer ne crée pas de doublon
 | `GET /api/export/db` | Dump complet de la base PostgreSQL (`.dump`). Auth : `Bearer $SYNC_TOKEN` ou session admin. |
 | `GET /api/admin/logs/export` | Export du journal d'événements (`?format=csv\|json` + `level`, `source`, `q`, `from`, `to`). Auth : `Bearer $SYNC_TOKEN` ou session admin. |
 | `GET /api/wrapped/image` | Image PNG du récapitulatif (`?year=2026&month=10`). |
+| `GET /api/wrapped/og` | Image Open Graph publique 1200×630 d'un récap partagé (`?token=…&year=…&month=…&locale=fr`). |
+| `GET /manifest.webmanifest` | Manifeste PWA (application installable). |
+| `GET /api/icon?size=192\|512` | Icône PWA générée (PNG). |
 | `GET /oauth/spotify/callback` | Retour OAuth Spotify (à déclarer côté Spotify). |
 | `GET /api/sources/spotify/start` | Démarre l'OAuth Spotify. |
 
@@ -445,6 +471,128 @@ curl -X POST -H "Authorization: Bearer $SYNC_TOKEN" \
 Avec un compte standard, le dump est attribué à ce compte. Avec le jeton (ou une
 session admin), il est attribué au premier administrateur ; utilisez
 `?email=vous@exemple.com` pour cibler un autre compte. L'import est idempotent.
+
+### 📊 Widget de tableau de bord (Homepage)
+
+Activez l'API dans **Réglages → Données personnelles**, puis pointez un widget
+[`customapi` de Homepage](https://gethomepage.dev/widgets/services/customapi/)
+vers l'endpoint de statistiques :
+
+```yaml
+- Statisfy:
+    widget:
+      type: customapi
+      url: https://mon-domaine/api/public/stats?range=30&token={{HOMEPAGE_VAR_STATISFY_TOKEN}}
+      refreshInterval: 60000
+      mappings:
+        - field: allTimeHours
+          label: Heures
+        - field: weekPlays
+          label: Écoutes (7 j)
+        - field: topArtist
+          label: Artiste top
+        - field: todayHours
+          label: Aujourd'hui
+```
+
+Avec curl :
+
+```bash
+curl -H "Authorization: Bearer $STATS_API_TOKEN" \
+  "https://mon-domaine/api/public/stats?range=30"
+```
+
+Le contrat complet (toutes les routes, paramètres et schémas) est disponible sur
+`/api-docs` (Swagger UI) et `/api/docs/openapi.json` (OpenAPI 3.1). L'API est en
+lecture seule, propre au compte et révocable à tout moment.
+
+Une carte SVG peut être intégrée dans un README ou un site :
+
+```markdown
+![Statisfy](https://mon-domaine/api/public/stats/card.svg?token=VOTRE_JETON&theme=dark)
+```
+
+### 🔔 Webhooks sortants
+
+Dans **Administration → Instance**, renseignez une URL de webhook pour être
+notifié à la fin d'une synchronisation ou d'un import. Discord, ntfy, Home
+Assistant et n8n sont détectés automatiquement ; les autres URLs reçoivent un
+JSON générique. Un secret facultatif signe le corps brut
+(`X-Statisfy-Signature: sha256=…`).
+
+> La requête est faite par le **serveur Statisfy**, pas par le navigateur du
+> visiteur. Cela permet de cibler le réseau local (Home Assistant, n8n interne),
+> mais un compte admin compromis peut aussi atteindre des services internes :
+> protégez les comptes admin en conséquence.
+
+### 📈 Real User Monitoring (SDK OpenObserve)
+
+Statisfy peut charger le SDK navigateur officiel d'OpenObserve
+(`@openobserve/browser-rum`) pour envoyer les sessions, les vues et les Core Web
+Vitals dans le flux `_rumdata` d'OpenObserve.
+
+Configurez-le dans **Administration → Instance** : URL, organisation, jeton
+client RUM, ID d'application, service, échantillonnage, confidentialité et
+trackers optionnels. Le formulaire propose un bouton **Tester la connexion**
+(envoie un petit événement et indique le statut HTTP), garde le jeton enregistré
+masqué (laisser le champ vide pour le conserver) et regroupe les options
+avancées dans une section repliable. La configuration est stockée en base ; les
+variables `.env` ci-dessous ne servent que de valeurs par défaut.
+
+```bash
+# .env (valeurs de secours facultatives)
+OPENOBSERVE_RUM_ENABLED="true"          # false force la désactivation
+OPENOBSERVE_URL="https://openobserve.example.com"
+OPENOBSERVE_ORG="default"
+OPENOBSERVE_RUM_TOKEN="votre-jeton-client-rum"  # Ingestion → RUM
+# OPENOBSERVE_RUM_APPLICATION_ID="statisfy"
+# OPENOBSERVE_RUM_SERVICE="statisfy"
+# OPENOBSERVE_RUM_ENV="production"
+# OPENOBSERVE_RUM_SAMPLE_RATE="100"     # 0–100
+# OPENOBSERVE_RUM_PRIVACY="mask-user-input"
+# OPENOBSERVE_RUM_PERSISTENCE="memory"  # memory = aucun cookie durable
+# OPENOBSERVE_RUM_TRACK_RESOURCES="false"
+# OPENOBSERVE_RUM_TRACK_LONG_TASKS="false"
+# OPENOBSERVE_RUM_TRACK_INTERACTIONS="false"
+# OPENOBSERVE_RUM_LOGS="true"            # logs et erreurs navigateur
+# OPENOBSERVE_RUM_FORWARD_ERRORS="true"
+# OPENOBSERVE_RUM_REPLAY_SAMPLE_RATE="0"
+# OPENOBSERVE_RUM_START_REPLAY="false"
+```
+
+- Le SDK est chargé **après hydratation**, dans un chunk séparé.
+- `OPENOBSERVE_RUM_ENABLED=false`, ou une URL/un jeton vide, empêche tout
+  chargement.
+- Les événements passent par `/api/rum` (même origine) puis sont relayés par
+  Statisfy : le jeton RUM reste côté serveur et le CSP demeure
+  `connect-src 'self'`. Les charges RUM, logs et replay passent par ce relais.
+- Le SDK n'est chargé que dans l'**espace authentifié** : les pages publiques
+  (connexion, récaps/profils partagés, docs API) ne sont pas suivies.
+- Les URLs sont normalisées (query/hash supprimés, IDs Spotify et jetons de
+  partage remplacés) ; les URLs `/settings` et `/admin` sont rédigées, leurs logs
+  ignorés et le replay y est automatiquement mis en pause.
+- Le relais refuse les requêtes cross-origin (`Origin`/`Sec-Fetch-Site`) et
+  limite les corps RUM/logs à 256 Ko (5 Mo pour le replay).
+- Gardez `mask-user-input` et le replay désactivé sur une instance partagée ou
+  en production.
+- OpenObserve voit donc l'**IP du serveur**, pas celle du visiteur (l'IP client
+  n'est pas transmise).
+- Les logs et erreurs navigateur sont activés par défaut ; décochez
+  **Collecter les logs et erreurs navigateur** pour les couper.
+- Le session replay est **désactivé par défaut**. Renseignez un taux
+  d'échantillonnage et cochez **Démarrer l'enregistrement de sessions** pour
+  l'activer ; c'est intrusif.
+- Les défauts sont orientés vie privée : aucune identité utilisateur, masquage
+  des saisies, persistance en mémoire (pas de cookie durable),
+  ressources/interactions/tâches longues désactivées.
+- `Do Not Track` et `Global Privacy Control` empêchent l'initialisation.
+- Mettez `OPENOBSERVE_RUM_PERSISTENCE=cookie` pour conserver une session entre
+  les pages (cookie first-party géré par le SDK).
+- L'URL accepte `https://host[:port]`, `http://host[:port]` ou `host[:port]`
+  (HTTP supposé sans protocole).
+
+Les données sont disponibles dans OpenObserve → **RUM** (`_rumdata`) ; filtrez
+les événements navigateur avec `WHERE source = 'browser'`.
 
 ## 🗂️ Structure du projet
 
@@ -486,6 +634,20 @@ comparaison, hachage de mots de passe et chiffrement des identifiants) :
 pnpm test        # exécution unique
 pnpm test:watch  # mode watch
 ```
+
+Les tests de bout en bout (Playwright) couvrent l'inscription, l'API publique, la
+carte SVG et le profil public. Ils recréent une base dédiée `statisfy_e2e` et
+lancent le serveur de développement automatiquement :
+
+```bash
+pnpm exec playwright install --with-deps chromium  # une fois
+pnpm test:e2e
+```
+
+Le schéma est géré par **Prisma Migrate** (`prisma/migrations`). Utilisez
+`pnpm db:migrate` pour appliquer les migrations, ou `pnpm db:migrate:dev` après
+une modification de `schema.prisma` (`db push` reste disponible pour un
+prototype local rapide).
 
 ## ⚖️ Licence et note légale
 
