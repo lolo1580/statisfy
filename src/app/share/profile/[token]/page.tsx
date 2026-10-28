@@ -63,10 +63,10 @@ export default async function SharedProfilePage({
   const [overview, artists, tracks, recent, heatmap] = await Promise.all([
     getOverview(owner.id, filters),
     config.topArtists
-      ? getTopArtists(owner.id, filters, 5)
+      ? getTopArtists(owner.id, filters, 5, "plays", owner.timezone)
       : Promise.resolve(noArtists),
     config.topTracks
-      ? getTopTracks(owner.id, filters, 5)
+      ? getTopTracks(owner.id, filters, 5, "plays", owner.timezone)
       : Promise.resolve(noTracks),
     config.recentPlays
       ? getRecentPlays(owner.id, filters, 10)

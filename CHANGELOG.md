@@ -24,6 +24,11 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   de reparcourir les écoutes, avec repli automatique sur les données brutes si
   elles ne sont pas encore remplies. L'entrypoint Docker effectue le backfill
   initial quand une table est vide.
+- **Classements sur agrégats** : les tops titres/artistes/genres lisent
+  `User*DailyStat` lorsque la période est alignée sur des jours locaux
+  (aujourd'hui, semaine, mois, année, tout l'historique), avec repli sur les
+  écoutes brutes pour les fenêtres glissantes et les bornes non locales.
+  Résultats vérifiés identiques aux requêtes brutes sur la base de l'instance.
 - **Cache Redis optionnel** : `REDIS_URL` active un cache L2 partagé entre
   répliques (valeurs sérialisées avec `v8`, Dates et BigInt conservés). En cas
   d'indisponibilité, repli silencieux sur le cache mémoire.

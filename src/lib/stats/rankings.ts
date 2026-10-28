@@ -6,6 +6,8 @@ import {
   buildWhere,
   parseGenres,
   rangeConditions,
+  rangeDayBounds,
+  type RangeDayBounds,
   type StatsRange,
 } from "./shared";
 
@@ -28,7 +30,14 @@ export async function getTopTracks(
   range: StatsRange,
   limit = 10,
   metric: RankMetric = "plays",
+  timeZone?: string,
 ): Promise<TopTrack[]> {
+  // Période alignée sur des jours locaux : le classement vient des agrégats.
+  if (timeZone && rangeDayBounds(range, timeZone)) {
+    const pair = await getTopTracksBoth(userId, range, limit, timeZone);
+    return metric === "time" ? pair.time : pair.plays;
+  }
+
   const where = buildWhere(userId, range);
   const grouped = await prisma.play.groupBy({
     by: ["trackId"],
@@ -131,6 +140,13 @@ async function rankedPlayIds(
     `,
   );
 
+  return toRankPair(rows);
+}
+
+function toRankPair(rows: RankedIdRow[]): {
+  plays: RankedId[];
+  time: RankedId[];
+} {
   const toId = (row: RankedIdRow): RankedId => ({
     id: row.id,
     plays: Number(row.plays),
@@ -149,13 +165,80 @@ async function rankedPlayIds(
   };
 }
 
+/**
+ * Même classement, mais calculé sur les agrégats quotidiens par entité :
+ * bien moins de lignes à parcourir sur « tout l'historique » ou une période
+ * alignée sur des jours locaux.
+ */
+async function rankedAggregateIds(
+  userId: string,
+  bounds: RangeDayBounds,
+  limit: number,
+  column: "trackId" | "artistId",
+): Promise<{ plays: RankedId[]; time: RankedId[] }> {
+  const col =
+    column === "trackId" ? Prisma.sql`"trackId"` : Prisma.sql`"artistId"`;
+  const table =
+    column === "trackId"
+      ? Prisma.sql`"UserTrackDailyStat"`
+      : Prisma.sql`"UserArtistDailyStat"`;
+
+  const conditions: Prisma.Sql[] = [Prisma.sql`"userId" = ${userId}`];
+  if (bounds.fromDay) {
+    conditions.push(Prisma.sql`"day" >= ${bounds.fromDay}`);
+  }
+  if (bounds.toDay) {
+    conditions.push(Prisma.sql`"day" <= ${bounds.toDay}`);
+  }
+
+  const rows = await prisma.$queryRaw<RankedIdRow[]>(
+    Prisma.sql`
+      WITH agg AS (
+        SELECT ${col} AS id,
+               SUM("plays")::int AS plays,
+               COALESCE(SUM("msPlayed"), 0)::bigint AS "msPlayed"
+        FROM ${table}
+        WHERE ${Prisma.join(conditions, " AND ")}
+        GROUP BY ${col}
+      ),
+      ranked AS (
+        SELECT id, plays, "msPlayed",
+               row_number() OVER (ORDER BY plays DESC, id) AS rp,
+               row_number() OVER (ORDER BY "msPlayed" DESC, id) AS rt
+        FROM agg
+      )
+      SELECT id, plays, "msPlayed", rp, rt,
+             (rp <= ${limit}) AS by_plays,
+             (rt <= ${limit}) AS by_time
+      FROM ranked
+      WHERE rp <= ${limit} OR rt <= ${limit}
+    `,
+  );
+
+  return toRankPair(rows);
+}
+
+/** Classement via agrégats si la période est exprimable en jours locaux. */
+async function rankedIds(
+  userId: string,
+  range: StatsRange,
+  limit: number,
+  column: "trackId" | "artistId",
+  timeZone?: string,
+): Promise<{ plays: RankedId[]; time: RankedId[] }> {
+  const bounds = timeZone ? rangeDayBounds(range, timeZone) : null;
+  if (bounds) return rankedAggregateIds(userId, bounds, limit, column);
+  return rankedPlayIds(userId, range, limit, column);
+}
+
 /** Top titres, par écoutes **et** par temps, avec une seule lecture des titres. */
 export async function getTopTracksBoth(
   userId: string,
   range: StatsRange,
   limit = 10,
+  timeZone?: string,
 ): Promise<RankPair<TopTrack>> {
-  const ranked = await rankedPlayIds(userId, range, limit, "trackId");
+  const ranked = await rankedIds(userId, range, limit, "trackId", timeZone);
   const ids = [...new Set([...ranked.plays, ...ranked.time].map((r) => r.id))];
   if (ids.length === 0) return { plays: [], time: [] };
 
@@ -191,8 +274,9 @@ export async function getTopArtistsBoth(
   userId: string,
   range: StatsRange,
   limit = 10,
+  timeZone?: string,
 ): Promise<RankPair<TopArtist>> {
-  const ranked = await rankedPlayIds(userId, range, limit, "artistId");
+  const ranked = await rankedIds(userId, range, limit, "artistId", timeZone);
   const ids = [...new Set([...ranked.plays, ...ranked.time].map((r) => r.id))];
   if (ids.length === 0) return { plays: [], time: [] };
 
@@ -223,7 +307,14 @@ export async function getTopArtists(
   range: StatsRange,
   limit = 10,
   metric: RankMetric = "plays",
+  timeZone?: string,
 ): Promise<TopArtist[]> {
+  // Période alignée sur des jours locaux : le classement vient des agrégats.
+  if (timeZone && rangeDayBounds(range, timeZone)) {
+    const pair = await getTopArtistsBoth(userId, range, limit, timeZone);
+    return metric === "time" ? pair.time : pair.plays;
+  }
+
   const where = buildWhere(userId, range);
   const grouped = await prisma.play.groupBy({
     by: ["artistId"],
@@ -319,39 +410,76 @@ export type GenreStat = { genre: string; plays: number; msPlayed: number };
 async function collectGenreTotals(
   userId: string,
   range: StatsRange,
+  timeZone?: string,
 ): Promise<Map<string, { plays: number; msPlayed: number }>> {
-  const where = buildWhere(userId, range);
-  // Pas de `take` : les genres doivent agréger **tous** les artistes écoutés,
-  // sinon les genres des artistes hors du top-100 (par écoutes) disparaissent et
-  // le classement est faussé.
-  const grouped = await prisma.play.groupBy({
-    by: ["artistId"],
-    where,
-    _count: { artistId: true },
-    _sum: { msPlayed: true },
-  });
+  const bounds = timeZone ? rangeDayBounds(range, timeZone) : null;
+
+  let grouped: Array<{ artistId: string; plays: number; msPlayed: number }>;
+
+  if (bounds) {
+    const conditions: Prisma.Sql[] = [Prisma.sql`"userId" = ${userId}`];
+    if (bounds.fromDay) {
+      conditions.push(Prisma.sql`"day" >= ${bounds.fromDay}`);
+    }
+    if (bounds.toDay) {
+      conditions.push(Prisma.sql`"day" <= ${bounds.toDay}`);
+    }
+    const rows = await prisma.$queryRaw<
+      Array<{ id: string; plays: number | bigint; msPlayed: number | bigint }>
+    >(
+      Prisma.sql`
+        SELECT "artistId" AS id,
+               SUM("plays")::int AS plays,
+               COALESCE(SUM("msPlayed"), 0)::bigint AS "msPlayed"
+        FROM "UserArtistDailyStat"
+        WHERE ${Prisma.join(conditions, " AND ")}
+        GROUP BY "artistId"
+      `,
+    );
+    grouped = rows.map((row) => ({
+      artistId: row.id,
+      plays: Number(row.plays),
+      msPlayed: Number(row.msPlayed),
+    }));
+  } else {
+    // Pas de `take` : les genres doivent agréger **tous** les artistes écoutés,
+    // sinon les genres des artistes hors du top-100 (par écoutes) disparaissent
+    // et le classement est faussé.
+    const rows = await prisma.play.groupBy({
+      by: ["artistId"],
+      where: buildWhere(userId, range),
+      _count: { artistId: true },
+      _sum: { msPlayed: true },
+    });
+    grouped = rows.map((row) => ({
+      artistId: row.artistId,
+      plays: row._count.artistId,
+      msPlayed: row._sum.msPlayed ?? 0,
+    }));
+  }
+
   const totals = new Map<string, { plays: number; msPlayed: number }>();
   if (grouped.length === 0) return totals;
 
   const artists = await prisma.artist.findMany({
-    where: { id: { in: grouped.map((g) => g.artistId) } },
+    where: { id: { in: grouped.map((row) => row.artistId) } },
     select: { id: true, genres: true },
   });
-  const countById = new Map(
-    grouped.map((g) => [g.artistId, g._count.artistId]),
-  );
-  const msById = new Map(
-    grouped.map((g) => [g.artistId, g._sum.msPlayed ?? 0]),
+  const byId = new Map(
+    grouped.map((row) => [
+      row.artistId,
+      { plays: row.plays, msPlayed: row.msPlayed },
+    ]),
   );
 
   for (const artist of artists) {
     if (!artist.genres) continue;
-    const plays = countById.get(artist.id) ?? 0;
-    const msPlayed = msById.get(artist.id) ?? 0;
+    const values = byId.get(artist.id);
+    if (!values) continue;
     for (const genre of parseGenres(artist.genres)) {
       const current = totals.get(genre) ?? { plays: 0, msPlayed: 0 };
-      current.plays += plays;
-      current.msPlayed += msPlayed;
+      current.plays += values.plays;
+      current.msPlayed += values.msPlayed;
       totals.set(genre, current);
     }
   }
@@ -380,8 +508,13 @@ export async function getTopGenres(
   range: StatsRange,
   limit = 12,
   metric: RankMetric = "plays",
+  timeZone?: string,
 ): Promise<GenreStat[]> {
-  return rankGenres(await collectGenreTotals(userId, range), limit, metric);
+  return rankGenres(
+    await collectGenreTotals(userId, range, timeZone),
+    limit,
+    metric,
+  );
 }
 
 /** Top genres, par écoutes **et** par temps, en une seule agrégation. */
@@ -389,8 +522,9 @@ export async function getTopGenresBoth(
   userId: string,
   range: StatsRange,
   limit = 12,
+  timeZone?: string,
 ): Promise<RankPair<GenreStat>> {
-  const totals = await collectGenreTotals(userId, range);
+  const totals = await collectGenreTotals(userId, range, timeZone);
   return {
     plays: rankGenres(totals, limit, "plays"),
     time: rankGenres(totals, limit, "time"),

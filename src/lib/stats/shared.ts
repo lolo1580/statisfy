@@ -1,6 +1,7 @@
 import "server-only";
 
 import { Prisma } from "../../generated/prisma/client";
+import { dayKey, startOfLocalDay } from "../format";
 
 /**
  * Filtres applicables aux agrégations.
@@ -81,6 +82,46 @@ export function rangeConditions(
   if (range.trackId) conditions.push(Prisma.sql`"trackId" = ${range.trackId}`);
   if (range.albumId) conditions.push(Prisma.sql`"albumId" = ${range.albumId}`);
   return conditions;
+}
+
+/**
+ * Bornes de jours locaux d'une période, si elle est exprimable en **jours
+ * entiers** : c'est la condition pour lire les agrégats quotidiens au lieu des
+ * écoutes brutes. Renvoie `null` quand les bornes ne coïncident pas avec des
+ * minuits locaux (période glissante, bornes UTC d'un récap…).
+ */
+export type RangeDayBounds = { fromDay?: string; toDay?: string };
+
+export function rangeDayBounds(
+  range: StatsRange,
+  timeZone: string,
+): RangeDayBounds | null {
+  // Les tables d'agrégats n'ont pas de dimension entité.
+  if (range.artistId || range.trackId || range.albumId) return null;
+
+  // Période glissante « N derniers jours » : pas alignée sur des jours locaux.
+  if (!range.from && !range.to && range.days !== null) return null;
+
+  let fromDay: string | undefined;
+  if (range.from) {
+    if (
+      startOfLocalDay(timeZone, range.from).getTime() !== range.from.getTime()
+    ) {
+      return null;
+    }
+    fromDay = dayKey(range.from, timeZone);
+  }
+
+  let toDay: string | undefined;
+  if (range.to) {
+    if (startOfLocalDay(timeZone, range.to).getTime() !== range.to.getTime()) {
+      return null;
+    }
+    // `to` est exclusif : le dernier jour inclus est la veille locale.
+    toDay = dayKey(new Date(range.to.getTime() - 1), timeZone);
+  }
+
+  return { fromDay, toDay };
 }
 
 /** Instant UTC du début d'une tranche (index de tranches de 15 min). */

@@ -410,8 +410,8 @@ export async function GET(request: NextRequest) {
 
   const [overview, artists, tracks] = await Promise.all([
     getOverview(user.id, filters),
-    getTopArtists(user.id, filters, 3),
-    getTopTracks(user.id, filters, story ? 6 : 5),
+    getTopArtists(user.id, filters, 3, "plays", user.timezone),
+    getTopTracks(user.id, filters, story ? 6 : 5, "plays", user.timezone),
   ]);
 
   const covers = await Promise.all(

@@ -135,9 +135,9 @@ export default async function DashboardPage({
   ] = await Promise.all([
     getOverview(user.id, filters),
     getTimelineStats(user.id, user.timezone, filters),
-    getTopTracksBoth(user.id, filters, 10),
-    getTopArtistsBoth(user.id, filters, 10),
-    getTopGenresBoth(user.id, filters, 10),
+    getTopTracksBoth(user.id, filters, 10, user.timezone),
+    getTopArtistsBoth(user.id, filters, 10, user.timezone),
+    getTopGenresBoth(user.id, filters, 10, user.timezone),
     hasAnyPlays(user.id),
     getRecords(user.id, user.timezone),
     getRediscoveries(user.id),

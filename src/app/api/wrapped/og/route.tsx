@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
 
   const owner = await prisma.user.findUnique({
     where: { id: userId },
-    select: { name: true },
+    select: { name: true, timezone: true },
   });
   if (!owner) return new Response("Not found", { status: 404 });
 
@@ -83,8 +83,8 @@ export async function GET(request: NextRequest) {
 
   const [overview, artists, tracks] = await Promise.all([
     getOverview(userId, filters),
-    getTopArtists(userId, filters, 1),
-    getTopTracks(userId, filters, 1),
+    getTopArtists(userId, filters, 1, "plays", owner.timezone),
+    getTopTracks(userId, filters, 1, "plays", owner.timezone),
   ]);
 
   const periodLabel = formatPeriodLabel(period, locale, t("recap.yearLabel"));

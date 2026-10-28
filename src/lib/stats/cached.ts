@@ -70,9 +70,11 @@ export function getTopTracksBoth(
   userId: string,
   range: StatsRange,
   limit = 10,
+  timeZone?: string,
 ): Promise<raw.RankPair<raw.TopTrack>> {
-  return cached(key(userId, "tracks-both", limit, rangeKey(range)), () =>
-    raw.getTopTracksBoth(userId, range, limit),
+  return cached(
+    key(userId, "tracks-both", limit, timeZone ?? "", rangeKey(range)),
+    () => raw.getTopTracksBoth(userId, range, limit, timeZone),
   );
 }
 
@@ -80,9 +82,11 @@ export function getTopArtistsBoth(
   userId: string,
   range: StatsRange,
   limit = 10,
+  timeZone?: string,
 ): Promise<raw.RankPair<raw.TopArtist>> {
-  return cached(key(userId, "artists-both", limit, rangeKey(range)), () =>
-    raw.getTopArtistsBoth(userId, range, limit),
+  return cached(
+    key(userId, "artists-both", limit, timeZone ?? "", rangeKey(range)),
+    () => raw.getTopArtistsBoth(userId, range, limit, timeZone),
   );
 }
 
@@ -90,9 +94,11 @@ export function getTopGenresBoth(
   userId: string,
   range: StatsRange,
   limit = 12,
+  timeZone?: string,
 ): Promise<raw.RankPair<raw.GenreStat>> {
-  return cached(key(userId, "genres-both", limit, rangeKey(range)), () =>
-    raw.getTopGenresBoth(userId, range, limit),
+  return cached(
+    key(userId, "genres-both", limit, timeZone ?? "", rangeKey(range)),
+    () => raw.getTopGenresBoth(userId, range, limit, timeZone),
   );
 }
 
@@ -101,9 +107,11 @@ export function getTopTracks(
   range: StatsRange,
   limit = 10,
   metric: RankMetric = "plays",
+  timeZone?: string,
 ): Promise<raw.TopTrack[]> {
-  return cached(key(userId, "tracks", limit, metric, rangeKey(range)), () =>
-    raw.getTopTracks(userId, range, limit, metric),
+  return cached(
+    key(userId, "tracks", limit, metric, timeZone ?? "", rangeKey(range)),
+    () => raw.getTopTracks(userId, range, limit, metric, timeZone),
   );
 }
 
@@ -112,9 +120,11 @@ export function getTopArtists(
   range: StatsRange,
   limit = 10,
   metric: RankMetric = "plays",
+  timeZone?: string,
 ): Promise<raw.TopArtist[]> {
-  return cached(key(userId, "artists", limit, metric, rangeKey(range)), () =>
-    raw.getTopArtists(userId, range, limit, metric),
+  return cached(
+    key(userId, "artists", limit, metric, timeZone ?? "", rangeKey(range)),
+    () => raw.getTopArtists(userId, range, limit, metric, timeZone),
   );
 }
 
@@ -134,9 +144,11 @@ export function getTopGenres(
   range: StatsRange,
   limit = 12,
   metric: RankMetric = "plays",
+  timeZone?: string,
 ): Promise<raw.GenreStat[]> {
-  return cached(key(userId, "genres", limit, metric, rangeKey(range)), () =>
-    raw.getTopGenres(userId, range, limit, metric),
+  return cached(
+    key(userId, "genres", limit, metric, timeZone ?? "", rangeKey(range)),
+    () => raw.getTopGenres(userId, range, limit, metric, timeZone),
   );
 }
 
