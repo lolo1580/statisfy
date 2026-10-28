@@ -16,6 +16,8 @@ test("CSP restreint les images aux CDN Spotify", async ({ request }) => {
   // Pas de joker HTTPS global pour les images.
   expect(csp).not.toContain("img-src 'self' data: blob: https:");
   expect(csp).toContain("frame-ancestors 'none'");
+  // Le serveur E2E est en HTTP : pas de mise à niveau forcée des assets.
+  expect(csp).not.toContain("upgrade-insecure-requests");
   expect(csp).toContain("object-src 'none'");
 
   expect(response.headers()["x-content-type-options"]).toBe("nosniff");

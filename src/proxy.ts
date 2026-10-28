@@ -21,6 +21,14 @@ export function proxy(request: NextRequest) {
   // Les visuels viennent exclusivement du catalogue Spotify (pochettes,
   // portraits) : on restreint `img-src` à ses CDN au lieu d'autoriser tout
   // HTTPS. Les imports historiques ne contiennent que ces domaines.
+  //
+  // `upgrade-insecure-requests` n'est ajouté qu'en HTTPS : sur une instance
+  // servie en HTTP (derrière un proxy mal configuré, ou en local), il forcerait
+  // le navigateur à recharger les assets `/_next/...` en HTTPS et casserait la
+  // page.
+  const isHttps =
+    request.nextUrl.protocol === "https:" ||
+    request.headers.get("x-forwarded-proto") === "https";
   const csp = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
@@ -36,8 +44,7 @@ export function proxy(request: NextRequest) {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    // Force HTTPS pour les sous-ressources (sans effet en HTTP, donc inoffensif).
-    "upgrade-insecure-requests",
+    ...(isHttps ? ["upgrade-insecure-requests"] : []),
   ].join("; ");
 
   // Le CSP doit figurer dans les en-têtes de *requête* pour que Next associe le

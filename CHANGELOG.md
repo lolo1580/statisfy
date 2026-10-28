@@ -134,7 +134,8 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   `api/openapi/*`, `charts/*`). Les imports existants restent inchangés.
 - **Sécurité (CSP)** : `img-src` n'autorise plus tout HTTPS mais uniquement les
   CDN Spotify (`*.scdn.co`, `*.spotifycdn.com`) ; ajout de `media-src`,
-  `manifest-src`, `frame-src 'none'` et `upgrade-insecure-requests`.
+  `manifest-src`, `frame-src 'none'` et, en HTTPS uniquement,
+  `upgrade-insecure-requests`.
 - **API publique** : les erreurs sont localisées selon `Accept-Language`
   (français/anglais) et exposent un `code` stable (`unauthorized`,
   `rate_limited`, `invalid_range`). Une période invalide renvoie désormais
