@@ -32,6 +32,7 @@ import {
   formatDayShort,
   formatDuration,
   formatNumber,
+  formatRelative,
 } from "@/lib/format";
 import { getI18n } from "@/i18n/server";
 import { prisma } from "@/lib/db";
@@ -381,14 +382,19 @@ export default async function DashboardPage({
                         <p className="truncate text-sm font-medium">
                           {artist.name}
                         </p>
-                        <p className="truncate text-xs text-muted">
-                          {t("dash.rediscoverLast", {
-                            date: formatDate(
-                              artist.lastPlayedAt,
-                              user.timezone,
-                              locale,
-                            ),
+                        <p
+                          className="truncate text-xs text-muted"
+                          title={formatDate(
+                            artist.lastPlayedAt,
+                            user.timezone,
+                            locale,
+                          )}
+                        >
+                          {t("dash.rediscoverPlays", {
+                            count: formatNumber(artist.plays, locale),
                           })}
+                          {" · "}
+                          {formatRelative(artist.lastPlayedAt, locale)}
                         </p>
                       </div>
                     </Link>

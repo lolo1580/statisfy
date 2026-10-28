@@ -117,7 +117,7 @@ export const fr: Dictionary = {
     "Aucune donnée pour l'instant. Rendez-vous dans Réglages pour connecter une source ou importer votre historique Spotify.",
   "dash.rediscover": "Redécouvertes",
   "dash.rediscoverSubtitle": "Écoutés autrefois, à réécouter",
-  "dash.rediscoverLast": "Dernière écoute : {date}",
+  "dash.rediscoverPlays": "{count} écoutes",
   "dash.rediscoverEmpty": "Rien à redécouvrir pour l'instant.",
 
   // Rankings

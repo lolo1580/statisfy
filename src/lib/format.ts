@@ -242,7 +242,13 @@ export function formatRelative(
   if (abs < 86_400_000) {
     return rtf.format(Math.round(diff / 3_600_000), "hour");
   }
-  return rtf.format(Math.round(diff / 86_400_000), "day");
+  if (abs < 30 * 86_400_000) {
+    return rtf.format(Math.round(diff / 86_400_000), "day");
+  }
+  if (abs < 365 * 86_400_000) {
+    return rtf.format(Math.round(diff / (30 * 86_400_000)), "month");
+  }
+  return rtf.format(Math.round(diff / (365 * 86_400_000)), "year");
 }
 
 /**

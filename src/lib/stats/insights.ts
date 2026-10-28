@@ -7,63 +7,102 @@ import { computeRecords, type ListeningRecords } from "../records";
 import { getTimeBuckets, type DailyStat } from "./timeline";
 import { DAY_MS, bucketDate, parseGenres, type StatsRange } from "./shared";
 import type { TopArtist } from "./rankings";
+import { pickDiverseRediscoveries, rankRediscoveries } from "../rediscoveries";
 
 // --- Redécouvertes, records & habitudes ------------------------------------
 
-export type RediscoveredArtist = TopArtist & { lastPlayedAt: Date };
+export type RediscoveredArtist = TopArtist & {
+  lastPlayedAt: Date;
+  /** Ancienneté de la dernière écoute, en jours. */
+  daysSince: number;
+};
 
 /**
- * Artistes « oubliés » : beaucoup écoutés par le passé mais plus depuis
- * `afterDays`. Toujours calculé sur **tout** l'historique (indépendant de la
- * période sélectionnée), car c'est un conseil de réécoute, pas une stat de période.
+ * Artistes « oubliés » : suffisamment écoutés par le passé, plus depuis
+ * `afterDays`, et **classés par un score** qui combine affection, silence,
+ * longévité et régularité (cf. `src/lib/rediscoveries.ts`).
+ *
+ * Toujours calculé sur **tout** l'historique (indépendant de la période
+ * sélectionnée), car c'est un conseil de réécoute, pas une stat de période.
+ * Le filtrage lourd (seuil d'écoutes + ancienneté) est fait en SQL ; seuls les
+ * meilleurs candidats sont chargés pour appliquer la diversité des genres.
  */
 export async function getRediscoveries(
   userId: string,
   options: { afterDays?: number; minPlays?: number; limit?: number } = {},
 ): Promise<RediscoveredArtist[]> {
   const { afterDays = 60, minPlays = 5, limit = 5 } = options;
-  const cutoff = new Date(Date.now() - afterDays * DAY_MS);
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - afterDays * DAY_MS);
 
-  const groups = await prisma.play.groupBy({
-    by: ["artistId"],
-    where: { userId, counted: true },
-    _count: { _all: true },
-    _sum: { msPlayed: true },
-    _max: { playedAt: true },
-  });
+  const rows = await prisma.$queryRaw<
+    Array<{
+      artistId: string;
+      plays: number;
+      msPlayed: bigint;
+      lastPlayedAt: Date;
+      firstPlayedAt: Date;
+      activeMonths: number;
+    }>
+  >(
+    Prisma.sql`
+      SELECT "artistId",
+             COUNT(*)::int AS plays,
+             COALESCE(SUM("msPlayed"), 0)::bigint AS "msPlayed",
+             MAX("playedAt") AS "lastPlayedAt",
+             MIN("playedAt") AS "firstPlayedAt",
+             COUNT(DISTINCT date_trunc('month', "playedAt"))::int AS "activeMonths"
+      FROM "Play"
+      WHERE "userId" = ${userId} AND "counted" = true
+      GROUP BY "artistId"
+      HAVING MAX("playedAt") < ${cutoff} AND COUNT(*) >= ${minPlays}
+    `,
+  );
 
-  const forgotten = groups
-    .filter(
-      (row) =>
-        row._max.playedAt !== null &&
-        row._max.playedAt < cutoff &&
-        row._count._all >= minPlays,
-    )
-    .sort((a, b) => (b._sum.msPlayed ?? 0) - (a._sum.msPlayed ?? 0))
-    .slice(0, limit);
+  if (rows.length === 0) return [];
 
-  if (forgotten.length === 0) return [];
+  const ranked = rankRediscoveries(
+    rows.map((row) => ({
+      artistId: row.artistId,
+      plays: Number(row.plays),
+      msPlayed: Number(row.msPlayed),
+      lastPlayedAt: row.lastPlayedAt,
+      firstPlayedAt: row.firstPlayedAt,
+      activeMonths: Number(row.activeMonths),
+    })),
+    now,
+  );
 
+  // On ne charge que les meilleurs candidats : assez pour appliquer la
+  // diversité de genres sans rapatrier toute la bibliothèque.
+  const shortlist = ranked.slice(0, Math.max(limit * 10, 20));
   const artists = await prisma.artist.findMany({
-    where: { id: { in: forgotten.map((row) => row.artistId) } },
+    where: { id: { in: shortlist.map((entry) => entry.item.artistId) } },
   });
   const byId = new Map(artists.map((artist) => [artist.id, artist]));
 
-  return forgotten.flatMap((row) => {
-    const artist = byId.get(row.artistId);
-    if (!artist || !row._max.playedAt) return [];
+  const candidates = shortlist.flatMap((entry) => {
+    const artist = byId.get(entry.item.artistId);
+    if (!artist) return [];
     return [
       {
-        id: artist.id,
-        name: artist.name,
-        plays: row._count._all,
-        msPlayed: row._sum.msPlayed ?? 0,
-        imageUrl: artist.imageUrl,
-        genres: parseGenres(artist.genres),
-        lastPlayedAt: row._max.playedAt,
+        item: {
+          id: artist.id,
+          name: artist.name,
+          plays: entry.item.plays,
+          msPlayed: entry.item.msPlayed,
+          imageUrl: artist.imageUrl,
+          genres: parseGenres(artist.genres),
+          lastPlayedAt: entry.item.lastPlayedAt,
+          daysSince: entry.daysSince,
+        },
+        score: entry.score,
+        daysSince: entry.daysSince,
       },
     ];
   });
+
+  return pickDiverseRediscoveries(candidates, limit).map(({ item }) => item);
 }
 
 /**

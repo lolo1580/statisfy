@@ -119,7 +119,7 @@ export const en: Dictionary = {
     "No data yet. Head to Settings to connect a source or import your Spotify history.",
   "dash.rediscover": "Rediscoveries",
   "dash.rediscoverSubtitle": "Loved before, worth another listen",
-  "dash.rediscoverLast": "Last played: {date}",
+  "dash.rediscoverPlays": "{count} plays",
   "dash.rediscoverEmpty": "Nothing to rediscover right now.",
 
   // Rankings

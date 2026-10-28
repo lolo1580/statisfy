@@ -128,6 +128,12 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   `pnpm format:check`, vérification en CI), seuils de couverture Vitest,
   test de parité des dictionnaires en/fr, `SECURITY.md` et `CONTRIBUTING.md`,
   version Node minimale déclarée (`engines`), image `curlimages/curl` épinglée.
+- **Redécouvertes** : la section classe désormais les artistes délaissés par un
+  score qui combine affection (nombre d'écoutes, en racine carrée), silence
+  (ancienneté de la dernière écoute, plafonné), longévité de la relation et
+  régularité (mois actifs distincts). Filtrage `HAVING` en SQL, diversité des
+  genres principaux, et affichage « X écoutes · il y a … » sur le tableau de
+  bord.
 - **Découpage des gros modules** : `src/lib/stats.ts`, `src/lib/log-sink.ts`,
   `src/lib/api/openapi.ts` et `src/components/charts.tsx` deviennent des
   barrels ; l'implémentation est répartie par domaine (`stats/*`, `log-sink/*`,

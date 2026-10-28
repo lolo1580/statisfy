@@ -29,6 +29,15 @@ describe("formatRelative", () => {
   it("gère l'instant présent", () => {
     expect(formatRelative(now, "en", now)).toBe("now");
   });
+
+  it("utilise les mois et les années pour les dates anciennes", () => {
+    expect(
+      formatRelative(new Date("2026-01-25T12:00:00.000Z"), "fr", now),
+    ).toContain("mois");
+    expect(
+      formatRelative(new Date("2024-10-25T12:00:00.000Z"), "en", now),
+    ).toContain("year");
+  });
 });
 
 describe("formatDuration", () => {

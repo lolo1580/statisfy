@@ -197,44 +197,62 @@ describe("getRediscoveries", () => {
     vi.setSystemTime(new Date("2026-06-01T12:00:00Z"));
   });
 
-  it("garde les artistes assez écoutés et délaissés depuis le seuil", async () => {
-    prismaMock.play.groupBy.mockResolvedValue([
+  it("classe par score et privilégie la diversité des genres", async () => {
+    prismaMock.$queryRaw.mockResolvedValue([
       {
         artistId: "old-big",
-        _count: { _all: 20 },
-        _sum: { msPlayed: 9_000 },
-        _max: { playedAt: new Date("2026-01-01T00:00:00Z") },
+        plays: 20,
+        msPlayed: BigInt(9_000),
+        lastPlayedAt: new Date("2026-01-01T12:00:00Z"),
+        firstPlayedAt: new Date("2024-01-01T00:00:00Z"),
+        activeMonths: 12,
       },
       {
-        artistId: "old-small",
-        _count: { _all: 2 },
-        _sum: { msPlayed: 8_000 },
-        _max: { playedAt: new Date("2026-01-01T00:00:00Z") },
+        artistId: "old-medium",
+        plays: 8,
+        msPlayed: BigInt(4_000),
+        lastPlayedAt: new Date("2026-01-01T12:00:00Z"),
+        firstPlayedAt: new Date("2025-06-01T00:00:00Z"),
+        activeMonths: 4,
       },
       {
-        artistId: "recent",
-        _count: { _all: 50 },
-        _sum: { msPlayed: 99_000 },
-        _max: { playedAt: new Date("2026-05-30T00:00:00Z") },
+        artistId: "old-same-genre",
+        plays: 40,
+        msPlayed: BigInt(20_000),
+        lastPlayedAt: new Date("2026-01-01T12:00:00Z"),
+        firstPlayedAt: new Date("2024-01-01T00:00:00Z"),
+        activeMonths: 12,
       },
     ]);
     prismaMock.artist.findMany.mockResolvedValue([
-      { id: "old-big", name: "Big", imageUrl: null, genres: null },
+      { id: "old-big", name: "Big", imageUrl: null, genres: '["rock"]' },
+      { id: "old-medium", name: "Medium", imageUrl: null, genres: '["jazz"]' },
+      {
+        id: "old-same-genre",
+        name: "Same",
+        imageUrl: null,
+        genres: '["rock"]',
+      },
     ]);
 
     const found = await getRediscoveries("u1", {
       afterDays: 60,
       minPlays: 5,
-      limit: 5,
+      limit: 2,
     });
 
-    expect(found).toHaveLength(1);
+    // « Same » a le meilleur score (rock) ; « Big » est écarté pour diversité,
+    // on complète avec « Medium » (jazz).
+    expect(found.map((artist) => artist.id)).toEqual([
+      "old-same-genre",
+      "old-medium",
+    ]);
     expect(found[0]).toMatchObject({
-      id: "old-big",
-      name: "Big",
-      plays: 20,
-      msPlayed: 9_000,
-      genres: [],
+      name: "Same",
+      plays: 40,
+      msPlayed: 20_000,
+      genres: ["rock"],
+      daysSince: 151,
     });
   });
 });

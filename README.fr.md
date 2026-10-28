@@ -81,8 +81,9 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
 - **Heatmap** : activité annuelle façon GitHub (écoutes par jour sur 12 mois).
 - **Heatmap 7×24** : répartition des écoutes par jour de la semaine et heure
   locale, sur la page Historique.
-- **Redécouvertes & records** : section « Redécouvertes » (artistes écoutés
-  autrefois puis délaissés, à réécouter) et « Records & séries » (jours
+- **Redécouvertes & records** : section « Redécouvertes » qui classe les coups
+  de cœur délaissés selon les écoutes, l'ancienneté de la dernière écoute, la
+  longévité et la diversité des genres, et « Records & séries » (jours
   d'affilée, meilleure série, jours actifs, journée la plus intense) sur le
   tableau de bord.
 - **Habitudes d'écoute** : quand l'historique Spotify **étendu** a été importé,
