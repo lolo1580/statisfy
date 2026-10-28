@@ -39,10 +39,12 @@ to be **easy to deploy**, **fast** and **pleasant to explore**.
   previous period, busiest day/hour and discovered artists.
 - **Compare periods**: side-by-side two-period comparator with overlaid
   listening time, metric deltas and parallel rankings (artists, tracks, genres).
-- **Export**: recap as a **PNG image** (square 1080×1080 or story 1080×1920) and
-  **CSV** of the whole history. The recap can also be shared through a **public
-  read-only link** (enable/disable in Settings), with a generated **Open
-  Graph/Twitter preview** (1200×630 image).
+- **Export**: recap as a **PNG image** (square 1080×1080 or story 1080×1920,
+  from a single dropdown menu) and **CSV** of the whole history. The image can
+  be sent to **Instagram** through the system share sheet (or downloaded and
+  copied when native file sharing is unavailable). The recap can also be shared
+  through a **public read-only link** (enable/disable in Settings), with a
+  generated **Open Graph/Twitter preview** (1200×630 image).
 - **Public profile**: opt-in read-only page with selectable sections (top
   artists/tracks, recent plays, yearly heatmap) and a period selector.
 - **Outgoing webhooks**: notify Discord, ntfy, Home Assistant or n8n when a sync

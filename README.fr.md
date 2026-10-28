@@ -44,9 +44,11 @@ pour être **simple à déployer**, **rapide** et **agréable à explorer**.
   temps d'écoute superposé, écarts par indicateur et classements (artistes,
   titres, genres) en parallèle.
 - **Export** : récapitulatif en **image PNG** (carré 1080×1080 ou story
-  1080×1920) et **CSV** de tout l'historique. Le récapitulatif peut aussi être
-  partagé via un **lien public en lecture seule** (activation/désactivation
-  dans les Réglages).
+  1080×1920, depuis un menu déroulant unique) et **CSV** de tout l'historique.
+  L'image peut être envoyée vers **Instagram** via la feuille de partage du
+  système (ou téléchargée et copiée quand le partage natif de fichiers n'est pas
+  disponible). Le récapitulatif peut aussi être partagé via un **lien public en
+  lecture seule** (activation/désactivation dans les Réglages).
 - **Profil public** : page en lecture seule (opt-in) avec sections au choix
   (top artistes/titres, dernières écoutes, heatmap annuelle) et sélecteur de
   période.

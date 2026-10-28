@@ -1,7 +1,12 @@
 import { getCurrentUser } from "@/lib/auth/dal";
 import { getPlayingYears } from "@/lib/stats";
-import { monthNames, parseWrappedPeriod } from "@/lib/period";
+import {
+  formatPeriodLabel,
+  monthNames,
+  parseWrappedPeriod,
+} from "@/lib/period";
 import { WrappedContent } from "@/components/wrapped-content";
+import { RecapExportMenu } from "@/components/recap-export";
 import { getI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +27,8 @@ export default async function WrappedPage({
 
   const years = await getPlayingYears(user.id);
   const monthsLong = monthNames(locale);
+  const periodLabel = formatPeriodLabel(period, locale, t("recap.yearLabel"));
+  const imageQuery = `year=${period.year}${period.month ? `&month=${period.month}` : ""}`;
   const yearOptions = [
     ...new Set([...years, period.year, new Date().getUTCFullYear()]),
   ]
@@ -68,20 +75,11 @@ export default async function WrappedPage({
               {t("recap.view")}
             </button>
           </form>
-          <a
-            href={`/api/wrapped/image?year=${period.year}${period.month ? `&month=${period.month}` : ""}`}
-            download={`statisfy-${period.key}.png`}
-            className="rounded-lg border border-border px-4 py-1.5 text-sm transition-colors hover:border-accent/40 hover:text-accent"
-          >
-            {t("recap.download")}
-          </a>
-          <a
-            href={`/api/wrapped/image?year=${period.year}${period.month ? `&month=${period.month}` : ""}&format=story`}
-            download={`statisfy-story-${period.key}.png`}
-            className="rounded-lg border border-border px-4 py-1.5 text-sm transition-colors hover:border-accent/40 hover:text-accent"
-          >
-            {t("recap.downloadStory")}
-          </a>
+          <RecapExportMenu
+            query={imageQuery}
+            periodKey={period.key}
+            periodLabel={periodLabel}
+          />
         </div>
       </div>
 

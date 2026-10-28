@@ -128,6 +128,12 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   `pnpm format:check`, vérification en CI), seuils de couverture Vitest,
   test de parité des dictionnaires en/fr, `SECURITY.md` et `CONTRIBUTING.md`,
   version Node minimale déclarée (`engines`), image `curlimages/curl` épinglée.
+- **Export du récapitulatif** : les deux formats d'image (carré 1:1 et story
+  9:16) sont regroupés dans un menu déroulant. Une entrée « Partager sur
+  Instagram » utilise la feuille de partage native (image story prête à
+  publier) ; sans partage de fichiers, l'image est téléchargée/copiée et
+  Instagram est ouvert. Préchargement de l'image à l'ouverture du menu pour
+  préserver l'activation utilisateur.
 - **Redécouvertes** : la section classe désormais les artistes délaissés par un
   score qui combine affection (nombre d'écoutes, en racine carrée), silence
   (ancienneté de la dernière écoute, plafonné), longévité de la relation et
