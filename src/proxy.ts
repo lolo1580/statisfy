@@ -18,18 +18,26 @@ export function proxy(request: NextRequest) {
   }
 
   const nonce = crypto.randomUUID().replace(/-/g, "");
+  // Les visuels viennent exclusivement du catalogue Spotify (pochettes,
+  // portraits) : on restreint `img-src` à ses CDN au lieu d'autoriser tout
+  // HTTPS. Les imports historiques ne contiennent que ces domaines.
   const csp = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https:",
+    "img-src 'self' data: blob: https://*.scdn.co https://*.spotifycdn.com",
     "font-src 'self' data:",
     "connect-src 'self'",
+    "media-src 'self'",
     "worker-src 'self' blob:",
+    "manifest-src 'self'",
+    "frame-src 'none'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
+    // Force HTTPS pour les sous-ressources (sans effet en HTTP, donc inoffensif).
+    "upgrade-insecure-requests",
   ].join("; ");
 
   // Le CSP doit figurer dans les en-têtes de *requête* pour que Next associe le

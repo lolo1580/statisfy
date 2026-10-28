@@ -1,6 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { loadStatsApiPayload } from "@/lib/api/public-stats";
-import { authorizeStatsRequest } from "@/lib/api/stats-request";
+import {
+  authorizeStatsRequest,
+  statsInvalidRange,
+} from "@/lib/api/stats-request";
+import { isRangePreference } from "@/lib/range";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +19,11 @@ export const dynamic = "force-dynamic";
  *   GET /api/public/stats?range=30&token=...
  */
 export async function GET(request: NextRequest) {
+  const range = request.nextUrl.searchParams.get("range") ?? "30";
+  if (!isRangePreference(range)) return statsInvalidRange(request);
+
   const auth = await authorizeStatsRequest(request);
   if ("response" in auth) return auth.response;
-
-  const range = request.nextUrl.searchParams.get("range") ?? "30";
   const payload = await loadStatsApiPayload(auth.user, range);
 
   return NextResponse.json(payload, {
