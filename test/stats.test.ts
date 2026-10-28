@@ -25,6 +25,7 @@ import {
   getDailyStats,
   getListeningBehavior,
   getOverview,
+  getRecords,
   getRediscoveries,
   getTopArtistsBoth,
   getTopGenres,
@@ -57,10 +58,9 @@ describe("getOverview", () => {
       _min: { playedAt: first },
       _max: { playedAt: last },
     });
-    prismaMock.play.groupBy.mockResolvedValue([
-      { artistId: "a1", trackId: "t1", albumId: "al1" },
-      { artistId: "a1", trackId: "t2", albumId: "al1" },
-      { artistId: "a2", trackId: "t3", albumId: null },
+    // `COUNT(DISTINCT …)` : PostgreSQL renvoie des bigint.
+    prismaMock.$queryRaw.mockResolvedValue([
+      { artists: BigInt(2), tracks: BigInt(3), albums: BigInt(1) },
     ]);
     prismaMock.play.count.mockResolvedValue(20);
 
@@ -80,6 +80,27 @@ describe("getOverview", () => {
     expect(prismaMock.play.count).toHaveBeenCalledWith({
       where: expect.objectContaining({ userId: "u1", counted: undefined }),
     });
+  });
+});
+
+describe("getRecords", () => {
+  it("déduit les séries à partir des jours actifs agrégés en SQL", async () => {
+    prismaMock.$queryRaw.mockResolvedValue([
+      { day: "2026-10-25", plays: 3, msPlayed: BigInt(1_000) },
+      { day: "2026-10-26", plays: 2, msPlayed: BigInt(2_000) },
+      { day: "2026-10-27", plays: 1, msPlayed: BigInt(3_000) },
+    ]);
+    vi.setSystemTime(new Date("2026-10-27T12:00:00Z"));
+
+    const records = await getRecords("u1", "UTC");
+
+    expect(records).toEqual({
+      currentStreak: 3,
+      longestStreak: 3,
+      activeDays: 3,
+      busiestDay: { day: "2026-10-27", msPlayed: 3_000 },
+    });
+    expect(prismaMock.$queryRaw).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -221,9 +242,33 @@ describe("getRediscoveries", () => {
 describe("classements double métrique", () => {
   it("getTopTracksBoth : une seule agrégation, titres lus une fois", async () => {
     prismaMock.$queryRaw.mockResolvedValue([
-      { id: "t1", plays: 10, msPlayed: 1_000, rp: 1, rt: 2, by_plays: true, by_time: true },
-      { id: "t2", plays: 5, msPlayed: 9_000, rp: 2, rt: 1, by_plays: true, by_time: true },
-      { id: "t3", plays: 1, msPlayed: 500, rp: 3, rt: 3, by_plays: false, by_time: false },
+      {
+        id: "t1",
+        plays: 10,
+        msPlayed: 1_000,
+        rp: 1,
+        rt: 2,
+        by_plays: true,
+        by_time: true,
+      },
+      {
+        id: "t2",
+        plays: 5,
+        msPlayed: 9_000,
+        rp: 2,
+        rt: 1,
+        by_plays: true,
+        by_time: true,
+      },
+      {
+        id: "t3",
+        plays: 1,
+        msPlayed: 500,
+        rp: 3,
+        rt: 3,
+        by_plays: false,
+        by_time: false,
+      },
     ]);
     prismaMock.track.findMany.mockResolvedValue([
       {
@@ -263,16 +308,31 @@ describe("classements double métrique", () => {
     });
     // Une seule lecture pour les deux classements, sur l'union des ids.
     expect(prismaMock.track.findMany).toHaveBeenCalledTimes(1);
-    expect(prismaMock.track.findMany.mock.calls[0][0].where.id.in.sort()).toEqual([
-      "t1",
-      "t2",
-    ]);
+    expect(
+      prismaMock.track.findMany.mock.calls[0][0].where.id.in.sort(),
+    ).toEqual(["t1", "t2"]);
   });
 
   it("getTopArtistsBoth : conserve les genres et l'ordre de chaque métrique", async () => {
     prismaMock.$queryRaw.mockResolvedValue([
-      { id: "a1", plays: 8, msPlayed: 2_000, rp: 1, rt: 2, by_plays: true, by_time: true },
-      { id: "a2", plays: 3, msPlayed: 8_000, rp: 2, rt: 1, by_plays: true, by_time: true },
+      {
+        id: "a1",
+        plays: 8,
+        msPlayed: 2_000,
+        rp: 1,
+        rt: 2,
+        by_plays: true,
+        by_time: true,
+      },
+      {
+        id: "a2",
+        plays: 3,
+        msPlayed: 8_000,
+        rp: 2,
+        rt: 1,
+        by_plays: true,
+        by_time: true,
+      },
     ]);
     prismaMock.artist.findMany.mockResolvedValue([
       { id: "a1", name: "A", imageUrl: null, genres: '["rock"]' },

@@ -59,8 +59,7 @@ export const en: Dictionary = {
   "auth.noAccount": "No account yet?",
   "auth.createAccount": "Create an account",
   "auth.signUpTitle": "Create an account",
-  "auth.firstUser":
-    "First setup: this account will be an administrator.",
+  "auth.firstUser": "First setup: this account will be an administrator.",
   "auth.join": "Join your Statisfy instance.",
   "auth.name": "Name",
   "auth.namePlaceholder": "Your name",
@@ -114,8 +113,7 @@ export const en: Dictionary = {
   "dash.genresWeighted": "Weighted by plays",
   "dash.noTracks": "No tracks yet.",
   "dash.noArtists": "No artists yet.",
-  "dash.genresUnavailable":
-    "Genres unavailable. Sync Spotify to enrich them.",
+  "dash.genresUnavailable": "Genres unavailable. Sync Spotify to enrich them.",
   "dash.avgPerDay": "avg/day",
   "dash.empty":
     "No data yet. Head to Settings to connect a source or import your Spotify history.",
@@ -148,7 +146,8 @@ export const en: Dictionary = {
   "history.daily": "Daily listening",
   "history.hourly": "Hourly breakdown",
   "history.hourlySubtitle": "Average per active day, over the selected period",
-  "history.recent": "Last 50 plays",
+  "history.recent": "Last {count} plays",
+  "history.loadMore": "Show 50 more",
   "history.noPlays": "No plays recorded.",
   "history.weekdayHour": "Day and hour",
   "history.weekdayHourSubtitle": "Plays by weekday and local hour",
@@ -234,15 +233,15 @@ export const en: Dictionary = {
   "settings.timezone": "Timezone (used for statistics)",
   "settings.save": "Save",
   "settings.connectSpotify": "Connect Spotify",
-  "settings.connectSpotifySubtitle":
-    "Recent plays, genres and covers",
+  "settings.connectSpotifySubtitle": "Recent plays, genres and covers",
   "settings.connectSpotifyCta": "Connect my Spotify account",
   "settings.spotifyNotConfigured":
     "Set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET (app created on the Spotify dashboard) then restart the server.",
   "settings.redirectUri": "Redirect URI to allow:",
   "settings.import": "Import Spotify history",
   "settings.importSubtitle": "From your Spotify privacy data",
-  "settings.importRequest": "Request your data on Spotify (Extended streaming history)",
+  "settings.importRequest":
+    "Request your data on Spotify (Extended streaming history)",
   "settings.importHint":
     "Spotify data export (.zip) or the Streaming_History_Audio_*.json / StreamingHistory*.json files. Multiple files accepted.",
   "settings.importCta": "Import",
@@ -438,8 +437,7 @@ export const en: Dictionary = {
   "err.deleteConfirm": "Check the confirmation box to continue.",
   "err.tooManyAttempts": "Too many attempts. Try again later.",
   "err.spotifyAccountRequired": "Enter your Spotify account.",
-  "msg.spotifyRequested":
-    "Request sent. An administrator will validate it.",
+  "msg.spotifyRequested": "Request sent. An administrator will validate it.",
   "msg.passwordReset":
     "Temporary password: {password} — share it securely, then have the user change it.",
   "err.enrichFailed": "Artwork enrichment failed.",
@@ -555,7 +553,8 @@ export const en: Dictionary = {
   "admin.registrationTitle": "Registrations",
   "admin.registrationSubtitle": "Who can create an account",
   "admin.thresholdTitle": "Play counting threshold",
-  "admin.thresholdSubtitle": "A play counts only if at least this share of the track was listened to. 0% counts everything.",
+  "admin.thresholdSubtitle":
+    "A play counts only if at least this share of the track was listened to. 0% counts everything.",
   "admin.thresholdLabel": "Minimum listened",
   "admin.thresholdSave": "Save and recount",
 
@@ -586,10 +585,8 @@ export const en: Dictionary = {
   // Real User Monitoring
   "admin.rumTitle": "Real User Monitoring",
   "admin.rumSubtitle": "OpenObserve browser SDK",
-  "admin.rumEnabled":
-    "Enabled → {site} (org “{org}”, sampling {rate}%).",
-  "admin.rumDisabled":
-    "Not configured. Fill in the form below to enable RUM.",
+  "admin.rumEnabled": "Enabled → {site} (org “{org}”, sampling {rate}%).",
+  "admin.rumDisabled": "Not configured. Fill in the form below to enable RUM.",
   "admin.rumEnable": "Enable RUM",
   "admin.rumUrl": "OpenObserve URL",
   "admin.rumUrlPlaceholder": "http://192.168.1.10:5080",
@@ -609,8 +606,7 @@ export const en: Dictionary = {
   "admin.rumPersistenceMemory": "Memory (no durable cookie)",
   "admin.rumPersistenceCookie": "Cookie",
   "admin.rumPersistenceLocalStorage": "Local storage",
-  "admin.rumPersistenceHint":
-    "Memory starts a new session on each page load.",
+  "admin.rumPersistenceHint": "Memory starts a new session on each page load.",
   "admin.rumTrackResources": "Track resources",
   "admin.rumTrackLongTasks": "Track long tasks",
   "admin.rumTrackInteractions": "Track interactions",
@@ -653,7 +649,8 @@ export const en: Dictionary = {
   "admin.rumLastError": "Last error: {when} (HTTP {status}).",
   "admin.rumLastErrorNetwork": "Last error: {when} (network error).",
   "admin.rumOpen": "Open OpenObserve",
-  "settings.completionRate": "{percent}% of plays reached the listening threshold.",
+  "settings.completionRate":
+    "{percent}% of plays reached the listening threshold.",
   "admin.backupTitle": "Backup & restore",
   "admin.backupSubtitle": "Export or replace the database",
   "admin.exportDbHint": "Full PostgreSQL dump of this instance.",
@@ -672,8 +669,7 @@ export const en: Dictionary = {
   "admin.logDate": "Date",
   "admin.logMessage": "Message",
   "admin.logClear": "Clear log",
-  "admin.logClearConfirm":
-    "Delete all log entries? This cannot be undone.",
+  "admin.logClearConfirm": "Delete all log entries? This cannot be undone.",
   "admin.logTest": "Test sink",
   "admin.logTestSending": "Sending…",
   "admin.logTestSent": "Test event sent to the log sink ({sink}).",
@@ -704,7 +700,8 @@ export const en: Dictionary = {
 
   // Backup restore
   "settings.restore": "Restore a backup",
-  "settings.restoreSubtitle": "Import a `.dump` file — replaces the current data",
+  "settings.restoreSubtitle":
+    "Import a `.dump` file — replaces the current data",
   "settings.restoreHint":
     "A file created by “Database (.dump)” or found in the backups folder.",
   "settings.restoreCta": "Restore",

@@ -14,12 +14,16 @@ import {
   SectionTitle,
   StatCard,
 } from "@/components/ui";
-import { formatDate, formatDateTime, formatDuration, formatNumber } from "@/lib/format";
+import {
+  formatDate,
+  formatDateTime,
+  formatDayShort,
+  formatDuration,
+  formatNumber,
+} from "@/lib/format";
 import { getI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
-
-const dayLabel = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(2, 4)}`;
 
 export default async function ArtistPage({
   params,
@@ -28,9 +32,10 @@ export default async function ArtistPage({
   const user = await getCurrentUser();
   const { locale, t } = await getI18n();
   const dayTitle = (iso: string) =>
-    new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(
-      new Date(`${iso}T00:00:00Z`),
-    );
+    new Intl.DateTimeFormat(locale, {
+      dateStyle: "long",
+      timeZone: "UTC",
+    }).format(new Date(`${iso}T00:00:00Z`));
   const { id } = await params;
   const sp = await searchParams;
   const parsed = parseRange(await resolveRangeParam(sp.range), user.timezone);
@@ -116,7 +121,7 @@ export default async function ArtistPage({
           <SectionTitle title={t("dash.overTime")} />
           <AreaChart
             points={detail.daily.map((d) => ({
-              label: dayLabel(d.day),
+              label: formatDayShort(d.day),
               value: d.msPlayed,
               title: dayTitle(d.day),
             }))}

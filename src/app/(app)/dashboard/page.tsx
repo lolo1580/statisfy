@@ -15,17 +15,30 @@ import { RangeTabs } from "@/components/range-tabs";
 import { parseRange } from "@/lib/range";
 import { resolveRangeParam } from "@/lib/range-preference";
 import { AreaChart } from "@/components/charts";
-import { Card, Cover, EmptyState, SectionTitle, StatCard } from "@/components/ui";
-import { TopArtistsPanel, TopGenresPanel, TopTracksPanel } from "@/components/ranking-panels";
-import { formatDate, formatDuration, formatNumber } from "@/lib/format";
+import {
+  Card,
+  Cover,
+  EmptyState,
+  SectionTitle,
+  StatCard,
+} from "@/components/ui";
+import {
+  TopArtistsPanel,
+  TopGenresPanel,
+  TopTracksPanel,
+} from "@/components/ranking-panels";
+import {
+  formatDate,
+  formatDayShort,
+  formatDuration,
+  formatNumber,
+} from "@/lib/format";
 import { getI18n } from "@/i18n/server";
 import { prisma } from "@/lib/db";
 import { dismissChecklist } from "@/lib/actions/onboarding";
 import { WelcomeModal } from "@/components/welcome-modal";
 
 export const dynamic = "force-dynamic";
-
-const dayLabel = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(2, 4)}`;
 
 /** Ligne de la checklist « Bien démarrer ». */
 function ChecklistItem({
@@ -91,9 +104,10 @@ export default async function DashboardPage({
   const user = await getCurrentUser();
   const { locale, t } = await getI18n();
   const dayTitle = (iso: string) =>
-    new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(
-      new Date(`${iso}T00:00:00Z`),
-    );
+    new Intl.DateTimeFormat(locale, {
+      dateStyle: "long",
+      timeZone: "UTC",
+    }).format(new Date(`${iso}T00:00:00Z`));
   const params = await searchParams;
   const parsed = parseRange(
     await resolveRangeParam(params.range),
@@ -159,7 +173,7 @@ export default async function DashboardPage({
         title: `${String(h.hour).padStart(2, "0")}:00`,
       }))
     : timeline.daily.map((d) => ({
-        label: dayLabel(d.day),
+        label: formatDayShort(d.day),
         value: d.msPlayed,
         title: dayTitle(d.day),
       }));
@@ -249,7 +263,10 @@ export default async function DashboardPage({
         ) : (
           <EmptyState>
             {t("dash.empty")}{" "}
-            <Link href="/settings/sources" className="text-accent hover:underline">
+            <Link
+              href="/settings/sources"
+              className="text-accent hover:underline"
+            >
               {t("nav.settings")}
             </Link>
           </EmptyState>
@@ -300,7 +317,9 @@ export default async function DashboardPage({
           <Card>
             <SectionTitle
               title={t("dash.overTime")}
-              subtitle={isSingleDay ? t("dash.hourlyTime") : t("dash.dailyTime")}
+              subtitle={
+                isSingleDay ? t("dash.hourlyTime") : t("dash.dailyTime")
+              }
             />
             <AreaChart points={overTimePoints} />
           </Card>

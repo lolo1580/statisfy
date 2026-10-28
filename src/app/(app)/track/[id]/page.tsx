@@ -14,12 +14,15 @@ import {
   SectionTitle,
   StatCard,
 } from "@/components/ui";
-import { formatDateTime, formatDuration, formatNumber } from "@/lib/format";
+import {
+  formatDateTime,
+  formatDayShort,
+  formatDuration,
+  formatNumber,
+} from "@/lib/format";
 import { getI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
-
-const dayLabel = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(2, 4)}`;
 
 export default async function TrackPage({
   params,
@@ -28,9 +31,10 @@ export default async function TrackPage({
   const user = await getCurrentUser();
   const { locale, t } = await getI18n();
   const dayTitle = (iso: string) =>
-    new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(
-      new Date(`${iso}T00:00:00Z`),
-    );
+    new Intl.DateTimeFormat(locale, {
+      dateStyle: "long",
+      timeZone: "UTC",
+    }).format(new Date(`${iso}T00:00:00Z`));
   const { id } = await params;
   const sp = await searchParams;
   const parsed = parseRange(await resolveRangeParam(sp.range), user.timezone);
@@ -84,7 +88,9 @@ export default async function TrackPage({
               {track.genres.slice(0, 3).map((genre) => (
                 <Badge key={genre}>{genre}</Badge>
               ))}
-              {track.isrc ? <Badge tone="violet">ISRC {track.isrc}</Badge> : null}
+              {track.isrc ? (
+                <Badge tone="violet">ISRC {track.isrc}</Badge>
+              ) : null}
             </div>
           </div>
         </div>
@@ -117,7 +123,7 @@ export default async function TrackPage({
             <SectionTitle title={t("dash.overTime")} />
             <AreaChart
               points={detail.daily.map((d) => ({
-                label: dayLabel(d.day),
+                label: formatDayShort(d.day),
                 value: d.msPlayed,
                 title: dayTitle(d.day),
               }))}

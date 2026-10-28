@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
       },
     },
   },
-  // En-têtes de sécurité de base. Le **CSP** est géré par `middleware.ts`
+  // En-têtes de sécurité de base. Le **CSP** est géré par `src/proxy.ts`
   // (nonce par requête), car il doit être posé sur la requête pour que Next
   // applique le nonce à ses scripts d'hydratation.
   async headers() {

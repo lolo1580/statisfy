@@ -1,9 +1,9 @@
-import 'server-only'
+import "server-only";
 
-import { prisma } from './db'
-import { Prisma } from '../generated/prisma/client'
-import { dayKey, getTimezoneOffsetMs, hourOf } from './format'
-import { computeRecords, type ListeningRecords } from './records'
+import { prisma } from "./db";
+import { Prisma } from "../generated/prisma/client";
+import { dayKey, getTimezoneOffsetMs, hourOf } from "./format";
+import { computeRecords, type ListeningRecords } from "./records";
 
 /**
  * Filtres applicables aux agrégations.
@@ -11,31 +11,31 @@ import { computeRecords, type ListeningRecords } from './records'
  * - `artistId` / `trackId` / `albumId` restreignent à une entité.
  */
 export type StatsRange = {
-  days: number | null
-  artistId?: string
-  trackId?: string
-  albumId?: string
+  days: number | null;
+  artistId?: string;
+  trackId?: string;
+  albumId?: string;
   /** Bornes explicites (prioritaires sur `days`). `to` est exclusif. */
-  from?: Date
-  to?: Date
-}
+  from?: Date;
+  to?: Date;
+};
 
 function buildWhere(userId: string, range: StatsRange): Prisma.PlayWhereInput {
-  const where: Prisma.PlayWhereInput = { userId, counted: true }
+  const where: Prisma.PlayWhereInput = { userId, counted: true };
   if (range.from || range.to) {
     where.playedAt = {
       ...(range.from ? { gte: range.from } : {}),
       ...(range.to ? { lt: range.to } : {}),
-    }
+    };
   } else if (range.days) {
     where.playedAt = {
       gte: new Date(Date.now() - range.days * 24 * 60 * 60 * 1000),
-    }
+    };
   }
-  if (range.artistId) where.artistId = range.artistId
-  if (range.trackId) where.trackId = range.trackId
-  if (range.albumId) where.albumId = range.albumId
-  return where
+  if (range.artistId) where.artistId = range.artistId;
+  if (range.trackId) where.trackId = range.trackId;
+  if (range.albumId) where.albumId = range.albumId;
+  return where;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -47,30 +47,32 @@ function parseGenres(value: string | null | undefined): string[] {
     const parsed = JSON.parse(value);
     if (!Array.isArray(parsed)) return [];
     // Dédoublonne : un même genre présent deux fois serait compté deux fois.
-    return [...new Set(parsed.filter((g): g is string => typeof g === "string"))];
+    return [
+      ...new Set(parsed.filter((g): g is string => typeof g === "string")),
+    ];
   } catch {
     return [];
   }
 }
 
 export type Overview = {
-  totalPlays: number
+  totalPlays: number;
   /** Toutes les écoutes (seuil appliqué ou non), pour le taux d'écoute complète. */
-  allPlays: number
-  totalMs: number
-  distinctArtists: number
-  distinctTracks: number
-  distinctAlbums: number
-  firstPlay: Date | null
-  lastPlay: Date | null
-}
+  allPlays: number;
+  totalMs: number;
+  distinctArtists: number;
+  distinctTracks: number;
+  distinctAlbums: number;
+  firstPlay: Date | null;
+  lastPlay: Date | null;
+};
 
 export async function getOverview(
   userId: string,
   range: StatsRange,
 ): Promise<Overview> {
-  const where = buildWhere(userId, range)
-  const [aggregate, combos, allPlays] = await Promise.all([
+  const where = buildWhere(userId, range);
+  const [aggregate, distinct, allPlays] = await Promise.all([
     prisma.play.aggregate({
       where,
       _count: { _all: true },
@@ -78,36 +80,36 @@ export async function getOverview(
       _min: { playedAt: true },
       _max: { playedAt: true },
     }),
-    // Un seul groupBy multi-clés (au lieu de 3) : les triplets (artiste, piste,
-    // album) sont ≤ au nombre de pistes distinctes, donc moins de lignes que la
-    // somme des trois groupBy séparés.
-    prisma.play.groupBy({
-      by: ['artistId', 'trackId', 'albumId'],
-      where,
-    }),
+    // `COUNT(DISTINCT …)` côté PostgreSQL : on évite de rapatrier un triplet
+    // (artiste, piste, album) par piste distincte juste pour compter des
+    // ensembles. Le coût reste borné par l'index (userId, playedAt).
+    prisma.$queryRaw<
+      Array<{ artists: bigint; tracks: bigint; albums: bigint }>
+    >(
+      Prisma.sql`
+        SELECT COUNT(DISTINCT "artistId")::bigint AS artists,
+               COUNT(DISTINCT "trackId")::bigint AS tracks,
+               COUNT(DISTINCT "albumId")::bigint AS albums
+        FROM "Play"
+        WHERE ${Prisma.join(rangeConditions(userId, range), " AND ")}
+      `,
+    ),
     // Même filtre sans `counted` : nombre total d'écoutes (toutes confondues).
     prisma.play.count({ where: { ...where, counted: undefined } }),
-  ])
+  ]);
 
-  const artists = new Set<string>()
-  const tracks = new Set<string>()
-  const albums = new Set<string>()
-  for (const row of combos) {
-    artists.add(row.artistId)
-    tracks.add(row.trackId)
-    if (row.albumId) albums.add(row.albumId)
-  }
+  const row = distinct[0];
 
   return {
     totalPlays: aggregate._count._all,
     allPlays,
     totalMs: aggregate._sum.msPlayed ?? 0,
-    distinctArtists: artists.size,
-    distinctTracks: tracks.size,
-    distinctAlbums: albums.size,
+    distinctArtists: Number(row?.artists ?? 0),
+    distinctTracks: Number(row?.tracks ?? 0),
+    distinctAlbums: Number(row?.albums ?? 0),
     firstPlay: aggregate._min.playedAt ?? null,
     lastPlay: aggregate._max.playedAt ?? null,
-  }
+  };
 }
 
 /** Indique si l'utilisateur possède au moins une écoute comptée (toutes périodes). */
@@ -115,11 +117,11 @@ export async function hasAnyPlays(userId: string): Promise<boolean> {
   const play = await prisma.play.findFirst({
     where: { userId, counted: true },
     select: { id: true },
-  })
-  return play !== null
+  });
+  return play !== null;
 }
 
-export type WindowStat = { plays: number; msPlayed: number }
+export type WindowStat = { plays: number; msPlayed: number };
 
 /** Compte et durée des écoutes sur une fenêtre [from, to). */
 export async function countWindow(
@@ -131,57 +133,57 @@ export async function countWindow(
     where: { userId, counted: true, playedAt: { gte: from, lt: to } },
     _count: { _all: true },
     _sum: { msPlayed: true },
-  })
+  });
   return {
     plays: aggregate._count._all,
     msPlayed: aggregate._sum.msPlayed ?? 0,
-  }
+  };
 }
 
 export type TopTrack = {
-  id: string
-  name: string
-  plays: number
-  msPlayed: number
-  artistId: string
-  artistName: string
-  albumName: string | null
-  imageUrl: string | null
-}
+  id: string;
+  name: string;
+  plays: number;
+  msPlayed: number;
+  artistId: string;
+  artistName: string;
+  albumName: string | null;
+  imageUrl: string | null;
+};
 
 /** Métrique de classement : nombre d'écoutes ou temps d'écoute. */
-export type RankMetric = 'plays' | 'time'
+export type RankMetric = "plays" | "time";
 
 export async function getTopTracks(
   userId: string,
   range: StatsRange,
   limit = 10,
-  metric: RankMetric = 'plays',
+  metric: RankMetric = "plays",
 ): Promise<TopTrack[]> {
-  const where = buildWhere(userId, range)
+  const where = buildWhere(userId, range);
   const grouped = await prisma.play.groupBy({
-    by: ['trackId'],
+    by: ["trackId"],
     where,
     _count: { trackId: true },
     _sum: { msPlayed: true },
     orderBy:
-      metric === 'time'
-        ? { _sum: { msPlayed: 'desc' } }
-        : { _count: { trackId: 'desc' } },
+      metric === "time"
+        ? { _sum: { msPlayed: "desc" } }
+        : { _count: { trackId: "desc" } },
     take: limit,
-  })
-  if (grouped.length === 0) return []
+  });
+  if (grouped.length === 0) return [];
 
-  const ids = grouped.map((g) => g.trackId)
+  const ids = grouped.map((g) => g.trackId);
   const tracks = await prisma.track.findMany({
     where: { id: { in: ids } },
     include: { artist: true, album: true },
-  })
-  const byId = new Map(tracks.map((t) => [t.id, t]))
+  });
+  const byId = new Map(tracks.map((t) => [t.id, t]));
 
   return grouped.flatMap((g) => {
-    const track = byId.get(g.trackId)
-    if (!track) return []
+    const track = byId.get(g.trackId);
+    if (!track) return [];
     return [
       {
         id: track.id,
@@ -193,33 +195,33 @@ export async function getTopTracks(
         albumName: track.album?.name ?? null,
         imageUrl: track.album?.imageUrl ?? track.imageUrl ?? null,
       },
-    ]
-  })
+    ];
+  });
 }
 
 export type TopArtist = {
-  id: string
-  name: string
-  plays: number
-  msPlayed: number
-  imageUrl: string | null
-  genres: string[]
-}
+  id: string;
+  name: string;
+  plays: number;
+  msPlayed: number;
+  imageUrl: string | null;
+  genres: string[];
+};
 
 /** Deux classements d'une même entité : par écoutes et par temps. */
-export type RankPair<T> = { plays: T[]; time: T[] }
+export type RankPair<T> = { plays: T[]; time: T[] };
 
-type RankedId = { id: string; plays: number; msPlayed: number }
+type RankedId = { id: string; plays: number; msPlayed: number };
 
 type RankedIdRow = {
-  id: string
-  plays: number | string | bigint
-  msPlayed: number | string | bigint
-  rp: number | string | bigint
-  rt: number | string | bigint
-  by_plays: boolean
-  by_time: boolean
-}
+  id: string;
+  plays: number | string | bigint;
+  msPlayed: number | string | bigint;
+  rp: number | string | bigint;
+  rt: number | string | bigint;
+  by_plays: boolean;
+  by_time: boolean;
+};
 
 /**
  * Identifiants des `limit` premiers **par écoutes et par temps** en une seule
@@ -232,10 +234,10 @@ async function rankedPlayIds(
   userId: string,
   range: StatsRange,
   limit: number,
-  column: 'trackId' | 'artistId',
+  column: "trackId" | "artistId",
 ): Promise<{ plays: RankedId[]; time: RankedId[] }> {
   const col =
-    column === 'trackId' ? Prisma.sql`"trackId"` : Prisma.sql`"artistId"`
+    column === "trackId" ? Prisma.sql`"trackId"` : Prisma.sql`"artistId"`;
   const rows = await prisma.$queryRaw<RankedIdRow[]>(
     Prisma.sql`
       WITH agg AS (
@@ -243,7 +245,7 @@ async function rankedPlayIds(
                COUNT(*)::int AS plays,
                COALESCE(SUM("msPlayed"), 0)::bigint AS "msPlayed"
         FROM "Play"
-        WHERE ${Prisma.join(rangeConditions(userId, range), ' AND ')}
+        WHERE ${Prisma.join(rangeConditions(userId, range), " AND ")}
         GROUP BY ${col}
       ),
       ranked AS (
@@ -258,13 +260,13 @@ async function rankedPlayIds(
       FROM ranked
       WHERE rp <= ${limit} OR rt <= ${limit}
     `,
-  )
+  );
 
   const toId = (row: RankedIdRow): RankedId => ({
     id: row.id,
     plays: Number(row.plays),
     msPlayed: Number(row.msPlayed),
-  })
+  });
 
   return {
     plays: rows
@@ -275,7 +277,7 @@ async function rankedPlayIds(
       .filter((row) => row.by_time)
       .sort((a, b) => Number(a.rt) - Number(b.rt))
       .map(toId),
-  }
+  };
 }
 
 /** Top titres, par écoutes **et** par temps, avec une seule lecture des titres. */
@@ -284,20 +286,20 @@ export async function getTopTracksBoth(
   range: StatsRange,
   limit = 10,
 ): Promise<RankPair<TopTrack>> {
-  const ranked = await rankedPlayIds(userId, range, limit, 'trackId')
-  const ids = [...new Set([...ranked.plays, ...ranked.time].map((r) => r.id))]
-  if (ids.length === 0) return { plays: [], time: [] }
+  const ranked = await rankedPlayIds(userId, range, limit, "trackId");
+  const ids = [...new Set([...ranked.plays, ...ranked.time].map((r) => r.id))];
+  if (ids.length === 0) return { plays: [], time: [] };
 
   const tracks = await prisma.track.findMany({
     where: { id: { in: ids } },
     include: { artist: true, album: true },
-  })
-  const byId = new Map(tracks.map((track) => [track.id, track]))
+  });
+  const byId = new Map(tracks.map((track) => [track.id, track]));
 
   const map = (rows: RankedId[]): TopTrack[] =>
     rows.flatMap((row) => {
-      const track = byId.get(row.id)
-      if (!track) return []
+      const track = byId.get(row.id);
+      if (!track) return [];
       return [
         {
           id: track.id,
@@ -309,10 +311,10 @@ export async function getTopTracksBoth(
           albumName: track.album?.name ?? null,
           imageUrl: track.album?.imageUrl ?? track.imageUrl ?? null,
         },
-      ]
-    })
+      ];
+    });
 
-  return { plays: map(ranked.plays), time: map(ranked.time) }
+  return { plays: map(ranked.plays), time: map(ranked.time) };
 }
 
 /** Top artistes, par écoutes **et** par temps, avec une seule lecture des artistes. */
@@ -321,17 +323,17 @@ export async function getTopArtistsBoth(
   range: StatsRange,
   limit = 10,
 ): Promise<RankPair<TopArtist>> {
-  const ranked = await rankedPlayIds(userId, range, limit, 'artistId')
-  const ids = [...new Set([...ranked.plays, ...ranked.time].map((r) => r.id))]
-  if (ids.length === 0) return { plays: [], time: [] }
+  const ranked = await rankedPlayIds(userId, range, limit, "artistId");
+  const ids = [...new Set([...ranked.plays, ...ranked.time].map((r) => r.id))];
+  if (ids.length === 0) return { plays: [], time: [] };
 
-  const artists = await prisma.artist.findMany({ where: { id: { in: ids } } })
-  const byId = new Map(artists.map((artist) => [artist.id, artist]))
+  const artists = await prisma.artist.findMany({ where: { id: { in: ids } } });
+  const byId = new Map(artists.map((artist) => [artist.id, artist]));
 
   const map = (rows: RankedId[]): TopArtist[] =>
     rows.flatMap((row) => {
-      const artist = byId.get(row.id)
-      if (!artist) return []
+      const artist = byId.get(row.id);
+      if (!artist) return [];
       return [
         {
           id: artist.id,
@@ -341,39 +343,39 @@ export async function getTopArtistsBoth(
           imageUrl: artist.imageUrl,
           genres: parseGenres(artist.genres),
         },
-      ]
-    })
+      ];
+    });
 
-  return { plays: map(ranked.plays), time: map(ranked.time) }
+  return { plays: map(ranked.plays), time: map(ranked.time) };
 }
 
 export async function getTopArtists(
   userId: string,
   range: StatsRange,
   limit = 10,
-  metric: RankMetric = 'plays',
+  metric: RankMetric = "plays",
 ): Promise<TopArtist[]> {
-  const where = buildWhere(userId, range)
+  const where = buildWhere(userId, range);
   const grouped = await prisma.play.groupBy({
-    by: ['artistId'],
+    by: ["artistId"],
     where,
     _count: { artistId: true },
     _sum: { msPlayed: true },
     orderBy:
-      metric === 'time'
-        ? { _sum: { msPlayed: 'desc' } }
-        : { _count: { artistId: 'desc' } },
+      metric === "time"
+        ? { _sum: { msPlayed: "desc" } }
+        : { _count: { artistId: "desc" } },
     take: limit,
-  })
-  if (grouped.length === 0) return []
+  });
+  if (grouped.length === 0) return [];
 
-  const ids = grouped.map((g) => g.artistId)
-  const artists = await prisma.artist.findMany({ where: { id: { in: ids } } })
-  const byId = new Map(artists.map((a) => [a.id, a]))
+  const ids = grouped.map((g) => g.artistId);
+  const artists = await prisma.artist.findMany({ where: { id: { in: ids } } });
+  const byId = new Map(artists.map((a) => [a.id, a]));
 
   return grouped.flatMap((g) => {
-    const artist = byId.get(g.artistId)
-    if (!artist) return []
+    const artist = byId.get(g.artistId);
+    if (!artist) return [];
     return [
       {
         id: artist.id,
@@ -383,52 +385,52 @@ export async function getTopArtists(
         imageUrl: artist.imageUrl,
         genres: parseGenres(artist.genres),
       },
-    ]
-  })
+    ];
+  });
 }
 
 export type TopAlbum = {
-  id: string
-  name: string
-  artistId: string
-  artistName: string
-  plays: number
-  msPlayed: number
-  imageUrl: string | null
-}
+  id: string;
+  name: string;
+  artistId: string;
+  artistName: string;
+  plays: number;
+  msPlayed: number;
+  imageUrl: string | null;
+};
 
 export async function getTopAlbums(
   userId: string,
   range: StatsRange,
   limit = 10,
-  metric: RankMetric = 'plays',
+  metric: RankMetric = "plays",
 ): Promise<TopAlbum[]> {
   const where: Prisma.PlayWhereInput = {
     ...buildWhere(userId, range),
     albumId: { not: null },
-  }
+  };
   const grouped = await prisma.play.groupBy({
-    by: ['albumId'],
+    by: ["albumId"],
     where,
     _count: { albumId: true },
     _sum: { msPlayed: true },
     orderBy:
-      metric === 'time'
-        ? { _sum: { msPlayed: 'desc' } }
-        : { _count: { albumId: 'desc' } },
+      metric === "time"
+        ? { _sum: { msPlayed: "desc" } }
+        : { _count: { albumId: "desc" } },
     take: limit,
-  })
+  });
 
-  const ids = grouped.flatMap((g) => (g.albumId ? [g.albumId] : []))
+  const ids = grouped.flatMap((g) => (g.albumId ? [g.albumId] : []));
   const albums = await prisma.album.findMany({
     where: { id: { in: ids } },
     include: { artist: true },
-  })
-  const byId = new Map(albums.map((a) => [a.id, a]))
+  });
+  const byId = new Map(albums.map((a) => [a.id, a]));
 
   return grouped.flatMap((g) => {
-    const album = g.albumId ? byId.get(g.albumId) : undefined
-    if (!album) return []
+    const album = g.albumId ? byId.get(g.albumId) : undefined;
+    if (!album) return [];
     return [
       {
         id: album.id,
@@ -439,48 +441,52 @@ export async function getTopAlbums(
         msPlayed: g._sum.msPlayed ?? 0,
         imageUrl: album.imageUrl,
       },
-    ]
-  })
+    ];
+  });
 }
 
-export type GenreStat = { genre: string; plays: number; msPlayed: number }
+export type GenreStat = { genre: string; plays: number; msPlayed: number };
 
 async function collectGenreTotals(
   userId: string,
   range: StatsRange,
 ): Promise<Map<string, { plays: number; msPlayed: number }>> {
-  const where = buildWhere(userId, range)
+  const where = buildWhere(userId, range);
   // Pas de `take` : les genres doivent agréger **tous** les artistes écoutés,
   // sinon les genres des artistes hors du top-100 (par écoutes) disparaissent et
   // le classement est faussé.
   const grouped = await prisma.play.groupBy({
-    by: ['artistId'],
+    by: ["artistId"],
     where,
     _count: { artistId: true },
     _sum: { msPlayed: true },
-  })
-  const totals = new Map<string, { plays: number; msPlayed: number }>()
-  if (grouped.length === 0) return totals
+  });
+  const totals = new Map<string, { plays: number; msPlayed: number }>();
+  if (grouped.length === 0) return totals;
 
   const artists = await prisma.artist.findMany({
     where: { id: { in: grouped.map((g) => g.artistId) } },
     select: { id: true, genres: true },
-  })
-  const countById = new Map(grouped.map((g) => [g.artistId, g._count.artistId]))
-  const msById = new Map(grouped.map((g) => [g.artistId, g._sum.msPlayed ?? 0]))
+  });
+  const countById = new Map(
+    grouped.map((g) => [g.artistId, g._count.artistId]),
+  );
+  const msById = new Map(
+    grouped.map((g) => [g.artistId, g._sum.msPlayed ?? 0]),
+  );
 
   for (const artist of artists) {
-    if (!artist.genres) continue
-    const plays = countById.get(artist.id) ?? 0
-    const msPlayed = msById.get(artist.id) ?? 0
+    if (!artist.genres) continue;
+    const plays = countById.get(artist.id) ?? 0;
+    const msPlayed = msById.get(artist.id) ?? 0;
     for (const genre of parseGenres(artist.genres)) {
-      const current = totals.get(genre) ?? { plays: 0, msPlayed: 0 }
-      current.plays += plays
-      current.msPlayed += msPlayed
-      totals.set(genre, current)
+      const current = totals.get(genre) ?? { plays: 0, msPlayed: 0 };
+      current.plays += plays;
+      current.msPlayed += msPlayed;
+      totals.set(genre, current);
     }
   }
-  return totals
+  return totals;
 }
 
 function rankGenres(
@@ -495,18 +501,18 @@ function rankGenres(
       msPlayed: value.msPlayed,
     }))
     .sort((a, b) =>
-      metric === 'time' ? b.msPlayed - a.msPlayed : b.plays - a.plays,
+      metric === "time" ? b.msPlayed - a.msPlayed : b.plays - a.plays,
     )
-    .slice(0, limit)
+    .slice(0, limit);
 }
 
 export async function getTopGenres(
   userId: string,
   range: StatsRange,
   limit = 12,
-  metric: RankMetric = 'plays',
+  metric: RankMetric = "plays",
 ): Promise<GenreStat[]> {
-  return rankGenres(await collectGenreTotals(userId, range), limit, metric)
+  return rankGenres(await collectGenreTotals(userId, range), limit, metric);
 }
 
 /** Top genres, par écoutes **et** par temps, en une seule agrégation. */
@@ -515,14 +521,14 @@ export async function getTopGenresBoth(
   range: StatsRange,
   limit = 12,
 ): Promise<RankPair<GenreStat>> {
-  const totals = await collectGenreTotals(userId, range)
+  const totals = await collectGenreTotals(userId, range);
   return {
-    plays: rankGenres(totals, limit, 'plays'),
-    time: rankGenres(totals, limit, 'time'),
-  }
+    plays: rankGenres(totals, limit, "plays"),
+    time: rankGenres(totals, limit, "time"),
+  };
 }
 
-export type DailyStat = { day: string; msPlayed: number; plays: number }
+export type DailyStat = { day: string; msPlayed: number; plays: number };
 
 /**
  * Agrégation temporelle en SQL par **tranches de 15 minutes UTC** : nombre de
@@ -533,9 +539,9 @@ export type DailyStat = { day: string; msPlayed: number; plays: number }
  * frontière de jour/heure locale pour tous les fuseaux modernes (offsets
  * multiples de 15 min), y compris ceux à offset `:30`/`:45`.
  */
-export type TimeBucket = { bucket: number; plays: number; msPlayed: number }
+export type TimeBucket = { bucket: number; plays: number; msPlayed: number };
 
-const BUCKET_SECONDS = 900
+const BUCKET_SECONDS = 900;
 
 /**
  * Conditions SQL des agrégations brutes : mêmes règles que `buildWhere`, pour
@@ -545,32 +551,37 @@ function rangeConditions(userId: string, range: StatsRange): Prisma.Sql[] {
   const conditions: Prisma.Sql[] = [
     Prisma.sql`"userId" = ${userId}`,
     Prisma.sql`"counted" = true`,
-  ]
-  if (range.from) conditions.push(Prisma.sql`"playedAt" >= ${range.from}`)
-  if (range.to) conditions.push(Prisma.sql`"playedAt" < ${range.to}`)
+  ];
+  if (range.from) conditions.push(Prisma.sql`"playedAt" >= ${range.from}`);
+  if (range.to) conditions.push(Prisma.sql`"playedAt" < ${range.to}`);
   if (!range.from && !range.to && range.days) {
     conditions.push(
       Prisma.sql`"playedAt" >= ${new Date(Date.now() - range.days * DAY_MS)}`,
-    )
+    );
   }
-  if (range.artistId) conditions.push(Prisma.sql`"artistId" = ${range.artistId}`)
-  if (range.trackId) conditions.push(Prisma.sql`"trackId" = ${range.trackId}`)
-  if (range.albumId) conditions.push(Prisma.sql`"albumId" = ${range.albumId}`)
-  return conditions
+  if (range.artistId)
+    conditions.push(Prisma.sql`"artistId" = ${range.artistId}`);
+  if (range.trackId) conditions.push(Prisma.sql`"trackId" = ${range.trackId}`);
+  if (range.albumId) conditions.push(Prisma.sql`"albumId" = ${range.albumId}`);
+  return conditions;
 }
 
 async function getTimeBuckets(
   userId: string,
   range: StatsRange,
 ): Promise<TimeBucket[]> {
-  const conditions = rangeConditions(userId, range)
+  const conditions = rangeConditions(userId, range);
 
   // `EXTRACT(EPOCH FROM "playedAt")` renvoie les secondes depuis l'époque Unix.
   // Le timestamp (sans fuseau) est interprété en UTC : c'est l'équivalent de
   // `strftime('%s', playedAt)` en SQLite. Le cast `::bigint` tronque les
   // secondes comme le faisait `CAST(... AS INTEGER)`.
   const rows = await prisma.$queryRaw<
-    Array<{ bucket: number | bigint; plays: number | bigint; msPlayed: number | bigint }>
+    Array<{
+      bucket: number | bigint;
+      plays: number | bigint;
+      msPlayed: number | bigint;
+    }>
   >(
     Prisma.sql`
       SELECT floor(EXTRACT(EPOCH FROM "playedAt") / ${BUCKET_SECONDS})::bigint AS bucket,
@@ -581,17 +592,17 @@ async function getTimeBuckets(
       GROUP BY bucket
       ORDER BY bucket
     `,
-  )
+  );
   return rows.map((row) => ({
     bucket: Number(row.bucket),
     plays: Number(row.plays),
     msPlayed: Number(row.msPlayed),
-  }))
+  }));
 }
 
 /** Instant UTC du début d'une tranche (index de tranches de 15 min). */
 function bucketDate(bucket: number): Date {
-  return new Date(bucket * BUCKET_SECONDS * 1000)
+  return new Date(bucket * BUCKET_SECONDS * 1000);
 }
 
 export async function getDailyStats(
@@ -599,53 +610,54 @@ export async function getDailyStats(
   timeZone: string,
   range: StatsRange,
 ): Promise<DailyStat[]> {
-  const buckets = await getTimeBuckets(userId, range)
+  const buckets = await getTimeBuckets(userId, range);
 
-  const daily = new Map<string, DailyStat>()
+  const daily = new Map<string, DailyStat>();
 
   // Jour de départ : début de fenêtre, ou premier jour d'écoute pour « tout ».
-  let startMs = Date.now()
+  let startMs = Date.now();
   if (range.from) {
-    startMs = range.from.getTime()
+    startMs = range.from.getTime();
   } else if (range.days) {
-    startMs = Date.now() - range.days * DAY_MS
+    startMs = Date.now() - range.days * DAY_MS;
   } else if (buckets.length > 0) {
-    startMs = bucketDate(buckets[0].bucket).getTime()
+    startMs = bucketDate(buckets[0].bucket).getTime();
   }
 
   // Pré-remplit chaque jour (heure locale) afin d'avoir un graphe continu.
-  const startDay = dayKey(new Date(startMs), timeZone)
-  const endDay = dayKey(range.to ?? new Date(), timeZone)
+  const startDay = dayKey(new Date(startMs), timeZone);
+  const endDay = dayKey(range.to ?? new Date(), timeZone);
   const totalDays = Math.max(
     1,
     Math.round(
-      (Date.parse(`${endDay}T00:00:00Z`) - Date.parse(`${startDay}T00:00:00Z`)) /
+      (Date.parse(`${endDay}T00:00:00Z`) -
+        Date.parse(`${startDay}T00:00:00Z`)) /
         DAY_MS,
     ) + 1,
-  )
+  );
   for (let i = 0; i < totalDays; i += 1) {
     const key = new Date(Date.parse(`${startDay}T00:00:00Z`) + i * DAY_MS)
       .toISOString()
-      .slice(0, 10)
-    daily.set(key, { day: key, msPlayed: 0, plays: 0 })
+      .slice(0, 10);
+    daily.set(key, { day: key, msPlayed: 0, plays: 0 });
   }
 
   for (const bucket of buckets) {
-    const key = dayKey(bucketDate(bucket.bucket), timeZone)
-    const stat = daily.get(key) ?? { day: key, msPlayed: 0, plays: 0 }
-    stat.msPlayed += bucket.msPlayed
-    stat.plays += bucket.plays
-    daily.set(key, stat)
+    const key = dayKey(bucketDate(bucket.bucket), timeZone);
+    const stat = daily.get(key) ?? { day: key, msPlayed: 0, plays: 0 };
+    stat.msPlayed += bucket.msPlayed;
+    stat.plays += bucket.plays;
+    daily.set(key, stat);
   }
 
-  return [...daily.values()].sort((a, b) => a.day.localeCompare(b.day))
+  return [...daily.values()].sort((a, b) => a.day.localeCompare(b.day));
 }
 
-export type HourStat = { hour: number; plays: number; msPlayed: number }
+export type HourStat = { hour: number; plays: number; msPlayed: number };
 
-export type HourlyStats = { hours: HourStat[]; activeDays: number }
+export type HourlyStats = { hours: HourStat[]; activeDays: number };
 
-export type TimelineStats = { daily: DailyStat[]; hourly: HourlyStats }
+export type TimelineStats = { daily: DailyStat[]; hourly: HourlyStats };
 
 /**
  * Série quotidienne **et** répartition horaire en une seule lecture des écoutes
@@ -657,71 +669,72 @@ export async function getTimelineStats(
   timeZone: string,
   range: StatsRange,
 ): Promise<TimelineStats> {
-  const hourBuckets = await getTimeBuckets(userId, range)
+  const hourBuckets = await getTimeBuckets(userId, range);
 
-  const daily = new Map<string, DailyStat>()
-  let startMs = Date.now()
+  const daily = new Map<string, DailyStat>();
+  let startMs = Date.now();
   if (range.from) {
-    startMs = range.from.getTime()
+    startMs = range.from.getTime();
   } else if (range.days) {
-    startMs = Date.now() - range.days * DAY_MS
+    startMs = Date.now() - range.days * DAY_MS;
   } else if (hourBuckets.length > 0) {
-    startMs = bucketDate(hourBuckets[0].bucket).getTime()
+    startMs = bucketDate(hourBuckets[0].bucket).getTime();
   }
-  const startDay = dayKey(new Date(startMs), timeZone)
-  const endDay = dayKey(range.to ?? new Date(), timeZone)
+  const startDay = dayKey(new Date(startMs), timeZone);
+  const endDay = dayKey(range.to ?? new Date(), timeZone);
   const totalDays = Math.max(
     1,
     Math.round(
-      (Date.parse(`${endDay}T00:00:00Z`) - Date.parse(`${startDay}T00:00:00Z`)) /
+      (Date.parse(`${endDay}T00:00:00Z`) -
+        Date.parse(`${startDay}T00:00:00Z`)) /
         DAY_MS,
     ) + 1,
-  )
+  );
   for (let i = 0; i < totalDays; i += 1) {
     const key = new Date(Date.parse(`${startDay}T00:00:00Z`) + i * DAY_MS)
       .toISOString()
-      .slice(0, 10)
-    daily.set(key, { day: key, msPlayed: 0, plays: 0 })
+      .slice(0, 10);
+    daily.set(key, { day: key, msPlayed: 0, plays: 0 });
   }
 
   const hours: HourStat[] = Array.from({ length: 24 }, (_, hour) => ({
     hour,
     plays: 0,
     msPlayed: 0,
-  }))
-  const activeDays = new Set<string>()
+  }));
+  const activeDays = new Set<string>();
 
   for (const bucket of hourBuckets) {
-    const date = bucketDate(bucket.bucket)
-    const key = dayKey(date, timeZone)
-    const stat = daily.get(key) ?? { day: key, msPlayed: 0, plays: 0 }
-    stat.msPlayed += bucket.msPlayed
-    stat.plays += bucket.plays
-    daily.set(key, stat)
+    const date = bucketDate(bucket.bucket);
+    const key = dayKey(date, timeZone);
+    const stat = daily.get(key) ?? { day: key, msPlayed: 0, plays: 0 };
+    stat.msPlayed += bucket.msPlayed;
+    stat.plays += bucket.plays;
+    daily.set(key, stat);
 
-    const hour = hours[hourOf(date, timeZone)]
-    hour.plays += bucket.plays
-    hour.msPlayed += bucket.msPlayed
-    activeDays.add(key)
+    const hour = hours[hourOf(date, timeZone)];
+    hour.plays += bucket.plays;
+    hour.msPlayed += bucket.msPlayed;
+    activeDays.add(key);
   }
 
   return {
     daily: [...daily.values()].sort((a, b) => a.day.localeCompare(b.day)),
     hourly: { hours, activeDays: activeDays.size },
-  }
+  };
 }
 
 export type RecentPlay = {
-  id: string
-  playedAt: Date
-  trackId: string
-  trackName: string
-  artistId: string
-  artistName: string
-  albumName: string | null
-  imageUrl: string | null
-  msPlayed: number
-}
+  id: string;
+  playedAt: Date;
+  trackId: string;
+  trackName: string;
+  artistId: string;
+  artistName: string;
+  albumName: string | null;
+  imageUrl: string | null;
+  msPlayed: number;
+};
 
 export async function getRecentPlays(
   userId: string,
@@ -730,10 +743,10 @@ export async function getRecentPlays(
 ): Promise<RecentPlay[]> {
   const plays = await prisma.play.findMany({
     where: buildWhere(userId, range),
-    orderBy: { playedAt: 'desc' },
+    orderBy: { playedAt: "desc" },
     take: limit,
     include: { track: { include: { artist: true, album: true } } },
-  })
+  });
   return plays.map((p) => ({
     id: p.id,
     playedAt: p.playedAt,
@@ -744,24 +757,24 @@ export async function getRecentPlays(
     albumName: p.track.album?.name ?? null,
     imageUrl: p.track.album?.imageUrl ?? p.track.imageUrl ?? null,
     msPlayed: p.msPlayed,
-  }))
+  }));
 }
 
 // --- Détails d'une entité ---------------------------------------------------
 
 export type ArtistDetail = {
   artist: {
-    id: string
-    name: string
-    imageUrl: string | null
-    genres: string[]
-  }
-  overview: Overview
-  topTracks: TopTrack[]
-  topAlbums: TopAlbum[]
-  daily: DailyStat[]
-  recent: RecentPlay[]
-}
+    id: string;
+    name: string;
+    imageUrl: string | null;
+    genres: string[];
+  };
+  overview: Overview;
+  topTracks: TopTrack[];
+  topAlbums: TopAlbum[];
+  daily: DailyStat[];
+  recent: RecentPlay[];
+};
 
 export async function getArtistDetail(
   userId: string,
@@ -772,18 +785,17 @@ export async function getArtistDetail(
   const artist = await prisma.artist.findUnique({
     where: { id: artistId },
     select: { id: true, name: true, imageUrl: true, genres: true },
-  })
-  if (!artist) return null
+  });
+  if (!artist) return null;
 
-  const scoped: StatsRange = { ...range, artistId }
-  const [overview, topTracks, topAlbums, daily, recent] =
-    await Promise.all([
-      getOverview(userId, scoped),
-      getTopTracks(userId, scoped, 10, 'time'),
-      getTopAlbums(userId, scoped, 6, 'time'),
-      getDailyStats(userId, timeZone, scoped),
-      getRecentPlays(userId, scoped, 15),
-    ])
+  const scoped: StatsRange = { ...range, artistId };
+  const [overview, topTracks, topAlbums, daily, recent] = await Promise.all([
+    getOverview(userId, scoped),
+    getTopTracks(userId, scoped, 10, "time"),
+    getTopAlbums(userId, scoped, 6, "time"),
+    getDailyStats(userId, timeZone, scoped),
+    getRecentPlays(userId, scoped, 15),
+  ]);
 
   return {
     artist: {
@@ -797,24 +809,24 @@ export async function getArtistDetail(
     topAlbums,
     daily,
     recent,
-  }
+  };
 }
 
 export type TrackDetail = {
   track: {
-    id: string
-    name: string
-    durationMs: number | null
-    imageUrl: string | null
-    isrc: string | null
-    artist: { id: string; name: string; imageUrl: string | null }
-    album: { id: string; name: string; imageUrl: string | null } | null
-    genres: string[]
-  }
-  overview: Overview
-  daily: DailyStat[]
-  recent: RecentPlay[]
-}
+    id: string;
+    name: string;
+    durationMs: number | null;
+    imageUrl: string | null;
+    isrc: string | null;
+    artist: { id: string; name: string; imageUrl: string | null };
+    album: { id: string; name: string; imageUrl: string | null } | null;
+    genres: string[];
+  };
+  overview: Overview;
+  daily: DailyStat[];
+  recent: RecentPlay[];
+};
 
 export async function getTrackDetail(
   userId: string,
@@ -825,17 +837,17 @@ export async function getTrackDetail(
   const track = await prisma.track.findUnique({
     where: { id: trackId },
     include: { artist: true, album: true },
-  })
-  if (!track) return null
+  });
+  if (!track) return null;
 
-  const scoped: StatsRange = { ...range, trackId }
+  const scoped: StatsRange = { ...range, trackId };
   const [overview, daily, recent] = await Promise.all([
     getOverview(userId, scoped),
     getDailyStats(userId, timeZone, scoped),
     getRecentPlays(userId, scoped, 15),
-  ])
+  ]);
 
-  const genres = parseGenres(track.artist.genres)
+  const genres = parseGenres(track.artist.genres);
 
   return {
     track: {
@@ -861,28 +873,28 @@ export async function getTrackDetail(
     overview,
     daily,
     recent,
-  }
+  };
 }
 
 // --- Recherche --------------------------------------------------------------
 
 export type SearchResults = {
   artists: Array<{
-    id: string
-    name: string
-    imageUrl: string | null
-    plays: number
-    msPlayed: number
-  }>
+    id: string;
+    name: string;
+    imageUrl: string | null;
+    plays: number;
+    msPlayed: number;
+  }>;
   tracks: Array<{
-    id: string
-    name: string
-    artistId: string
-    artistName: string
-    albumName: string | null
-    imageUrl: string | null
-  }>
-}
+    id: string;
+    name: string;
+    artistId: string;
+    artistName: string;
+    albumName: string | null;
+    imageUrl: string | null;
+  }>;
+};
 
 /** Recherche d'artistes et de titres dans la bibliothèque de l'utilisateur. */
 export async function searchLibrary(
@@ -890,8 +902,8 @@ export async function searchLibrary(
   query: string,
   limit = 10,
 ): Promise<SearchResults> {
-  const q = query.trim()
-  if (q.length < 1) return { artists: [], tracks: [] }
+  const q = query.trim();
+  if (q.length < 1) return { artists: [], tracks: [] };
 
   const [artists, tracks] = await Promise.all([
     prisma.artist.findMany({
@@ -900,7 +912,7 @@ export async function searchLibrary(
         plays: { some: { userId, counted: true } },
       },
       take: limit,
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
     }),
     prisma.track.findMany({
       where: {
@@ -909,22 +921,26 @@ export async function searchLibrary(
       },
       take: limit,
       include: { artist: true, album: true },
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
     }),
-  ])
+  ]);
 
   const artistPlays = await prisma.play.groupBy({
-    by: ['artistId'],
-    where: { userId, counted: true, artistId: { in: artists.map((a) => a.id) } },
+    by: ["artistId"],
+    where: {
+      userId,
+      counted: true,
+      artistId: { in: artists.map((a) => a.id) },
+    },
     _count: { artistId: true },
     _sum: { msPlayed: true },
-  })
+  });
   const playById = new Map(
     artistPlays.map((p) => [p.artistId, p._count.artistId]),
-  )
+  );
   const msById = new Map(
     artistPlays.map((p) => [p.artistId, p._sum.msPlayed ?? 0]),
-  )
+  );
 
   return {
     artists: artists.map((a) => ({
@@ -942,20 +958,20 @@ export async function searchLibrary(
       albumName: t.album?.name ?? null,
       imageUrl: t.album?.imageUrl ?? t.imageUrl,
     })),
-  }
+  };
 }
 
 // --- Récapitulatif (« Wrapped ») --------------------------------------------
 
-export type TimelineBucket = { key: string; msPlayed: number; plays: number }
+export type TimelineBucket = { key: string; msPlayed: number; plays: number };
 
 export type WrappedExtras = {
-  monthly: TimelineBucket[]
-  daily: TimelineBucket[]
-  busiestDay: TimelineBucket | null
-  busiestHour: { hour: number; plays: number } | null
-  activeDays: number
-}
+  monthly: TimelineBucket[];
+  daily: TimelineBucket[];
+  busiestDay: TimelineBucket | null;
+  busiestHour: { hour: number; plays: number } | null;
+  activeDays: number;
+};
 
 /**
  * Agrégats temporels d'une période explicite (from/to) : cumuls mensuels,
@@ -966,47 +982,59 @@ export async function getWrappedExtras(
   timeZone: string,
   range: StatsRange,
 ): Promise<WrappedExtras> {
-  const hourBuckets = await getTimeBuckets(userId, range)
+  const hourBuckets = await getTimeBuckets(userId, range);
 
-  const daily = new Map<string, TimelineBucket>()
-  const monthly = new Map<string, TimelineBucket>()
-  const hours = new Array<number>(24).fill(0)
+  const daily = new Map<string, TimelineBucket>();
+  const monthly = new Map<string, TimelineBucket>();
+  const hours = new Array<number>(24).fill(0);
 
   for (const bucket of hourBuckets) {
-    const date = bucketDate(bucket.bucket)
+    const date = bucketDate(bucket.bucket);
     // Clés en **UTC** : les périodes Wrapped sont des bornes UTC ; des clés
     // locales produisaient des tranches hors période (ex. un jour local basculant
     // sur le mois/année suivants) et un décalage avec `getOverview`.
-    const dayKeyValue = date.toISOString().slice(0, 10)
-    const monthKey = dayKeyValue.slice(0, 7)
+    const dayKeyValue = date.toISOString().slice(0, 10);
+    const monthKey = dayKeyValue.slice(0, 7);
 
-    const day = daily.get(dayKeyValue) ?? { key: dayKeyValue, msPlayed: 0, plays: 0 }
-    day.msPlayed += bucket.msPlayed
-    day.plays += bucket.plays
-    daily.set(dayKeyValue, day)
+    const day = daily.get(dayKeyValue) ?? {
+      key: dayKeyValue,
+      msPlayed: 0,
+      plays: 0,
+    };
+    day.msPlayed += bucket.msPlayed;
+    day.plays += bucket.plays;
+    daily.set(dayKeyValue, day);
 
-    const month = monthly.get(monthKey) ?? { key: monthKey, msPlayed: 0, plays: 0 }
-    month.msPlayed += bucket.msPlayed
-    month.plays += bucket.plays
-    monthly.set(monthKey, month)
+    const month = monthly.get(monthKey) ?? {
+      key: monthKey,
+      msPlayed: 0,
+      plays: 0,
+    };
+    month.msPlayed += bucket.msPlayed;
+    month.plays += bucket.plays;
+    monthly.set(monthKey, month);
 
-    hours[hourOf(date, timeZone)] += bucket.plays
+    hours[hourOf(date, timeZone)] += bucket.plays;
   }
 
-  const dailyArr = [...daily.values()].sort((a, b) => a.key.localeCompare(b.key))
-  const monthlyArr = [...monthly.values()].sort((a, b) => a.key.localeCompare(b.key))
+  const dailyArr = [...daily.values()].sort((a, b) =>
+    a.key.localeCompare(b.key),
+  );
+  const monthlyArr = [...monthly.values()].sort((a, b) =>
+    a.key.localeCompare(b.key),
+  );
 
   const busiestDay =
     dailyArr.length > 0
       ? dailyArr.reduce((max, cur) => (cur.msPlayed > max.msPlayed ? cur : max))
-      : null
+      : null;
 
-  let busiestHour: { hour: number; plays: number } | null = null
+  let busiestHour: { hour: number; plays: number } | null = null;
   hours.forEach((count, hour) => {
     if (count > 0 && (!busiestHour || count > busiestHour.plays)) {
-      busiestHour = { hour, plays: count }
+      busiestHour = { hour, plays: count };
     }
-  })
+  });
 
   return {
     monthly: monthlyArr,
@@ -1014,13 +1042,13 @@ export async function getWrappedExtras(
     busiestDay,
     busiestHour,
     activeDays: dailyArr.length,
-  }
+  };
 }
 
 export type DiscoveredArtists = {
-  count: number
-  artists: TopArtist[]
-}
+  count: number;
+  artists: TopArtist[];
+};
 
 /** Artistes écoutés pour la première fois pendant la période. */
 export async function getDiscoveredArtists(
@@ -1028,35 +1056,35 @@ export async function getDiscoveredArtists(
   range: StatsRange,
   limit = 5,
 ): Promise<DiscoveredArtists> {
-  if (!range.from) return { count: 0, artists: [] }
+  if (!range.from) return { count: 0, artists: [] };
 
   const [before, inRange] = await Promise.all([
     prisma.play.groupBy({
-      by: ['artistId'],
+      by: ["artistId"],
       where: { userId, counted: true, playedAt: { lt: range.from } },
     }),
     prisma.play.groupBy({
-      by: ['artistId'],
+      by: ["artistId"],
       where: buildWhere(userId, range),
       _count: { artistId: true },
       _sum: { msPlayed: true },
     }),
-  ])
+  ]);
 
-  const known = new Set(before.map((row) => row.artistId))
+  const known = new Set(before.map((row) => row.artistId));
   const discovered = inRange
     .filter((row) => !known.has(row.artistId))
-    .sort((a, b) => b._count.artistId - a._count.artistId)
+    .sort((a, b) => b._count.artistId - a._count.artistId);
 
-  const ids = discovered.slice(0, limit).map((row) => row.artistId)
-  const artists = await prisma.artist.findMany({ where: { id: { in: ids } } })
-  const byId = new Map(artists.map((a) => [a.id, a]))
+  const ids = discovered.slice(0, limit).map((row) => row.artistId);
+  const artists = await prisma.artist.findMany({ where: { id: { in: ids } } });
+  const byId = new Map(artists.map((a) => [a.id, a]));
 
   return {
     count: discovered.length,
     artists: discovered.slice(0, limit).flatMap((row) => {
-      const artist = byId.get(row.artistId)
-      if (!artist) return []
+      const artist = byId.get(row.artistId);
+      if (!artist) return [];
       return [
         {
           id: artist.id,
@@ -1066,9 +1094,9 @@ export async function getDiscoveredArtists(
           imageUrl: artist.imageUrl,
           genres: parseGenres(artist.genres),
         },
-      ]
+      ];
     }),
-  }
+  };
 }
 
 /** Années pour lesquelles l'utilisateur possède des écoutes comptées (desc.). */
@@ -1077,22 +1105,22 @@ export async function getPlayingYears(userId: string): Promise<number[]> {
     where: { userId, counted: true },
     _min: { playedAt: true },
     _max: { playedAt: true },
-  })
-  if (!aggregate._min.playedAt || !aggregate._max.playedAt) return []
-  const years: number[] = []
+  });
+  if (!aggregate._min.playedAt || !aggregate._max.playedAt) return [];
+  const years: number[] = [];
   for (
     let year = aggregate._max.playedAt.getUTCFullYear();
     year >= aggregate._min.playedAt.getUTCFullYear();
     year -= 1
   ) {
-    years.push(year)
+    years.push(year);
   }
-  return years
+  return years;
 }
 
 // --- Redécouvertes, records & habitudes ------------------------------------
 
-export type RediscoveredArtist = TopArtist & { lastPlayedAt: Date }
+export type RediscoveredArtist = TopArtist & { lastPlayedAt: Date };
 
 /**
  * Artistes « oubliés » : beaucoup écoutés par le passé mais plus depuis
@@ -1103,16 +1131,16 @@ export async function getRediscoveries(
   userId: string,
   options: { afterDays?: number; minPlays?: number; limit?: number } = {},
 ): Promise<RediscoveredArtist[]> {
-  const { afterDays = 60, minPlays = 5, limit = 5 } = options
-  const cutoff = new Date(Date.now() - afterDays * DAY_MS)
+  const { afterDays = 60, minPlays = 5, limit = 5 } = options;
+  const cutoff = new Date(Date.now() - afterDays * DAY_MS);
 
   const groups = await prisma.play.groupBy({
-    by: ['artistId'],
+    by: ["artistId"],
     where: { userId, counted: true },
     _count: { _all: true },
     _sum: { msPlayed: true },
     _max: { playedAt: true },
-  })
+  });
 
   const forgotten = groups
     .filter(
@@ -1122,18 +1150,18 @@ export async function getRediscoveries(
         row._count._all >= minPlays,
     )
     .sort((a, b) => (b._sum.msPlayed ?? 0) - (a._sum.msPlayed ?? 0))
-    .slice(0, limit)
+    .slice(0, limit);
 
-  if (forgotten.length === 0) return []
+  if (forgotten.length === 0) return [];
 
   const artists = await prisma.artist.findMany({
     where: { id: { in: forgotten.map((row) => row.artistId) } },
-  })
-  const byId = new Map(artists.map((artist) => [artist.id, artist]))
+  });
+  const byId = new Map(artists.map((artist) => [artist.id, artist]));
 
   return forgotten.flatMap((row) => {
-    const artist = byId.get(row.artistId)
-    if (!artist || !row._max.playedAt) return []
+    const artist = byId.get(row.artistId);
+    if (!artist || !row._max.playedAt) return [];
     return [
       {
         id: artist.id,
@@ -1144,8 +1172,42 @@ export async function getRediscoveries(
         genres: parseGenres(artist.genres),
         lastPlayedAt: row._max.playedAt,
       },
-    ]
-  })
+    ];
+  });
+}
+
+/**
+ * Jours actifs pour les records : l'agrégation est faite **dans le fuseau
+ * local** par PostgreSQL (`AT TIME ZONE`), ce qui évite de relire toutes les
+ * tranches de 15 minutes de l'historique complet puis de les reventiler en JS
+ * (cf. `getDailyStats`). On ne renvoie que les jours ayant au moins une écoute :
+ * `computeRecords` n'a pas besoin des jours vides.
+ */
+async function getActiveDays(
+  userId: string,
+  timeZone: string,
+): Promise<DailyStat[]> {
+  const rows = await prisma.$queryRaw<
+    Array<{ day: string; plays: number; msPlayed: bigint }>
+  >(
+    Prisma.sql`
+      SELECT to_char(
+               ("playedAt" AT TIME ZONE 'UTC') AT TIME ZONE ${timeZone},
+               'YYYY-MM-DD'
+             ) AS day,
+             COUNT(*)::int AS plays,
+             COALESCE(SUM("msPlayed"), 0)::bigint AS "msPlayed"
+      FROM "Play"
+      WHERE "userId" = ${userId} AND "counted" = true
+      GROUP BY day
+      ORDER BY day
+    `,
+  );
+  return rows.map((row) => ({
+    day: row.day,
+    plays: Number(row.plays),
+    msPlayed: Number(row.msPlayed),
+  }));
 }
 
 /** Records sur tout l'historique : séries, jours actifs, jour le plus intense. */
@@ -1153,11 +1215,11 @@ export async function getRecords(
   userId: string,
   timeZone: string,
 ): Promise<ListeningRecords> {
-  const daily = await getDailyStats(userId, timeZone, { days: null })
-  return computeRecords(daily, dayKey(new Date(), timeZone))
+  const daily = await getActiveDays(userId, timeZone);
+  return computeRecords(daily, dayKey(new Date(), timeZone));
 }
 
-export type WeeklyHourHeatmap = { grid: number[][]; max: number }
+export type WeeklyHourHeatmap = { grid: number[][]; max: number };
 
 /**
  * Répartition des écoutes par **jour de la semaine × heure locale** (lundi = 0),
@@ -1168,31 +1230,33 @@ export async function getWeeklyHourStats(
   timeZone: string,
   range: StatsRange,
 ): Promise<WeeklyHourHeatmap> {
-  const buckets = await getTimeBuckets(userId, range)
-  const grid = Array.from({ length: 7 }, () => new Array<number>(24).fill(0))
+  const buckets = await getTimeBuckets(userId, range);
+  const grid = Array.from({ length: 7 }, () => new Array<number>(24).fill(0));
 
   for (const bucket of buckets) {
-    const date = bucketDate(bucket.bucket)
-    const local = new Date(date.getTime() + getTimezoneOffsetMs(timeZone, date))
-    const dow = (local.getUTCDay() + 6) % 7
-    grid[dow][local.getUTCHours()] += bucket.plays
+    const date = bucketDate(bucket.bucket);
+    const local = new Date(
+      date.getTime() + getTimezoneOffsetMs(timeZone, date),
+    );
+    const dow = (local.getUTCDay() + 6) % 7;
+    grid[dow][local.getUTCHours()] += bucket.plays;
   }
 
-  let max = 0
+  let max = 0;
   for (const row of grid) {
-    for (const value of row) if (value > max) max = value
+    for (const value of row) if (value > max) max = value;
   }
-  return { grid, max }
+  return { grid, max };
 }
 
 export type ListeningBehavior = {
   /** Nombre d'écoutes porteuses des métadonnées (export étendu). */
-  sample: number
-  skippedRate: number | null
-  shuffleRate: number | null
-  offlineRate: number | null
-  platforms: { platform: string; plays: number }[]
-}
+  sample: number;
+  skippedRate: number | null;
+  shuffleRate: number | null;
+  offlineRate: number | null;
+  platforms: { platform: string; plays: number }[];
+};
 
 /**
  * Habitudes d'écoute issues de l'export étendu Spotify (appareil, saut, aléatoire,
@@ -1206,20 +1270,20 @@ export async function getListeningBehavior(
     userId,
     counted: true,
     platform: { not: null },
-  }
+  };
   const [sample, skipped, shuffled, offline, platforms] = await Promise.all([
     prisma.play.count({ where }),
     prisma.play.count({ where: { ...where, skipped: true } }),
     prisma.play.count({ where: { ...where, shuffle: true } }),
     prisma.play.count({ where: { ...where, offline: true } }),
     prisma.play.groupBy({
-      by: ['platform'],
+      by: ["platform"],
       where,
       _count: { _all: true },
     }),
-  ])
+  ]);
 
-  const rate = (value: number) => (sample > 0 ? value / sample : null)
+  const rate = (value: number) => (sample > 0 ? value / sample : null);
 
   return {
     sample,
@@ -1227,8 +1291,8 @@ export async function getListeningBehavior(
     shuffleRate: rate(shuffled),
     offlineRate: rate(offline),
     platforms: platforms
-      .map((row) => ({ platform: row.platform ?? '—', plays: row._count._all }))
+      .map((row) => ({ platform: row.platform ?? "—", plays: row._count._all }))
       .sort((a, b) => b.plays - a.plays)
       .slice(0, 5),
-  }
+  };
 }

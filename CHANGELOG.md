@@ -112,6 +112,22 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Modifié
 
+- **Performance des agrégations** : les entités distinctes du tableau de bord
+  sont comptées par PostgreSQL (`COUNT(DISTINCT …)`) au lieu de rapatrier tous
+  les triplets (artiste, piste, album) ; les records sont calculés à partir des
+  jours actifs agrégés directement dans le fuseau local (fini la relecture de
+  toutes les tranches de 15 min de l'historique complet) ; nouvel index
+  composite `Play (userId, counted, playedAt)`.
+- **Accessibilité** : le dialogue de bienvenue piège désormais le focus, se
+  ferme avec `Échap` et restitue le focus ; les graphiques en aire et de
+  comparaison sont focusables et navigables au clavier (flèches, `Début`,
+  `Fin`), avec annonce des valeurs via une région `aria-live`.
+- **Historique** : les dernières écoutes sont paginées par paliers de 50
+  (« Afficher 50 de plus », plafond 500) au lieu d'être figées à 50.
+- **Qualité** : Prettier (`.prettierrc.json`, `pnpm format` /
+  `pnpm format:check`, vérification en CI), seuils de couverture Vitest,
+  test de parité des dictionnaires en/fr, `SECURITY.md` et `CONTRIBUTING.md`,
+  version Node minimale déclarée (`engines`), image `curlimages/curl` épinglée.
 - **Durcissement RUM** : SDK chargé uniquement dans l'espace authentifié,
   URLs normalisées (query/hash/IDs/jetons), URLs `/settings` et `/admin`
   rédigées et leurs logs ignorés, replay mis en pause sur ces pages, relais
@@ -128,6 +144,13 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 - **Tests** : couverture de `src/lib/stats.ts` (agrégations, fuseaux, genres,
   redécouvertes, habitudes, classements doubles) ; `pnpm test:coverage` et le
   rapport de couverture sont exécutés en CI.
+
+### Corrigé
+
+- **Limitation de débit** : l'API publique de statistiques et le relais RUM ne
+  créent plus de seau partagé « local » quand l'IP n'est pas déterminable (tous
+  les clients anonymes tombaient sinon dans la même limite, avec un risque de
+  blocage global). La limite par compte reste appliquée à l'API.
 
 ### Supprimé
 

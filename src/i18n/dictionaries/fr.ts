@@ -21,7 +21,8 @@ export const fr: Dictionary = {
   "palette.open": "↵ ouvrir",
   "palette.close": "échap fermer",
   "shell.searchPlaceholder": "Rechercher…",
-  "shell.spotifyAttribution": "Données et visuels musicaux fournis par Spotify.",
+  "shell.spotifyAttribution":
+    "Données et visuels musicaux fournis par Spotify.",
   "common.loading": "Chargement…",
 
   // Erreurs & page introuvable
@@ -32,8 +33,7 @@ export const fr: Dictionary = {
   "error.retry": "Réessayer",
   "error.home": "Retour au tableau de bord",
   "notFound.title": "Page introuvable",
-  "notFound.body":
-    "Cette page n'existe pas, ou vous n'y avez plus accès.",
+  "notFound.body": "Cette page n'existe pas, ou vous n'y avez plus accès.",
   "notFound.home": "Retour au tableau de bord",
 
   // Thème
@@ -56,8 +56,7 @@ export const fr: Dictionary = {
   "auth.noAccount": "Pas encore de compte ?",
   "auth.createAccount": "Créer un compte",
   "auth.signUpTitle": "Créer un compte",
-  "auth.firstUser":
-    "Première installation : ce compte sera administrateur.",
+  "auth.firstUser": "Première installation : ce compte sera administrateur.",
   "auth.join": "Rejoignez votre instance Statisfy.",
   "auth.name": "Nom",
   "auth.namePlaceholder": "Votre nom",
@@ -144,11 +143,14 @@ export const fr: Dictionary = {
   "history.title": "Historique",
   "history.daily": "Écoute quotidienne",
   "history.hourly": "Répartition horaire",
-  "history.hourlySubtitle": "Moyenne par jour actif, sur la période sélectionnée",
-  "history.recent": "50 dernières écoutes",
+  "history.hourlySubtitle":
+    "Moyenne par jour actif, sur la période sélectionnée",
+  "history.recent": "{count} dernières écoutes",
+  "history.loadMore": "Afficher 50 de plus",
   "history.noPlays": "Aucune écoute enregistrée.",
   "history.weekdayHour": "Jour et heure",
-  "history.weekdayHourSubtitle": "Écoutes par jour de la semaine et heure locale",
+  "history.weekdayHourSubtitle":
+    "Écoutes par jour de la semaine et heure locale",
   "history.behavior": "Habitudes d'écoute",
   "history.behaviorSubtitle": "D'après vos imports d'historique étendu",
   "history.skipRate": "Écoutes zappées",
@@ -424,7 +426,8 @@ export const fr: Dictionary = {
   "msg.enrichDone":
     "Visuels enrichis : {albums}/{albumsChecked} album(s) et {artists}/{artistsChecked} artiste(s).",
   "err.selectFile": "Sélectionnez au moins un fichier JSON.",
-  "err.noHistory": "Aucun historique exploitable dans les fichiers sélectionnés.",
+  "err.noHistory":
+    "Aucun historique exploitable dans les fichiers sélectionnés.",
   "err.importFailed": "Échec de l'import.",
   "err.syncFailed": "Échec de la synchronisation.",
   "err.connectionNotFound": "Connexion introuvable.",
@@ -438,8 +441,7 @@ export const fr: Dictionary = {
   "err.deleteConfirm": "Cochez la case de confirmation pour continuer.",
   "err.tooManyAttempts": "Trop de tentatives. Réessayez plus tard.",
   "err.spotifyAccountRequired": "Indiquez votre compte Spotify.",
-  "msg.spotifyRequested":
-    "Demande envoyée. Un administrateur va la valider.",
+  "msg.spotifyRequested": "Demande envoyée. Un administrateur va la valider.",
   "msg.passwordReset":
     "Mot de passe temporaire : {password} — transmettez-le de façon sûre, puis invitez l'utilisateur à le changer.",
   "err.enrichFailed": "Échec de l'enrichissement des visuels.",
@@ -554,7 +556,8 @@ export const fr: Dictionary = {
   "admin.registrationTitle": "Inscriptions",
   "admin.registrationSubtitle": "Qui peut créer un compte",
   "admin.thresholdTitle": "Seuil de comptabilisation",
-  "admin.thresholdSubtitle": "Une écoute ne compte que si au moins cette part de la piste a été écoutée. 0 % : tout compte.",
+  "admin.thresholdSubtitle":
+    "Une écoute ne compte que si au moins cette part de la piste a été écoutée. 0 % : tout compte.",
   "admin.thresholdLabel": "Écoute minimale",
   "admin.thresholdSave": "Enregistrer et recalculer",
 
@@ -656,7 +659,8 @@ export const fr: Dictionary = {
   "admin.rumLastError": "Dernière erreur : {when} (HTTP {status}).",
   "admin.rumLastErrorNetwork": "Dernière erreur : {when} (erreur réseau).",
   "admin.rumOpen": "Ouvrir OpenObserve",
-  "settings.completionRate": "{percent} % des écoutes ont atteint le seuil d'écoute.",
+  "settings.completionRate":
+    "{percent} % des écoutes ont atteint le seuil d'écoute.",
   "admin.backupTitle": "Sauvegarde & restauration",
   "admin.backupSubtitle": "Exporter ou remplacer la base de données",
   "admin.exportDbHint": "Dump PostgreSQL complet de cette instance.",
@@ -680,7 +684,8 @@ export const fr: Dictionary = {
   "admin.logTest": "Tester l'envoi",
   "admin.logTestSending": "Envoi…",
   "admin.logTestSent": "Événement de test envoyé au sink ({sink}).",
-  "admin.logTestDisabled": "Aucun sink de logs configuré (renseignez LOG_SINK).",
+  "admin.logTestDisabled":
+    "Aucun sink de logs configuré (renseignez LOG_SINK).",
   "admin.logTestFailed": "Échec de l'envoi : {error}",
   "admin.logSinkActive": "Sink de logs actif : {sink}",
   "admin.logFilterApply": "Filtrer",
@@ -713,7 +718,9 @@ export const fr: Dictionary = {
     "Un fichier produit par « Base de données (.dump) » ou présent dans le dossier des sauvegardes.",
   "settings.restoreCta": "Restaurer",
   "settings.restoring": "Restauration…",
-  "settings.confirmRestore": "Cela remplace toutes les données actuelles. Continuer ?",
+  "settings.confirmRestore":
+    "Cela remplace toutes les données actuelles. Continuer ?",
   "msg.restoreDone": "Sauvegarde restaurée.",
-  "err.restoreFailed": "Échec de la restauration (dump invalide ou incompatible ?).",
+  "err.restoreFailed":
+    "Échec de la restauration (dump invalide ou incompatible ?).",
 };

@@ -44,11 +44,16 @@ export function statsUnauthorized(message = "Unauthorized"): NextResponse {
 export async function authorizeStatsRequest(
   request: Request,
 ): Promise<{ user: StatsApiUser } | { response: NextResponse }> {
-  const ip = pickClientIp(
+  const rawIp = pickClientIp(
     request.headers.get("x-forwarded-for"),
     request.headers.get("x-real-ip"),
   );
-  if (!takeToken(`stats-api:ip:${ip}`, RATE_LIMIT, RATE_WINDOW_MS)) {
+  // `pickClientIp` renvoie « local » quand l'IP n'est pas déterminable. On ne
+  // crée alors **pas** de seau commun : tous les clients anonymes partageraient
+  // la même limite, ce qui transformerait une protection par IP en blocage
+  // global (cf. `auth/rate-limit.ts`).
+  const ip = rawIp === "local" ? null : rawIp;
+  if (ip && !takeToken(`stats-api:ip:${ip}`, RATE_LIMIT, RATE_WINDOW_MS)) {
     return { response: statsRateLimited() };
   }
 

@@ -1,6 +1,12 @@
 "use client";
 
-import { useId, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useId,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { formatDuration } from "@/lib/format";
 import { useI18n } from "@/components/i18n-provider";
 
@@ -8,13 +14,17 @@ const MINUTE_MS = 60_000;
 
 /** Échelle « ronde » pour l'axe vertical (en minutes/heures/jours). */
 function axisTicks(maxValue: number): { max: number; ticks: number[] } {
-  const steps = [1, 2, 5, 10, 15, 30, 60, 120, 180, 360, 720, 1440, 2880, 4320, 7200];
+  const steps = [
+    1, 2, 5, 10, 15, 30, 60, 120, 180, 360, 720, 1440, 2880, 4320, 7200,
+  ];
   const minutes = maxValue / MINUTE_MS;
   for (const step of steps) {
     if (step * 4 >= minutes) {
       return {
         max: step * 4 * MINUTE_MS,
-        ticks: [0, step, step * 2, step * 3, step * 4].map((m) => m * MINUTE_MS),
+        ticks: [0, step, step * 2, step * 3, step * 4].map(
+          (m) => m * MINUTE_MS,
+        ),
       };
     }
   }
@@ -147,8 +157,37 @@ export function AreaChart({
   const onMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const rect = plotRef.current?.getBoundingClientRect();
     if (!rect || rect.width === 0) return;
-    const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    const ratio = Math.min(
+      1,
+      Math.max(0, (event.clientX - rect.left) / rect.width),
+    );
     setHover(Math.round(ratio * (n - 1)));
+  };
+
+  // Navigation clavier : le graphique est focusable et les flèches déplacent
+  // le curseur, avec annonce de la valeur via la région `aria-live`.
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape") {
+      setHover(null);
+      return;
+    }
+    if (
+      event.key !== "ArrowLeft" &&
+      event.key !== "ArrowRight" &&
+      event.key !== "Home" &&
+      event.key !== "End"
+    ) {
+      return;
+    }
+    event.preventDefault();
+    setHover((current) => {
+      if (event.key === "Home") return 0;
+      if (event.key === "End") return n - 1;
+      const base = current ?? 0;
+      return event.key === "ArrowLeft"
+        ? Math.max(0, base - 1)
+        : Math.min(n - 1, base + 1);
+    });
   };
 
   return (
@@ -167,10 +206,15 @@ export function AreaChart({
         </div>
         <div
           ref={plotRef}
-          className="relative flex-1"
+          className="relative flex-1 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           style={{ height }}
+          tabIndex={0}
+          role="group"
+          aria-label={t("chart.evolution")}
           onPointerMove={onMove}
           onPointerLeave={() => setHover(null)}
+          onKeyDown={onKeyDown}
+          onBlur={() => setHover(null)}
         >
           <svg
             viewBox={`0 0 ${W} ${H}`}
@@ -181,8 +225,16 @@ export function AreaChart({
           >
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.35" />
-                <stop offset="100%" stopColor="var(--accent)" stopOpacity="0.02" />
+                <stop
+                  offset="0%"
+                  stopColor="var(--accent)"
+                  stopOpacity="0.35"
+                />
+                <stop
+                  offset="100%"
+                  stopColor="var(--accent)"
+                  stopOpacity="0.02"
+                />
               </linearGradient>
             </defs>
             {ticks.map((tick) => {
@@ -225,7 +277,10 @@ export function AreaChart({
               />
               <div
                 className="pointer-events-none absolute z-10 -translate-x-1/2 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-center shadow-lg"
-                style={{ left: `${Math.min(95, Math.max(5, hoverX))}%`, top: 0 }}
+                style={{
+                  left: `${Math.min(95, Math.max(5, hoverX))}%`,
+                  top: 0,
+                }}
               >
                 <div className="whitespace-nowrap text-[11px] font-medium">
                   {hovered.title ?? hovered.label}
@@ -249,6 +304,11 @@ export function AreaChart({
           </span>
         ))}
       </div>
+      <span className="sr-only" aria-live="polite">
+        {hovered
+          ? `${hovered.title ?? hovered.label} : ${formatDuration(hovered.value, locale)}`
+          : ""}
+      </span>
     </div>
   );
 }
@@ -318,8 +378,35 @@ export function CompareChart({
   const onMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const rect = plotRef.current?.getBoundingClientRect();
     if (!rect || rect.width === 0) return;
-    const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    const ratio = Math.min(
+      1,
+      Math.max(0, (event.clientX - rect.left) / rect.width),
+    );
     setHover(Math.round(ratio * (n - 1)));
+  };
+
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape") {
+      setHover(null);
+      return;
+    }
+    if (
+      event.key !== "ArrowLeft" &&
+      event.key !== "ArrowRight" &&
+      event.key !== "Home" &&
+      event.key !== "End"
+    ) {
+      return;
+    }
+    event.preventDefault();
+    setHover((current) => {
+      if (event.key === "Home") return 0;
+      if (event.key === "End") return n - 1;
+      const base = current ?? 0;
+      return event.key === "ArrowLeft"
+        ? Math.max(0, base - 1)
+        : Math.min(n - 1, base + 1);
+    });
   };
 
   return (
@@ -348,10 +435,15 @@ export function CompareChart({
         </div>
         <div
           ref={plotRef}
-          className="relative flex-1"
+          className="relative flex-1 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           style={{ height }}
+          tabIndex={0}
+          role="group"
+          aria-label={t("compare.overlay")}
           onPointerMove={onMove}
           onPointerLeave={() => setHover(null)}
+          onKeyDown={onKeyDown}
+          onBlur={() => setHover(null)}
         >
           <svg
             viewBox={`0 0 ${W} ${H}`}
@@ -362,12 +454,28 @@ export function CompareChart({
           >
             <defs>
               <linearGradient id={gradientAId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.28" />
-                <stop offset="100%" stopColor="var(--accent)" stopOpacity="0.02" />
+                <stop
+                  offset="0%"
+                  stopColor="var(--accent)"
+                  stopOpacity="0.28"
+                />
+                <stop
+                  offset="100%"
+                  stopColor="var(--accent)"
+                  stopOpacity="0.02"
+                />
               </linearGradient>
               <linearGradient id={gradientBId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--violet)" stopOpacity="0.24" />
-                <stop offset="100%" stopColor="var(--violet)" stopOpacity="0.02" />
+                <stop
+                  offset="0%"
+                  stopColor="var(--violet)"
+                  stopOpacity="0.24"
+                />
+                <stop
+                  offset="100%"
+                  stopColor="var(--violet)"
+                  stopOpacity="0.02"
+                />
               </linearGradient>
             </defs>
             {ticks.map((tick) => {
@@ -430,7 +538,10 @@ export function CompareChart({
               />
               <div
                 className="pointer-events-none absolute z-10 -translate-x-1/2 rounded-lg border border-border bg-surface px-3 py-2 text-center shadow-lg"
-                style={{ left: `${Math.min(92, Math.max(8, hoverX))}%`, top: 0 }}
+                style={{
+                  left: `${Math.min(92, Math.max(8, hoverX))}%`,
+                  top: 0,
+                }}
               >
                 <div className="whitespace-nowrap text-[11px] font-medium">
                   {hovered.label}
@@ -439,12 +550,16 @@ export function CompareChart({
                   <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                     <span className="h-2 w-2 rounded-full bg-accent" />
                     <span className="text-muted">{labelA}</span>
-                    <span className="text-accent">{formatDuration(hovered.a, locale)}</span>
+                    <span className="text-accent">
+                      {formatDuration(hovered.a, locale)}
+                    </span>
                   </div>
                   <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                     <span className="h-2 w-2 rounded-full bg-violet" />
                     <span className="text-muted">{labelB}</span>
-                    <span className="text-violet">{formatDuration(hovered.b, locale)}</span>
+                    <span className="text-violet">
+                      {formatDuration(hovered.b, locale)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -463,13 +578,20 @@ export function CompareChart({
           </span>
         ))}
       </div>
+      <span className="sr-only" aria-live="polite">
+        {hovered
+          ? `${hovered.label} : ${labelA} ${formatDuration(hovered.a, locale)}, ${labelB} ${formatDuration(hovered.b, locale)}`
+          : ""}
+      </span>
     </div>
   );
 }
 
 /** Échelle « ronde » pour un axe de comptage (entiers). */
 function countTicks(value: number): { max: number; ticks: number[] } {
-  const steps = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000, 10000];
+  const steps = [
+    1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000, 10000,
+  ];
   for (const step of steps) {
     if (step * 4 >= value) {
       return { max: step * 4, ticks: [0, step, step * 2, step * 3, step * 4] };
@@ -522,7 +644,9 @@ export function BarsChart({
   const hoverLeft = hover != null ? ((hover + 0.5) / n) * 100 : 0;
   const hoverValue = hovered
     ? (hovered.title ??
-      (duration ? formatDuration(hovered.value, locale) : String(hovered.value)))
+      (duration
+        ? formatDuration(hovered.value, locale)
+        : String(hovered.value)))
     : "";
 
   return (
@@ -544,7 +668,10 @@ export function BarsChart({
             <div
               key={tick}
               className="absolute inset-x-0 border-t border-border"
-              style={{ top: `${(1 - tick / max) * 100}%`, opacity: tick === 0 ? 0.9 : 0.45 }}
+              style={{
+                top: `${(1 - tick / max) * 100}%`,
+                opacity: tick === 0 ? 0.9 : 0.45,
+              }}
             />
           ))}
           <div
@@ -571,7 +698,10 @@ export function BarsChart({
           {hover != null && hovered ? (
             <div
               className="pointer-events-none absolute z-10 -translate-x-1/2 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-center shadow-lg"
-              style={{ left: `${Math.min(94, Math.max(6, hoverLeft))}%`, top: 0 }}
+              style={{
+                left: `${Math.min(94, Math.max(6, hoverLeft))}%`,
+                top: 0,
+              }}
             >
               <div className="whitespace-nowrap text-[11px] font-medium">
                 {hovered.label}
@@ -628,11 +758,7 @@ export function RankBars({
 }
 
 /** Heatmap type « contribution » : un carré par jour, regroupés par semaine. */
-export function Heatmap({
-  days,
-}: {
-  days: { day: string; plays: number }[];
-}) {
+export function Heatmap({ days }: { days: { day: string; plays: number }[] }) {
   const { t } = useI18n();
   if (days.length === 0) {
     return <div className="text-sm text-muted">{t("chart.noData")}</div>;
@@ -643,9 +769,8 @@ export function Heatmap({
   const firstDow = (first.getUTCDay() + 6) % 7; // lundi = 0
 
   const weeks: ({ day: string; plays: number } | null)[][] = [];
-  let week: ({ day: string; plays: number } | null)[] = Array(firstDow).fill(
-    null,
-  );
+  let week: ({ day: string; plays: number } | null)[] =
+    Array(firstDow).fill(null);
   for (const day of days) {
     week.push(day);
     if (week.length === 7) {

@@ -190,6 +190,9 @@ model Play {
 
   @@unique([userId, dedupKey])
   @@index([userId, playedAt])
+  // La quasi-totalité des agrégations filtre `counted = true` + une plage de
+  // dates : cet index composite évite de parcourir les écoutes non comptées.
+  @@index([userId, counted, playedAt])
   @@index([userId, trackId])
   @@index([userId, artistId])
   @@index([userId, albumId])

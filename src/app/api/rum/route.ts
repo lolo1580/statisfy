@@ -61,11 +61,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const ip = pickClientIp(
+  const rawIp = pickClientIp(
     request.headers.get("x-forwarded-for"),
     request.headers.get("x-real-ip"),
   );
-  if (!takeToken(`rum-proxy:${ip}`, RATE_LIMIT, RATE_WINDOW_MS)) {
+  // Pas de seau partagé « local » : sans IP fiable, la limite par IP est
+  // simplement ignorée (les autres protections restent en place).
+  const ip = rawIp === "local" ? null : rawIp;
+  if (ip && !takeToken(`rum-proxy:${ip}`, RATE_LIMIT, RATE_WINDOW_MS)) {
     return new NextResponse(null, {
       status: 429,
       headers: { "Retry-After": "60", "Cache-Control": "no-store" },

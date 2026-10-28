@@ -1,16 +1,22 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/components/i18n-provider";
 import { completeOnboarding } from "@/lib/actions/onboarding";
 
 const STEPS = [1, 2, 3, 4] as const;
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 /**
  * Accueil (didacticiel) affiché une seule fois, au premier passage sur le
  * tableau de bord. « Passer » ou terminer l'enregistre côté serveur
  * (`onboardedAt`) : il ne réapparaît plus.
+ *
+ * Accessibilité : dialogue modal avec piège de focus, fermeture par `Échap` et
+ * restitution du focus à l'élément déclencheur.
  */
 export function WelcomeModal({ initialOpen }: { initialOpen: boolean }) {
   const { t } = useI18n();
@@ -18,20 +24,69 @@ export function WelcomeModal({ initialOpen }: { initialOpen: boolean }) {
   const [open, setOpen] = useState(initialOpen);
   const [step, setStep] = useState(0);
   const [, startTransition] = useTransition();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+
+  const close = useCallback(() => {
+    setOpen(false);
+    startTransition(async () => {
+      await completeOnboarding();
+      router.refresh();
+    });
+  }, [router, startTransition]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    restoreFocusRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
+    const panel = panelRef.current;
+    const first = panel?.querySelector<HTMLElement>(FOCUSABLE);
+    (first ?? panel)?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        close();
+        return;
+      }
+      if (event.key !== "Tab" || !panel) return;
+
+      const focusable = Array.from(
+        panel.querySelectorAll<HTMLElement>(FOCUSABLE),
+      );
+      if (focusable.length === 0) {
+        event.preventDefault();
+        panel.focus();
+        return;
+      }
+
+      const firstEl = focusable[0];
+      const lastEl = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === firstEl) {
+        event.preventDefault();
+        lastEl.focus();
+      } else if (!event.shiftKey && document.activeElement === lastEl) {
+        event.preventDefault();
+        firstEl.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      restoreFocusRef.current?.focus?.();
+    };
+  }, [close, open]);
 
   if (!open) return null;
 
   const total = STEPS.length;
   const current = STEPS[step];
   const isLast = step === total - 1;
-
-  const close = () => {
-    setOpen(false);
-    startTransition(async () => {
-      await completeOnboarding();
-      router.refresh();
-    });
-  };
 
   return (
     <div
@@ -40,7 +95,11 @@ export function WelcomeModal({ initialOpen }: { initialOpen: boolean }) {
       aria-modal="true"
       aria-labelledby="onboard-title"
     >
-      <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-xl">
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-xl outline-none"
+      >
         <p className="text-xs uppercase tracking-wider text-muted">
           {t("onboard.subtitle", { total: String(total) })}
         </p>

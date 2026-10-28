@@ -19,12 +19,15 @@ import {
   WeekdayHourHeatmap,
 } from "@/components/charts";
 import { Card, Cover, EmptyState, SectionTitle } from "@/components/ui";
-import { formatDateTime, formatDuration, formatNumber } from "@/lib/format";
+import {
+  formatDateTime,
+  formatDayShort,
+  formatDuration,
+  formatNumber,
+} from "@/lib/format";
 import { getI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
-
-const dayLabel = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(2, 4)}`;
 
 /** Petit indicateur de pourcentage (saut, aléatoire, hors ligne). */
 function RateStat({
@@ -59,14 +62,20 @@ export default async function HistoryPage({
   const user = await getCurrentUser();
   const { locale, t } = await getI18n();
   const dayTitle = (iso: string) =>
-    new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(
-      new Date(`${iso}T00:00:00Z`),
-    );
+    new Intl.DateTimeFormat(locale, {
+      dateStyle: "long",
+      timeZone: "UTC",
+    }).format(new Date(`${iso}T00:00:00Z`));
   const params = await searchParams;
   const parsed = parseRange(
     await resolveRangeParam(params.range),
     user.timezone,
   );
+  // Pagination simple de l'historique : 50 écoutes par palier, plafonnée à 500.
+  const requestedLimit = Number(params.limit);
+  const recentLimit = Number.isFinite(requestedLimit)
+    ? Math.min(500, Math.max(50, Math.floor(requestedLimit)))
+    : 50;
   const filters: StatsRange = {
     days: parsed.days,
     from: parsed.from,
@@ -75,7 +84,7 @@ export default async function HistoryPage({
 
   const [timeline, recent, heatmap, weeklyHour, behavior] = await Promise.all([
     getTimelineStats(user.id, user.timezone, filters),
-    getRecentPlays(user.id, filters, 50),
+    getRecentPlays(user.id, filters, recentLimit),
     getDailyStats(user.id, user.timezone, { days: 371 }),
     getWeeklyHourStats(user.id, user.timezone, filters),
     getListeningBehavior(user.id),
@@ -106,7 +115,7 @@ export default async function HistoryPage({
           <SectionTitle title={t("history.daily")} />
           <AreaChart
             points={daily.map((d) => ({
-              label: dayLabel(d.day),
+              label: formatDayShort(d.day),
               value: d.msPlayed,
               title: dayTitle(d.day),
             }))}
@@ -187,7 +196,11 @@ export default async function HistoryPage({
       ) : null}
 
       <Card>
-        <SectionTitle title={t("history.recent")} />
+        <SectionTitle
+          title={t("history.recent", {
+            count: formatNumber(recentLimit, locale),
+          })}
+        />
         {recent.length === 0 ? (
           <EmptyState>{t("history.noPlays")}</EmptyState>
         ) : (
@@ -224,6 +237,16 @@ export default async function HistoryPage({
             ))}
           </ul>
         )}
+        {recent.length === recentLimit && recentLimit < 500 ? (
+          <div className="mt-4 text-center">
+            <Link
+              href={`/history?range=${parsed.key}&limit=${recentLimit + 50}`}
+              className="inline-block rounded-lg border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-accent/40 hover:text-accent"
+            >
+              {t("history.loadMore", { count: "50" })}
+            </Link>
+          </div>
+        ) : null}
       </Card>
     </div>
   );
