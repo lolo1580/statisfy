@@ -7,6 +7,8 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-10-28
+
 ### Ajouté
 
 - **Palette de commandes (`⌘K` / `Ctrl+K`)** : navigation rapide vers les
