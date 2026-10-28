@@ -197,6 +197,10 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Corrigé
 
+- **Upgrade 1.2.0 → 1.5** : les migrations d'index et de tables d'agrégats sont
+  désormais idempotentes (`IF NOT EXISTS`, contraintes gardées), pour les bases
+  créées par `db push`/`migrate diff` sans historique Prisma.
+
 - **Limitation de débit** : l'API publique de statistiques et le relais RUM ne
   créent plus de seau partagé « local » quand l'IP n'est pas déterminable (tous
   les clients anonymes tombaient sinon dans la même limite, avec un risque de
