@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/dal";
+import type { StatsRange } from "@/lib/stats";
 import {
   getOverview,
   getPlayingYears,
@@ -7,8 +8,7 @@ import {
   getTopGenres,
   getTopTracks,
   getWrappedExtras,
-  type StatsRange,
-} from "@/lib/stats";
+} from "@/lib/stats/cached";
 import { comparisonSeries, percentChange } from "@/lib/compare";
 import {
   formatPeriodLabel,
@@ -144,18 +144,18 @@ export default async function ComparePage({
     getOverview(user.id, filtersB),
     getWrappedExtras(user.id, user.timezone, filtersA),
     getWrappedExtras(user.id, user.timezone, filtersB),
-    getTopArtists(user.id, filtersA, 5),
-    getTopArtists(user.id, filtersA, 5, "time"),
-    getTopArtists(user.id, filtersB, 5),
-    getTopArtists(user.id, filtersB, 5, "time"),
-    getTopTracks(user.id, filtersA, 5),
-    getTopTracks(user.id, filtersA, 5, "time"),
-    getTopTracks(user.id, filtersB, 5),
-    getTopTracks(user.id, filtersB, 5, "time"),
-    getTopGenres(user.id, filtersA, 6),
-    getTopGenres(user.id, filtersA, 6, "time"),
-    getTopGenres(user.id, filtersB, 6),
-    getTopGenres(user.id, filtersB, 6, "time"),
+    getTopArtists(user.id, filtersA, 5, "plays", user.timezone),
+    getTopArtists(user.id, filtersA, 5, "time", user.timezone),
+    getTopArtists(user.id, filtersB, 5, "plays", user.timezone),
+    getTopArtists(user.id, filtersB, 5, "time", user.timezone),
+    getTopTracks(user.id, filtersA, 5, "plays", user.timezone),
+    getTopTracks(user.id, filtersA, 5, "time", user.timezone),
+    getTopTracks(user.id, filtersB, 5, "plays", user.timezone),
+    getTopTracks(user.id, filtersB, 5, "time", user.timezone),
+    getTopGenres(user.id, filtersA, 6, "plays", user.timezone),
+    getTopGenres(user.id, filtersA, 6, "time", user.timezone),
+    getTopGenres(user.id, filtersB, 6, "plays", user.timezone),
+    getTopGenres(user.id, filtersB, 6, "time", user.timezone),
   ]);
 
   const labelA = formatPeriodLabel(periodA, locale, t("recap.yearLabel"));

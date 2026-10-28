@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/dal";
+import { hasAnyPlays, type StatsRange } from "@/lib/stats";
 import {
   getOverview,
   getRecords,
@@ -8,9 +9,7 @@ import {
   getTopArtistsBoth,
   getTopGenresBoth,
   getTopTracksBoth,
-  hasAnyPlays,
-  type StatsRange,
-} from "@/lib/stats";
+} from "@/lib/stats/cached";
 import { RangeTabs } from "@/components/range-tabs";
 import { parseRange } from "@/lib/range";
 import { resolveRangeParam } from "@/lib/range-preference";
@@ -136,9 +135,9 @@ export default async function DashboardPage({
   ] = await Promise.all([
     getOverview(user.id, filters),
     getTimelineStats(user.id, user.timezone, filters),
-    getTopTracksBoth(user.id, filters, 10),
-    getTopArtistsBoth(user.id, filters, 10),
-    getTopGenresBoth(user.id, filters, 10),
+    getTopTracksBoth(user.id, filters, 10, user.timezone),
+    getTopArtistsBoth(user.id, filters, 10, user.timezone),
+    getTopGenresBoth(user.id, filters, 10, user.timezone),
     hasAnyPlays(user.id),
     getRecords(user.id, user.timezone),
     getRediscoveries(user.id),

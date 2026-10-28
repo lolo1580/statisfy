@@ -4,6 +4,11 @@ import { Prisma } from "../../generated/prisma/client";
 import { prisma } from "../db";
 import { dayKey, hourOf } from "../format";
 import {
+  getStoredArtistDailyStats,
+  getStoredDailyStats,
+  getStoredTrackDailyStats,
+} from "./daily-store";
+import {
   BUCKET_SECONDS,
   DAY_MS,
   bucketDate,
@@ -58,11 +63,72 @@ export async function getTimeBuckets(
   }));
 }
 
+/** Construit une série continue à partir d'agrégats quotidiens matérialisés. */
+function buildDailySeries(
+  stats: readonly DailyStat[],
+  timeZone: string,
+  range: StatsRange,
+): DailyStat[] {
+  const now = new Date();
+  const startDay = range.from
+    ? dayKey(range.from, timeZone)
+    : range.days
+      ? dayKey(new Date(now.getTime() - range.days * DAY_MS), timeZone)
+      : (stats[0]?.day ?? dayKey(now, timeZone));
+  const endDay = dayKey(range.to ?? now, timeZone);
+
+  const totalDays = Math.max(
+    1,
+    Math.round(
+      (Date.parse(`${endDay}T00:00:00Z`) -
+        Date.parse(`${startDay}T00:00:00Z`)) /
+        DAY_MS,
+    ) + 1,
+  );
+
+  const daily = new Map<string, DailyStat>();
+  for (let i = 0; i < totalDays; i += 1) {
+    const key = new Date(Date.parse(`${startDay}T00:00:00Z`) + i * DAY_MS)
+      .toISOString()
+      .slice(0, 10);
+    daily.set(key, { day: key, msPlayed: 0, plays: 0 });
+  }
+
+  for (const stat of stats) {
+    if (stat.day < startDay || stat.day > endDay) continue;
+    const entry = daily.get(stat.day) ?? {
+      day: stat.day,
+      msPlayed: 0,
+      plays: 0,
+    };
+    entry.msPlayed += stat.msPlayed;
+    entry.plays += stat.plays;
+    daily.set(stat.day, entry);
+  }
+
+  return [...daily.values()].sort((a, b) => a.day.localeCompare(b.day));
+}
+
 export async function getDailyStats(
   userId: string,
   timeZone: string,
   range: StatsRange,
 ): Promise<DailyStat[]> {
+  // Chemin rapide : agrégats quotidiens matérialisés (une ligne par jour).
+  // Les tables artiste/titre couvrent les fiches détail ; l'album n'a pas de
+  // page dédiée et retombe sur les écoutes brutes.
+  const stored = range.artistId
+    ? await getStoredArtistDailyStats(userId, range.artistId)
+    : range.trackId
+      ? await getStoredTrackDailyStats(userId, range.trackId)
+      : range.albumId
+        ? []
+        : await getStoredDailyStats(userId);
+  if (stored.length > 0) {
+    return buildDailySeries(stored, timeZone, range);
+  }
+
+  // Repli pour les bases migrées mais pas encore backfillées.
   const buckets = await getTimeBuckets(userId, range);
 
   const daily = new Map<string, DailyStat>();

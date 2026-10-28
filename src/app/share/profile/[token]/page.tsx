@@ -2,16 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getSharedProfile } from "@/lib/profile-share";
+import type { StatsRange, TopArtist, TopTrack } from "@/lib/stats";
 import {
   getDailyStats,
   getOverview,
   getRecentPlays,
   getTopArtists,
   getTopTracks,
-  type StatsRange,
-  type TopArtist,
-  type TopTrack,
-} from "@/lib/stats";
+} from "@/lib/stats/cached";
 import { parseRange } from "@/lib/range";
 import { RangeTabs } from "@/components/range-tabs";
 import { Heatmap } from "@/components/charts";
@@ -65,10 +63,10 @@ export default async function SharedProfilePage({
   const [overview, artists, tracks, recent, heatmap] = await Promise.all([
     getOverview(owner.id, filters),
     config.topArtists
-      ? getTopArtists(owner.id, filters, 5)
+      ? getTopArtists(owner.id, filters, 5, "plays", owner.timezone)
       : Promise.resolve(noArtists),
     config.topTracks
-      ? getTopTracks(owner.id, filters, 5)
+      ? getTopTracks(owner.id, filters, 5, "plays", owner.timezone)
       : Promise.resolve(noTracks),
     config.recentPlays
       ? getRecentPlays(owner.id, filters, 10)

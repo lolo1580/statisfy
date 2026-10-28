@@ -2,15 +2,8 @@ import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import { getOptionalUser } from "@/lib/auth/dal";
 import { fetchPublicUrl } from "@/lib/net";
-import {
-  getOverview,
-  getTopArtists,
-  getTopTracks,
-  type Overview,
-  type StatsRange,
-  type TopArtist,
-  type TopTrack,
-} from "@/lib/stats";
+import type { Overview, StatsRange, TopArtist, TopTrack } from "@/lib/stats";
+import { getOverview, getTopArtists, getTopTracks } from "@/lib/stats/cached";
 import { formatPeriodLabel, parseWrappedPeriod } from "@/lib/period";
 import { formatDuration, formatNumber } from "@/lib/format";
 import { getI18n } from "@/i18n/server";
@@ -417,8 +410,8 @@ export async function GET(request: NextRequest) {
 
   const [overview, artists, tracks] = await Promise.all([
     getOverview(user.id, filters),
-    getTopArtists(user.id, filters, 3),
-    getTopTracks(user.id, filters, story ? 6 : 5),
+    getTopArtists(user.id, filters, 3, "plays", user.timezone),
+    getTopTracks(user.id, filters, story ? 6 : 5, "plays", user.timezone),
   ]);
 
   const covers = await Promise.all(

@@ -61,6 +61,9 @@ model User {
   sessions    Session[]
   connections SourceConnection[]
   plays       Play[]
+  dailyStats  UserDailyStat[]
+  artistDailyStats UserArtistDailyStat[]
+  trackDailyStats  UserTrackDailyStat[]
   jobs        Job[]
   logs        LogEntry[]
 
@@ -118,6 +121,7 @@ model Artist {
   albums Album[]
   tracks Track[]
   plays  Play[]
+  dailyStats UserArtistDailyStat[]
 
   @@index([name])
 }
@@ -149,6 +153,7 @@ model Track {
   artist Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
   album  Album? @relation(fields: [albumId], references: [id], onDelete: SetNull)
   plays  Play[]
+  dailyStats UserTrackDailyStat[]
 
   @@index([artistId])
   @@index([albumId])
@@ -199,6 +204,53 @@ model Play {
   @@index([playedAt])
 }
 
+/// Agrégat quotidien par utilisateur, exprimé dans **son fuseau local**.
+/// Alimenté après chaque sync/import (et par `pnpm db:backfill-daily-stats`) :
+/// il évite de relire toutes les écoutes pour la heatmap et les records.
+model UserDailyStat {
+  userId   String
+  /// Jour local `YYYY-MM-DD`.
+  day      String
+  plays    Int    @default(0)
+  msPlayed BigInt @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, day])
+}
+
+/// Agrégat quotidien par artiste (jour local), pour les fiches artiste.
+model UserArtistDailyStat {
+  userId   String
+  artistId String
+  /// Jour local `YYYY-MM-DD`.
+  day      String
+  plays    Int    @default(0)
+  msPlayed BigInt @default(0)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artist Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@id([userId, artistId, day])
+  @@index([userId, day])
+}
+
+/// Agrégat quotidien par titre (jour local), pour les fiches titre.
+model UserTrackDailyStat {
+  userId  String
+  trackId String
+  /// Jour local `YYYY-MM-DD`.
+  day     String
+  plays   Int    @default(0)
+  msPlayed BigInt @default(0)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track Track @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@id([userId, trackId, day])
+  @@index([userId, day])
+}
+
 // Table de correspondance identifiants fournisseurs -> entités internes.
 model ExternalRef {
   id         String  @id @default(cuid())
@@ -234,6 +286,17 @@ model Job {
   connection SourceConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
 
   @@index([userId, status])
+}
+
+/// Verrou distribué (synchronisation multi-instance), avec expiration et
+/// renouvellement par heartbeat. Une ligne par ressource verrouillée.
+model SyncLock {
+  key       String   @id
+  owner     String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
 }
 
 // Journal d'événements de l'instance (auth, administration, sync/import…).

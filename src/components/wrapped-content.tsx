@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import type { StatsRange } from "@/lib/stats";
 import {
   getDiscoveredArtists,
   getOverview,
@@ -8,8 +9,7 @@ import {
   getTopGenres,
   getTopTracks,
   getWrappedExtras,
-  type StatsRange,
-} from "@/lib/stats";
+} from "@/lib/stats/cached";
 import {
   formatPeriodLabel,
   monthShortNames,
@@ -86,10 +86,10 @@ export async function WrappedContent({
   ] = await Promise.all([
     getOverview(userId, filters),
     getOverview(userId, prevFilters),
-    getTopTracks(userId, filters, 10, "time"),
-    getTopArtists(userId, filters, 5, "time"),
+    getTopTracks(userId, filters, 10, "time", timezone),
+    getTopArtists(userId, filters, 5, "time", timezone),
     getTopAlbums(userId, filters, 5, "time"),
-    getTopGenres(userId, filters, 8),
+    getTopGenres(userId, filters, 8, "plays", timezone),
     getWrappedExtras(userId, timezone, filters),
     getDiscoveredArtists(userId, filters, 5),
   ]);

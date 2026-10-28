@@ -7,6 +7,39 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Modifié
+
+- **Performance** : cache mémoire TTL (60 s par défaut, réglable avec
+  `STATS_CACHE_TTL_MS`) sur les agrégations des pages en lecture seule
+  (tableau de bord, historique, comparateur, récapitulatif, fiches, partages,
+  images Open Graph). Les chargements concurrents sont dédupliqués et le cache
+  est invalidé par utilisateur après chaque synchronisation ou import (et
+  globalement après un recalcul du seuil d'écoute).
+- **Agrégats quotidiens matérialisés** : nouvelles tables `UserDailyStat`,
+  `UserArtistDailyStat` et `UserTrackDailyStat` (jour local, écoutes, temps).
+  Elles sont reconstruites de façon **incrémentale** après chaque sync/import
+  (seuls les jours touchés), complètement après un changement de fuseau ou un
+  recalcul du seuil, et par `pnpm db:backfill-daily-stats`. La heatmap, les
+  records et les graphiques des fiches artiste/titre lisent ces tables au lieu
+  de reparcourir les écoutes, avec repli automatique sur les données brutes si
+  elles ne sont pas encore remplies. L'entrypoint Docker effectue le backfill
+  initial quand une table est vide.
+- **Classements sur agrégats** : les tops titres/artistes/genres lisent
+  `User*DailyStat` lorsque la période est alignée sur des jours locaux
+  (aujourd'hui, semaine, mois, année, tout l'historique), avec repli sur les
+  écoutes brutes pour les fenêtres glissantes et les bornes non locales.
+  Résultats vérifiés identiques aux requêtes brutes sur la base de l'instance.
+- **Verrou de synchronisation distribué** : table `SyncLock` avec acquisition
+  atomique, expiration et heartbeat (`SYNC_LOCK_TTL_MS`). Deux instances ne
+  peuvent plus synchroniser la même connexion en parallèle ; le verrou est
+  repris automatiquement après un crash.
+- **Reprise des jobs bloqués** : les jobs `running` de plus de deux heures sont
+  marqués en erreur au démarrage d'une synchronisation ou d'un import, au lieu
+  de rester bloqués après un redémarrage.
+- **Cache Redis optionnel** : `REDIS_URL` active un cache L2 partagé entre
+  répliques (valeurs sérialisées avec `v8`, Dates et BigInt conservés). En cas
+  d'indisponibilité, repli silencieux sur le cache mémoire.
+
 ## [1.2.0] — 2026-10-28
 
 ### Ajouté
@@ -175,6 +208,10 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   rapport de couverture sont exécutés en CI.
 
 ### Corrigé
+
+- **Upgrade 1.2.0 → 1.5** : les migrations d'index et de tables d'agrégats sont
+  désormais idempotentes (`IF NOT EXISTS`, contraintes gardées), pour les bases
+  créées par `db push`/`migrate diff` sans historique Prisma.
 
 - **Limitation de débit** : l'API publique de statistiques et le relais RUM ne
   créent plus de seau partagé « local » quand l'IP n'est pas déterminable (tous

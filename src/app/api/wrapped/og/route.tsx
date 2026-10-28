@@ -2,12 +2,8 @@ import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import { getSharedUserId } from "@/lib/wrapped-share";
 import { prisma } from "@/lib/db";
-import {
-  getOverview,
-  getTopArtists,
-  getTopTracks,
-  type StatsRange,
-} from "@/lib/stats";
+import type { StatsRange } from "@/lib/stats";
+import { getOverview, getTopArtists, getTopTracks } from "@/lib/stats/cached";
 import { formatPeriodLabel, parseWrappedPeriod } from "@/lib/period";
 import { formatDuration, formatNumber } from "@/lib/format";
 import { getDictionary, translate } from "@/i18n";
@@ -66,7 +62,7 @@ export async function GET(request: NextRequest) {
 
   const owner = await prisma.user.findUnique({
     where: { id: userId },
-    select: { name: true },
+    select: { name: true, timezone: true },
   });
   if (!owner) return new Response("Not found", { status: 404 });
 
@@ -87,8 +83,8 @@ export async function GET(request: NextRequest) {
 
   const [overview, artists, tracks] = await Promise.all([
     getOverview(userId, filters),
-    getTopArtists(userId, filters, 1),
-    getTopTracks(userId, filters, 1),
+    getTopArtists(userId, filters, 1, "plays", owner.timezone),
+    getTopTracks(userId, filters, 1, "plays", owner.timezone),
   ]);
 
   const periodLabel = formatPeriodLabel(period, locale, t("recap.yearLabel"));

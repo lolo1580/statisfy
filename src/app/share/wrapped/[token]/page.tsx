@@ -4,7 +4,7 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import { getSharedUserId } from "@/lib/wrapped-share";
 import { prisma } from "@/lib/db";
-import { getOverview, getPlayingYears } from "@/lib/stats";
+import { getOverview, getPlayingYears } from "@/lib/stats/cached";
 import {
   formatPeriodLabel,
   monthNames,

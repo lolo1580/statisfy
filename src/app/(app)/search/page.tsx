@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/dal";
-import { searchLibrary } from "@/lib/stats";
+import { searchLibrary } from "@/lib/stats/cached";
 import { Badge, Card, Cover, EmptyState, SectionTitle } from "@/components/ui";
 import { formatDuration } from "@/lib/format";
 import { getI18n } from "@/i18n/server";

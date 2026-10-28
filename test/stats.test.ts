@@ -14,6 +14,9 @@ const { prismaMock } = vi.hoisted(() => {
       artist: { findMany: vi.fn() },
       track: { findMany: vi.fn() },
       album: { findMany: vi.fn() },
+      userDailyStat: { findMany: vi.fn() },
+      userArtistDailyStat: { findMany: vi.fn() },
+      userTrackDailyStat: { findMany: vi.fn() },
       $queryRaw: vi.fn(),
     },
   };
@@ -42,6 +45,11 @@ function bucket(date: string): number {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.useRealTimers();
+  // Par défaut, pas d'agrégats matérialisés : les tests existants exercent le
+  // repli sur les écoutes brutes.
+  prismaMock.userDailyStat.findMany.mockResolvedValue([]);
+  prismaMock.userArtistDailyStat.findMany.mockResolvedValue([]);
+  prismaMock.userTrackDailyStat.findMany.mockResolvedValue([]);
 });
 
 afterEach(() => {
@@ -80,6 +88,88 @@ describe("getOverview", () => {
     expect(prismaMock.play.count).toHaveBeenCalledWith({
       where: expect.objectContaining({ userId: "u1", counted: undefined }),
     });
+  });
+});
+
+describe("agrégats quotidiens matérialisés", () => {
+  it("getDailyStats lit la table quand elle est remplie", async () => {
+    prismaMock.userDailyStat.findMany.mockResolvedValue([
+      { day: "2026-10-16", plays: 2, msPlayed: BigInt(1_000) },
+      { day: "2026-10-17", plays: 3, msPlayed: BigInt(2_000) },
+    ]);
+
+    const days = await getDailyStats("u1", "Europe/Paris", {
+      days: null,
+      from: new Date("2026-10-16T00:00:00Z"),
+      to: new Date("2026-10-18T00:00:00Z"),
+    });
+
+    expect(days).toEqual([
+      { day: "2026-10-16", plays: 2, msPlayed: 1_000 },
+      { day: "2026-10-17", plays: 3, msPlayed: 2_000 },
+      { day: "2026-10-18", plays: 0, msPlayed: 0 },
+    ]);
+    expect(prismaMock.$queryRaw).not.toHaveBeenCalled();
+  });
+
+  it("ignore la table pour une série filtrée par artiste", async () => {
+    prismaMock.userDailyStat.findMany.mockResolvedValue([
+      { day: "2026-10-16", plays: 2, msPlayed: BigInt(1_000) },
+    ]);
+    prismaMock.$queryRaw.mockResolvedValue([
+      { bucket: bucket("2026-10-16T12:00:00Z"), plays: 1, msPlayed: 500 },
+    ]);
+
+    const days = await getDailyStats("u1", "UTC", {
+      days: null,
+      artistId: "a1",
+      from: new Date("2026-10-16T00:00:00Z"),
+      to: new Date("2026-10-17T00:00:00Z"),
+    });
+
+    expect(days).toEqual([
+      { day: "2026-10-16", plays: 1, msPlayed: 500 },
+      { day: "2026-10-17", plays: 0, msPlayed: 0 },
+    ]);
+    expect(prismaMock.userDailyStat.findMany).not.toHaveBeenCalled();
+    expect(prismaMock.userArtistDailyStat.findMany).toHaveBeenCalledWith({
+      where: { userId: "u1", artistId: "a1" },
+      orderBy: { day: "asc" },
+    });
+    expect(prismaMock.$queryRaw).toHaveBeenCalled();
+  });
+
+  it("getDailyStats utilise les agrégats de l'artiste quand ils existent", async () => {
+    prismaMock.userArtistDailyStat.findMany.mockResolvedValue([
+      { day: "2026-10-16", plays: 1, msPlayed: BigInt(500) },
+    ]);
+
+    const days = await getDailyStats("u1", "UTC", {
+      days: null,
+      artistId: "a1",
+      from: new Date("2026-10-16T00:00:00Z"),
+      to: new Date("2026-10-17T00:00:00Z"),
+    });
+
+    expect(days).toEqual([
+      { day: "2026-10-16", plays: 1, msPlayed: 500 },
+      { day: "2026-10-17", plays: 0, msPlayed: 0 },
+    ]);
+    expect(prismaMock.$queryRaw).not.toHaveBeenCalled();
+  });
+
+  it("getRecords utilise la table sans relire les écoutes", async () => {
+    prismaMock.userDailyStat.findMany.mockResolvedValue([
+      { day: "2026-10-25", plays: 3, msPlayed: BigInt(1_000) },
+      { day: "2026-10-26", plays: 2, msPlayed: BigInt(2_000) },
+      { day: "2026-10-27", plays: 1, msPlayed: BigInt(3_000) },
+    ]);
+    vi.setSystemTime(new Date("2026-10-27T12:00:00Z"));
+
+    const records = await getRecords("u1", "UTC");
+
+    expect(records.currentStreak).toBe(3);
+    expect(prismaMock.$queryRaw).not.toHaveBeenCalled();
   });
 });
 

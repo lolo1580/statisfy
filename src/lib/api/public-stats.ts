@@ -142,8 +142,8 @@ export async function loadStatsApiPayload(
   const [overview, topArtists, topTracks, totals, today, week, month] =
     await Promise.all([
       getOverview(user.id, range),
-      getTopArtists(user.id, range, 1),
-      getTopTracks(user.id, range, 1),
+      getTopArtists(user.id, range, 1, "plays", user.timezone),
+      getTopTracks(user.id, range, 1, "plays", user.timezone),
       getAllTimeStats(user.id),
       countWindow(
         user.id,

@@ -7,7 +7,8 @@ import {
   SectionTitle,
   StatCard,
 } from "@/components/ui";
-import { countWindow, getOverview } from "@/lib/stats";
+import { countWindow } from "@/lib/stats";
+import { getOverview } from "@/lib/stats/cached";
 import {
   formatDateTime,
   formatDuration,
