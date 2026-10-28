@@ -24,7 +24,9 @@ export async function GET() {
     "http://127.0.0.1:3000";
 
   if (!spotify.configured) {
-    return NextResponse.redirect(`${origin}/settings/sources?error=spotify_config`);
+    return NextResponse.redirect(
+      `${origin}/settings/sources?error=spotify_config`,
+    );
   }
 
   // L'accès à l'API Spotify doit avoir été validé par un administrateur.

@@ -53,8 +53,8 @@ describe("parseProfileShareConfig", () => {
 describe("serializeProfileShareConfig", () => {
   it("produit un JSON relisible", () => {
     const config = { ...DEFAULT_PROFILE_SHARE_CONFIG, recentPlays: true };
-    expect(parseProfileShareConfig(serializeProfileShareConfig(config))).toEqual(
-      config,
-    );
+    expect(
+      parseProfileShareConfig(serializeProfileShareConfig(config)),
+    ).toEqual(config);
   });
 });

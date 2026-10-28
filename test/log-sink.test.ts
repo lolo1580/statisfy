@@ -54,7 +54,10 @@ describe("parseSinkConfig", () => {
   });
 
   it("configure GELF UDP avec port par défaut", () => {
-    const config = parseSinkConfig({ LOG_SINK: "gelf-udp", LOG_SINK_HOST: "graylog" });
+    const config = parseSinkConfig({
+      LOG_SINK: "gelf-udp",
+      LOG_SINK_HOST: "graylog",
+    });
     expect(config?.kind).toBe("gelf-udp");
     expect(config?.host).toBe("graylog");
     expect(config?.port).toBe(12201);
@@ -81,7 +84,10 @@ describe("parseSinkConfig", () => {
   });
 
   it("configure GELF TCP sans TLS par défaut", () => {
-    const config = parseSinkConfig({ LOG_SINK: "gelf-tcp", LOG_SINK_HOST: "graylog" });
+    const config = parseSinkConfig({
+      LOG_SINK: "gelf-tcp",
+      LOG_SINK_HOST: "graylog",
+    });
     expect(config?.kind).toBe("gelf-tcp");
     expect(config?.port).toBe(12201);
     expect(config?.tls).toBe(false);
@@ -98,7 +104,10 @@ describe("parseSinkConfig", () => {
     expect(flag?.tls).toBe(true);
     expect(flag?.rejectUnauthorized).toBe(false);
 
-    const alias = parseSinkConfig({ LOG_SINK: "gelf-tcp-tls", LOG_SINK_HOST: "h" });
+    const alias = parseSinkConfig({
+      LOG_SINK: "gelf-tcp-tls",
+      LOG_SINK_HOST: "h",
+    });
     expect(alias?.kind).toBe("gelf-tcp");
     expect(alias?.tls).toBe(true);
   });
@@ -165,7 +174,10 @@ describe("sinks HTTP génériques", () => {
 
 describe("corps HTTP génériques", () => {
   it("construit un JSON générique", () => {
-    const body = JSON.parse(jsonHttpBody(event, "host-1")) as Record<string, unknown>;
+    const body = JSON.parse(jsonHttpBody(event, "host-1")) as Record<
+      string,
+      unknown
+    >;
     expect(body.level).toBe("error");
     expect(body.source).toBe("admin");
     expect(body.host).toBe("host-1");
@@ -205,12 +217,16 @@ describe("corps HTTP génériques", () => {
   });
 
   it("complète les URL de base", () => {
-    expect(lokiUrl("http://loki:3100")).toBe("http://loki:3100/loki/api/v1/push");
+    expect(lokiUrl("http://loki:3100")).toBe(
+      "http://loki:3100/loki/api/v1/push",
+    );
     expect(lokiUrl("http://loki:3100/loki/api/v1/push")).toBe(
       "http://loki:3100/loki/api/v1/push",
     );
     expect(elasticsearchUrl("http://es:9200")).toBe("http://es:9200/_bulk");
-    expect(elasticsearchUrl("http://es:9200/_bulk")).toBe("http://es:9200/_bulk");
+    expect(elasticsearchUrl("http://es:9200/_bulk")).toBe(
+      "http://es:9200/_bulk",
+    );
   });
 });
 
@@ -232,7 +248,9 @@ describe("OTLP (SigNoz / OpenTelemetry)", () => {
   it("construit un enregistrement de log OTLP/JSON", () => {
     const body = JSON.parse(otlpBody(event, "host-1")) as {
       resourceLogs: Array<{
-        resource: { attributes: Array<{ key: string; value: { stringValue: string } }> };
+        resource: {
+          attributes: Array<{ key: string; value: { stringValue: string } }>;
+        };
         scopeLogs: Array<{
           logRecords: Array<{
             timeUnixNano: string;
@@ -252,7 +270,9 @@ describe("OTLP (SigNoz / OpenTelemetry)", () => {
     const record = resource.scopeLogs[0].logRecords[0];
     expect(record.severityNumber).toBe(17); // error
     expect(record.severityText).toBe("ERROR");
-    expect(record.timeUnixNano).toBe(`${BigInt(event.createdAt!.getTime())}000000`);
+    expect(record.timeUnixNano).toBe(
+      `${BigInt(event.createdAt!.getTime())}000000`,
+    );
     expect(record.timeUnixNano.length).toBe(19);
     expect(record.body.stringValue).toBe("Échec de synchronisation");
     const keys = record.attributes.map((a) => a.key);
@@ -262,7 +282,9 @@ describe("OTLP (SigNoz / OpenTelemetry)", () => {
   });
 
   it("complète l'URL OTLP avec /v1/logs", () => {
-    expect(otlpUrl("http://collector:4318")).toBe("http://collector:4318/v1/logs");
+    expect(otlpUrl("http://collector:4318")).toBe(
+      "http://collector:4318/v1/logs",
+    );
     expect(otlpUrl("http://collector:4318/v1/logs")).toBe(
       "http://collector:4318/v1/logs",
     );
@@ -382,9 +404,11 @@ describe("syslogLine", () => {
   it("formate une ligne RFC 5424 avec la priorité calculée", () => {
     const line = syslogLine(event, { hostname: "host-1", facility: 1 });
     // PRI = facility(1) * 8 + severity(error=3) = 11
-    expect(line.startsWith("<11>1 2026-10-13T12:00:00.000Z host-1 statisfy - admin - ")).toBe(
-      true,
-    );
+    expect(
+      line.startsWith(
+        "<11>1 2026-10-13T12:00:00.000Z host-1 statisfy - admin - ",
+      ),
+    ).toBe(true);
     expect(line).toContain("user=user-1");
     expect(line).toContain("ip=10.0.0.7");
   });

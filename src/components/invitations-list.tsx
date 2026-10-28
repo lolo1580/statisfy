@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  createInvitationAction,
-  revokeInvitation,
-} from "@/lib/actions/users";
+import { createInvitationAction, revokeInvitation } from "@/lib/actions/users";
 import { CopyField } from "@/components/admin-forms";
 import { Spinner, useOptimisticList } from "@/components/optimistic";
 import { createTempId, type OptimisticMeta } from "@/lib/optimistic";
@@ -100,7 +97,10 @@ export function InvitationsList({
     <div className="space-y-3">
       <form onSubmit={submit} className="flex flex-wrap items-end gap-2">
         <div className="min-w-[200px] flex-1">
-          <label htmlFor="invite-email" className="mb-1 block text-xs text-muted">
+          <label
+            htmlFor="invite-email"
+            className="mb-1 block text-xs text-muted"
+          >
             {t("settings.inviteEmail")}
           </label>
           <input
@@ -117,7 +117,10 @@ export function InvitationsList({
           />
         </div>
         <div>
-          <label htmlFor="invite-days" className="mb-1 block text-xs text-muted">
+          <label
+            htmlFor="invite-days"
+            className="mb-1 block text-xs text-muted"
+          >
             {t("settings.inviteDays")}
           </label>
           <select
@@ -144,9 +147,7 @@ export function InvitationsList({
         </button>
       </form>
 
-      {formError ? (
-        <p className="text-sm text-danger">{formError}</p>
-      ) : null}
+      {formError ? <p className="text-sm text-danger">{formError}</p> : null}
 
       <div className="mt-4">
         {items.length === 0 ? (
@@ -156,12 +157,24 @@ export function InvitationsList({
             {items.map((invitation) => {
               const usable = invitation.usable;
               const status = invitation.syncing
-                ? { tone: "neutral" as const, label: t("settings.inviteCreating") }
+                ? {
+                    tone: "neutral" as const,
+                    label: t("settings.inviteCreating"),
+                  }
                 : invitation.usedAt
-                  ? { tone: "neutral" as const, label: t("settings.inviteUsed") }
+                  ? {
+                      tone: "neutral" as const,
+                      label: t("settings.inviteUsed"),
+                    }
                   : usable
-                    ? { tone: "accent" as const, label: t("settings.invitePending") }
-                    : { tone: "danger" as const, label: t("settings.inviteExpired") };
+                    ? {
+                        tone: "accent" as const,
+                        label: t("settings.invitePending"),
+                      }
+                    : {
+                        tone: "danger" as const,
+                        label: t("settings.inviteExpired"),
+                      };
               const rowError = errors[invitation.id];
               const pending = invitation.syncing || isPending(invitation.id);
 

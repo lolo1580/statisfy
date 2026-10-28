@@ -15,8 +15,7 @@ import { getI18n } from "@/i18n/server";
 import type { MutationOutcome } from "../optimistic";
 
 export type SpotifyAccessState =
-  | { ok?: boolean; error?: string; message?: string }
-  | undefined;
+  { ok?: boolean; error?: string; message?: string } | undefined;
 
 /** L'utilisateur demande l'accès à l'API Spotify, en précisant son compte. */
 export async function requestSpotifyAccess(

@@ -24,18 +24,26 @@ describe("buildDedupKey", () => {
   });
 
   it("distingue deux écoutes à des secondes différentes", () => {
-    const a = buildDedupKey(play({ playedAt: new Date("2024-05-01T10:00:00Z") }));
-    const b = buildDedupKey(play({ playedAt: new Date("2024-05-01T10:00:01Z") }));
+    const a = buildDedupKey(
+      play({ playedAt: new Date("2024-05-01T10:00:00Z") }),
+    );
+    const b = buildDedupKey(
+      play({ playedAt: new Date("2024-05-01T10:00:01Z") }),
+    );
     expect(a).not.toBe(b);
   });
 
   it("utilise l'identifiant externe de piste quand il est présent", () => {
-    const key = buildDedupKey(play({ externalTrackId: "abc", trackName: "Autre" }));
+    const key = buildDedupKey(
+      play({ externalTrackId: "abc", trackName: "Autre" }),
+    );
     expect(key.startsWith("spotify|abc|")).toBe(true);
   });
 
   it("retombe sur artiste::titre normalisé sans identifiant externe", () => {
-    const key = buildDedupKey(play({ artistName: " Artiste ", trackName: "TITRE" }));
+    const key = buildDedupKey(
+      play({ artistName: " Artiste ", trackName: "TITRE" }),
+    );
     expect(key).toContain("spotify|artiste::titre|");
   });
 });

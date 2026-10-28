@@ -124,7 +124,9 @@ export async function WrappedContent({
       <Card className="bg-gradient-to-br from-accent-soft to-transparent">
         <p className="text-xs uppercase tracking-wider text-muted">
           {t("recap.heroKicker", {
-            period: t(period.isMonth ? "recap.periodMonth" : "recap.periodYear"),
+            period: t(
+              period.isMonth ? "recap.periodMonth" : "recap.periodYear",
+            ),
           })}
         </p>
         <h2 className="mt-1 text-3xl font-semibold tracking-tight">
@@ -193,7 +195,9 @@ export async function WrappedContent({
               label={t("recap.busiestDay")}
               value={
                 extras.busiestDay
-                  ? dateFmt.format(new Date(`${extras.busiestDay.key}T12:00:00Z`))
+                  ? dateFmt.format(
+                      new Date(`${extras.busiestDay.key}T12:00:00Z`),
+                    )
                   : "—"
               }
               hint={
@@ -299,7 +303,9 @@ export async function WrappedContent({
                       interactive={interactive}
                       className="flex items-center gap-3 rounded-lg p-1.5 transition-colors hover:bg-surface-2"
                     >
-                      <span className="w-5 text-sm text-muted">{index + 1}</span>
+                      <span className="w-5 text-sm text-muted">
+                        {index + 1}
+                      </span>
                       <Cover src={track.imageUrl} alt={track.name} size={38} />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">

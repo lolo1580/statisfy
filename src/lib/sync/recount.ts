@@ -1,8 +1,8 @@
-import 'server-only'
+import "server-only";
 
-import { prisma } from '../db'
+import { prisma } from "../db";
 
-export type RecountResult = { reset: number; evaluated: number }
+export type RecountResult = { reset: number; evaluated: number };
 
 /**
  * Recalcule l'indicateur `counted` de **toutes** les écoutes selon le seuil
@@ -14,7 +14,7 @@ export type RecountResult = { reset: number; evaluated: number }
  * (`pnpm db:backfill-counted`).
  */
 export async function recountPlays(ratio: number): Promise<RecountResult> {
-  const reset = await prisma.play.updateMany({ data: { counted: true } })
+  const reset = await prisma.play.updateMany({ data: { counted: true } });
   const evaluated = await prisma.$executeRaw`
     UPDATE "Play"
     SET "counted" = ("Play"."msPlayed" >= "Track"."durationMs" * ${ratio}::double precision)
@@ -22,6 +22,6 @@ export async function recountPlays(ratio: number): Promise<RecountResult> {
     WHERE "Play"."trackId" = "Track"."id"
       AND "Track"."durationMs" IS NOT NULL
       AND "Track"."durationMs" > 0
-  `
-  return { reset: reset.count, evaluated }
+  `;
+  return { reset: reset.count, evaluated };
 }

@@ -31,10 +31,10 @@ export function RumForm({
     saveRumSettings,
     undefined,
   );
-  const [testState, testAction, testing] = useActionState<
-    RumState,
-    FormData
-  >(testRumConnection, undefined);
+  const [testState, testAction, testing] = useActionState<RumState, FormData>(
+    testRumConnection,
+    undefined,
+  );
   const [privacy, setPrivacy] = useState<RumPrivacyLevel>(settings.privacy);
   const [replay, setReplay] = useState(settings.startSessionReplay);
 
@@ -107,7 +107,7 @@ export function RumForm({
             name="token"
             defaultValue=""
             autoComplete="off"
-            placeholder={hasToken ? tokenHint ?? "••••" : undefined}
+            placeholder={hasToken ? (tokenHint ?? "••••") : undefined}
             className={inputClass}
           />
           <span className="block text-[11px] text-muted">
@@ -176,9 +176,7 @@ export function RumForm({
               defaultValue={settings.persistence}
               className={inputClass}
             >
-              <option value="memory">
-                {t("admin.rumPersistenceMemory")}
-              </option>
+              <option value="memory">{t("admin.rumPersistenceMemory")}</option>
               <option value="cookie">{t("admin.rumPersistenceCookie")}</option>
               <option value="local-storage">
                 {t("admin.rumPersistenceLocalStorage")}
@@ -278,9 +276,7 @@ export function RumForm({
         >
           {testing ? t("admin.rumTesting") : t("admin.rumTest")}
         </button>
-        <span className="text-[11px] text-muted">
-          {t("admin.rumTestHint")}
-        </span>
+        <span className="text-[11px] text-muted">{t("admin.rumTestHint")}</span>
       </div>
       <Feedback state={testState} />
     </form>

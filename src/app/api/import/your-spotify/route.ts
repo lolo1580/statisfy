@@ -67,7 +67,9 @@ export async function POST(request: NextRequest) {
   if (!isZip) {
     const hint =
       request.headers.get("x-filename") ??
-      filenameFromContentDisposition(request.headers.get("content-disposition"));
+      filenameFromContentDisposition(
+        request.headers.get("content-disposition"),
+      );
     const collection = peekCollection(buffer, hint);
     name = collection ? `${collection}.bson` : "dump.bson";
   }

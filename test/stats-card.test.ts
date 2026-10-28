@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  escapeXml,
-  renderStatsCard,
-} from "@/lib/api/stats-card";
+import { escapeXml, renderStatsCard } from "@/lib/api/stats-card";
 import type { StatsApiPayload } from "@/lib/api/public-stats";
 
 const PAYLOAD: StatsApiPayload = {

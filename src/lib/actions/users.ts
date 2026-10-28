@@ -24,7 +24,9 @@ export type AdminState =
   | undefined;
 
 /** Active/désactive le rôle administrateur d'un autre compte. */
-export async function setUserAdmin(formData: FormData): Promise<MutationOutcome> {
+export async function setUserAdmin(
+  formData: FormData,
+): Promise<MutationOutcome> {
   const { t } = await getI18n();
   const admin = await getAdminUser();
   if (!admin) return { error: t("err.forbidden") };

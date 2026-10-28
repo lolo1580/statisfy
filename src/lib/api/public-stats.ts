@@ -61,9 +61,7 @@ export async function getStatsApiUser(
 }
 
 /** Jeton d'API actuel d'un compte (`null` si l'API est désactivée). */
-export async function getStatsApiToken(
-  userId: string,
-): Promise<string | null> {
+export async function getStatsApiToken(userId: string): Promise<string | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { statsApiToken: true },
@@ -98,7 +96,9 @@ export type StatsApiAllTime = {
 };
 
 /** Totaux « depuis toujours » : une seule agrégation, sans groupBy. */
-export async function getAllTimeStats(userId: string): Promise<StatsApiAllTime> {
+export async function getAllTimeStats(
+  userId: string,
+): Promise<StatsApiAllTime> {
   const aggregate = await prisma.play.aggregate({
     where: { userId, counted: true },
     _count: { _all: true },
@@ -139,23 +139,20 @@ export async function loadStatsApiPayload(
   const weekFrom = new Date(now.getTime() - 7 * DAY_MS);
   const monthFrom = new Date(now.getTime() - 30 * DAY_MS);
 
-  const [
-    overview,
-    topArtists,
-    topTracks,
-    totals,
-    today,
-    week,
-    month,
-  ] = await Promise.all([
-    getOverview(user.id, range),
-    getTopArtists(user.id, range, 1),
-    getTopTracks(user.id, range, 1),
-    getAllTimeStats(user.id),
-    countWindow(user.id, todayRange.from ?? new Date(now.getTime() - DAY_MS), to),
-    countWindow(user.id, weekFrom, to),
-    countWindow(user.id, monthFrom, to),
-  ]);
+  const [overview, topArtists, topTracks, totals, today, week, month] =
+    await Promise.all([
+      getOverview(user.id, range),
+      getTopArtists(user.id, range, 1),
+      getTopTracks(user.id, range, 1),
+      getAllTimeStats(user.id),
+      countWindow(
+        user.id,
+        todayRange.from ?? new Date(now.getTime() - DAY_MS),
+        to,
+      ),
+      countWindow(user.id, weekFrom, to),
+      countWindow(user.id, monthFrom, to),
+    ]);
 
   const payload = buildStatsApiPayload({
     user,

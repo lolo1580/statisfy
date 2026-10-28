@@ -13,9 +13,9 @@ import { getI18n } from "@/i18n/server";
 
 export type AuthState =
   | {
-      error?: string
-      fieldErrors?: Record<string, string[]>
-      values?: { email?: string; name?: string }
+      error?: string;
+      fieldErrors?: Record<string, string[]>;
+      values?: { email?: string; name?: string };
     }
   | undefined;
 
@@ -182,11 +182,12 @@ export async function login(
   const ip = await clientIp();
   const userKey = `login:${ip ?? "-"}|${email}`;
   const userAllowed = takeToken(userKey, 10, 15 * 60 * 1000);
-  const ipAllowed = ip
-    ? takeToken(`login-ip:${ip}`, 30, 15 * 60 * 1000)
-    : true;
+  const ipAllowed = ip ? takeToken(`login-ip:${ip}`, 30, 15 * 60 * 1000) : true;
   if (!userAllowed || !ipAllowed) {
-    return { error: t("autherr.rateLimited", { minutes: 15 }), values: { email } };
+    return {
+      error: t("autherr.rateLimited", { minutes: 15 }),
+      values: { email },
+    };
   }
 
   if (!email || !password) {

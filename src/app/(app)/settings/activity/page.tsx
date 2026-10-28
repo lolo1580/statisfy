@@ -1,6 +1,12 @@
 import { getCurrentUser } from "@/lib/auth/dal";
 import { prisma } from "@/lib/db";
-import { Badge, Card, EmptyState, SectionTitle, StatCard } from "@/components/ui";
+import {
+  Badge,
+  Card,
+  EmptyState,
+  SectionTitle,
+  StatCard,
+} from "@/components/ui";
 import { countWindow, getOverview } from "@/lib/stats";
 import {
   formatDateTime,

@@ -27,9 +27,7 @@ export default async function SettingsSourcesPage() {
 
   const hasSpotifyConnection = connections.some((c) => c.type === "spotify");
   const canConnectSpotifyUi =
-    user.isAdmin ||
-    spotifyAccess.status === "approved" ||
-    hasSpotifyConnection;
+    user.isAdmin || spotifyAccess.status === "approved" || hasSpotifyConnection;
   const spotifyBadge =
     spotifyAccess.status === "pending" ? (
       <Badge tone="violet">{t("settings.spotifyPendingBadge")}</Badge>

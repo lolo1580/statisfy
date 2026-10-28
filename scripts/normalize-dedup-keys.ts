@@ -10,8 +10,8 @@
  *
  * Idempotent : relancer le script ne fait plus rien.
  */
-import 'dotenv/config'
-import { prisma } from '../src/lib/db'
+import "dotenv/config";
+import { prisma } from "../src/lib/db";
 
 async function main() {
   // 1) Doublons « même seconde » : on garde la ligne créée en premier.
@@ -26,21 +26,21 @@ async function main() {
         p."createdAt" > q."createdAt"
         OR (p."createdAt" = q."createdAt" AND p.id > q.id)
       )
-  `
+  `;
   // 2) Normalisation des clés restantes.
   const normalized = await prisma.$executeRaw`
     UPDATE "Play"
     SET "dedupKey" = regexp_replace("dedupKey", '\\.\\d{3}Z$', 'Z')
     WHERE "dedupKey" <> regexp_replace("dedupKey", '\\.\\d{3}Z$', 'Z')
-  `
+  `;
   console.log(
     `${deleted} doublon(s) supprimé(s), ${normalized} clé(s) normalisée(s).`,
-  )
-  await prisma.$disconnect()
+  );
+  await prisma.$disconnect();
 }
 
 main().catch(async (error) => {
-  console.error(error)
-  await prisma.$disconnect()
-  process.exit(1)
-})
+  console.error(error);
+  await prisma.$disconnect();
+  process.exit(1);
+});

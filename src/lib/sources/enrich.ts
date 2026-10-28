@@ -78,7 +78,8 @@ async function searchImage(
   });
   if (!res.ok) return null;
   const data = (await res.json()) as SpotifySearchResponse;
-  const item = type === "album" ? data.albums?.items?.[0] : data.artists?.items?.[0];
+  const item =
+    type === "album" ? data.albums?.items?.[0] : data.artists?.items?.[0];
   return item?.images?.[0]?.url ?? null;
 }
 
@@ -88,7 +89,11 @@ export async function findAlbumCover(
   albumName: string,
 ): Promise<string | null> {
   const token = await getClientToken();
-  return searchImage(token, "album", `artist:"${artistName}" album:"${albumName}"`);
+  return searchImage(
+    token,
+    "album",
+    `artist:"${artistName}" album:"${albumName}"`,
+  );
 }
 
 /** Recherche la photo d'un artiste dans le catalogue Spotify. */

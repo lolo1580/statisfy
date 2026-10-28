@@ -13,7 +13,10 @@ export type JobProgress = {
 
 /** Identifiant de suivi (UUID natif, ou repli non sécurisé). */
 export function newImportRunId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
   return `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
@@ -38,10 +41,9 @@ export function useImportProgress(
     let cancelled = false;
     const poll = async () => {
       try {
-        const response = await fetch(
-          `/api/jobs/${encodeURIComponent(runId)}`,
-          { cache: "no-store" },
-        );
+        const response = await fetch(`/api/jobs/${encodeURIComponent(runId)}`, {
+          cache: "no-store",
+        });
         if (!response.ok) return;
         const job = (await response.json()) as JobProgress;
         if (!cancelled) setEntry({ runId, job });

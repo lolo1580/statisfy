@@ -24,7 +24,11 @@ function evictExpired(now: number): void {
 }
 
 /** Consomme un jeton ; renvoie `false` si la limite est dépassée. */
-export function takeToken(key: string, limit: number, windowMs: number): boolean {
+export function takeToken(
+  key: string,
+  limit: number,
+  windowMs: number,
+): boolean {
   const now = Date.now();
   const bucket = buckets.get(key);
   if (bucket && bucket.resetAt > now) {

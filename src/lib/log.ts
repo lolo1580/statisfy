@@ -21,7 +21,8 @@ export type LogSource = (typeof LOG_SOURCES)[number];
 
 export function isLogLevel(value: unknown): value is LogLevel {
   return (
-    typeof value === "string" && (LOG_LEVELS as readonly string[]).includes(value)
+    typeof value === "string" &&
+    (LOG_LEVELS as readonly string[]).includes(value)
   );
 }
 

@@ -44,7 +44,9 @@ export function UsersList({
   };
 
   const removeUser = (member: UserRow) => {
-    if (!window.confirm(t("settings.confirmDeleteUser", { name: member.name }))) {
+    if (
+      !window.confirm(t("settings.confirmDeleteUser", { name: member.name }))
+    ) {
       return;
     }
     remove(member.id, async () => {

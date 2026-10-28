@@ -1,8 +1,8 @@
-import 'server-only'
+import "server-only";
 
-import { SignJWT, jwtVerify } from 'jose'
-import { headers } from 'next/headers'
-import { appUrl, getSessionSecret } from '../env'
+import { SignJWT, jwtVerify } from "jose";
+import { headers } from "next/headers";
+import { appUrl, getSessionSecret } from "../env";
 
 /**
  * État OAuth signé.
@@ -15,37 +15,37 @@ import { appUrl, getSessionSecret } from '../env'
  * - `ret` : l'URL de l'interface vers laquelle rediriger après le callback.
  */
 export type OAuthState = {
-  uid: string
-  ret?: string
-}
+  uid: string;
+  ret?: string;
+};
 
-const PURPOSE = 'spotify_oauth'
+const PURPOSE = "spotify_oauth";
 
 export async function signOAuthState(state: OAuthState): Promise<string> {
   return new SignJWT({ ...state, purpose: PURPOSE })
-    .setProtectedHeader({ alg: 'HS256' })
+    .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime('15m')
-    .sign(getSessionSecret())
+    .setExpirationTime("15m")
+    .sign(getSessionSecret());
 }
 
 export async function verifyOAuthState(
   token: string | null | undefined,
 ): Promise<OAuthState | null> {
-  if (!token) return null
+  if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, getSessionSecret(), {
-      algorithms: ['HS256'],
-    })
-    if (payload.purpose !== PURPOSE || typeof payload.uid !== 'string') {
-      return null
+      algorithms: ["HS256"],
+    });
+    if (payload.purpose !== PURPOSE || typeof payload.uid !== "string") {
+      return null;
     }
     return {
       uid: payload.uid,
-      ret: typeof payload.ret === 'string' ? payload.ret : undefined,
-    }
+      ret: typeof payload.ret === "string" ? payload.ret : undefined,
+    };
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -53,19 +53,22 @@ export async function verifyOAuthState(
 export async function requestOrigin(): Promise<string | null> {
   // Priorité à l'URL publique configurée : ne dépend pas d'en-têtes `Host` /
   // `X-Forwarded-*` (forgables si l'app est joignable directement).
-  if (appUrl) return normalizeOrigin(appUrl)
-  const headerList = await headers()
-  const host = headerList.get('x-forwarded-host') ?? headerList.get('host')
-  if (!host) return null
+  if (appUrl) return normalizeOrigin(appUrl);
+  const headerList = await headers();
+  const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
+  if (!host) return null;
   // Refuse un hôte inattendu (injection / redirection ouverte).
-  if (!/^[a-z0-9.-]+(?::\d{1,5})?$/i.test(host)) return null
-  const proto = headerList.get('x-forwarded-proto') === 'https' ? 'https' : 'http'
-  return `${proto}://${host}`
+  if (!/^[a-z0-9.-]+(?::\d{1,5})?$/i.test(host)) return null;
+  const proto =
+    headerList.get("x-forwarded-proto") === "https" ? "https" : "http";
+  return `${proto}://${host}`;
 }
 
 /** Nettoie une origine : conserve le schéma http/https, retire le slash final. */
-export function normalizeOrigin(origin: string | null | undefined): string | null {
-  if (!origin) return null
-  if (!/^https?:\/\//.test(origin)) return null
-  return origin.replace(/\/+$/, '')
+export function normalizeOrigin(
+  origin: string | null | undefined,
+): string | null {
+  if (!origin) return null;
+  if (!/^https?:\/\//.test(origin)) return null;
+  return origin.replace(/\/+$/, "");
 }

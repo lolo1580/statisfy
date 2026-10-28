@@ -7,7 +7,20 @@ import {
 } from "@/lib/compare";
 import { parseWrappedPeriod } from "@/lib/period";
 
-const monthsShort = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+const monthsShort = [
+  "J",
+  "F",
+  "M",
+  "A",
+  "M",
+  "J",
+  "J",
+  "A",
+  "S",
+  "O",
+  "N",
+  "D",
+];
 const now = new Date("2026-06-01T00:00:00Z");
 const year = (y: string) => parseWrappedPeriod(y, undefined, now);
 const month = (y: string, m: string) => parseWrappedPeriod(y, m, now);

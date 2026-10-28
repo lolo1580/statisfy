@@ -1,51 +1,53 @@
-import 'server-only'
+import "server-only";
 
-import { SignJWT, jwtVerify } from 'jose'
-import { cookies } from 'next/headers'
-import { prisma } from '../db'
-import { cookieDomain, getSessionSecret } from '../env'
+import { SignJWT, jwtVerify } from "jose";
+import { cookies } from "next/headers";
+import { prisma } from "../db";
+import { cookieDomain, getSessionSecret } from "../env";
 
-const COOKIE_NAME = 'statisfy_session'
+const COOKIE_NAME = "statisfy_session";
 
-const DAY_MS = 24 * 60 * 60 * 1000
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function positiveIntEnv(name: string, fallback: number): number {
-  const value = Number(process.env[name])
-  return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback
+  const value = Number(process.env[name]);
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
 }
 
 /** Durée de vie **absolue** d'une session (défaut 7 jours, `SESSION_TTL_DAYS`). */
-const SESSION_DURATION_MS = positiveIntEnv('SESSION_TTL_DAYS', 7) * DAY_MS
+const SESSION_DURATION_MS = positiveIntEnv("SESSION_TTL_DAYS", 7) * DAY_MS;
 
 /** Timeout d'**inactivité** (défaut 24 h, `SESSION_IDLE_HOURS`). */
 const SESSION_IDLE_MS =
-  positiveIntEnv('SESSION_IDLE_HOURS', 24) * 60 * 60 * 1000
+  positiveIntEnv("SESSION_IDLE_HOURS", 24) * 60 * 60 * 1000;
 
 /** Intervalle minimal entre deux rafraîchissements de `lastUsedAt`. */
-const SESSION_TOUCH_MS = 5 * 60 * 1000
+const SESSION_TOUCH_MS = 5 * 60 * 1000;
 
-export type SessionPayload = { uid: string; sid: string }
+export type SessionPayload = { uid: string; sid: string };
 
 async function sign(payload: SessionPayload, expiresAt: Date): Promise<string> {
   return new SignJWT(payload)
-    .setProtectedHeader({ alg: 'HS256' })
+    .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(expiresAt)
-    .sign(getSessionSecret())
+    .sign(getSessionSecret());
 }
 
-async function verify(token: string | undefined): Promise<SessionPayload | null> {
-  if (!token) return null
+async function verify(
+  token: string | undefined,
+): Promise<SessionPayload | null> {
+  if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, getSessionSecret(), {
-      algorithms: ['HS256'],
-    })
-    if (typeof payload.uid !== 'string' || typeof payload.sid !== 'string') {
-      return null
+      algorithms: ["HS256"],
+    });
+    if (typeof payload.uid !== "string" || typeof payload.sid !== "string") {
+      return null;
     }
-    return { uid: payload.uid, sid: payload.sid }
+    return { uid: payload.uid, sid: payload.sid };
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -54,21 +56,21 @@ export async function createSession(userId: string): Promise<void> {
   // Purge opportuniste des sessions expirées (best-effort, à la connexion).
   await prisma.session
     .deleteMany({ where: { expiresAt: { lt: new Date() } } })
-    .catch(() => undefined)
-  const expiresAt = new Date(Date.now() + SESSION_DURATION_MS)
+    .catch(() => undefined);
+  const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
   const session = await prisma.session.create({
     data: { userId, expiresAt },
-  })
-  const token = await sign({ uid: userId, sid: session.id }, expiresAt)
-  const jar = await cookies()
+  });
+  const token = await sign({ uid: userId, sid: session.id }, expiresAt);
+  const jar = await cookies();
   jar.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
     expires: expiresAt,
     ...(cookieDomain ? { domain: cookieDomain } : {}),
-  })
+  });
 }
 
 /**
@@ -77,14 +79,14 @@ export async function createSession(userId: string): Promise<void> {
  * inactive depuis trop longtemps. Rafraîchit l'activité (throttlé).
  */
 export async function readSession(): Promise<SessionPayload | null> {
-  const jar = await cookies()
-  const payload = await verify(jar.get(COOKIE_NAME)?.value)
-  if (!payload) return null
+  const jar = await cookies();
+  const payload = await verify(jar.get(COOKIE_NAME)?.value);
+  if (!payload) return null;
 
-  const row = await prisma.session.findUnique({ where: { id: payload.sid } })
-  if (!row || row.userId !== payload.uid) return null
+  const row = await prisma.session.findUnique({ where: { id: payload.sid } });
+  if (!row || row.userId !== payload.uid) return null;
 
-  const now = Date.now()
+  const now = Date.now();
   if (
     row.expiresAt.getTime() < now ||
     now - row.lastUsedAt.getTime() > SESSION_IDLE_MS
@@ -92,35 +94,35 @@ export async function readSession(): Promise<SessionPayload | null> {
     // Expirée ou inactive : on nettoie la session.
     await prisma.session
       .deleteMany({ where: { id: row.id } })
-      .catch(() => undefined)
-    return null
+      .catch(() => undefined);
+    return null;
   }
 
   // Rafraîchit l'horodatage d'activité au plus toutes les 5 minutes.
   if (now - row.lastUsedAt.getTime() > SESSION_TOUCH_MS) {
     await prisma.session
       .update({ where: { id: row.id }, data: { lastUsedAt: new Date(now) } })
-      .catch(() => undefined)
+      .catch(() => undefined);
   }
 
-  return payload
+  return payload;
 }
 
 export async function deleteSession(): Promise<void> {
-  const jar = await cookies()
-  const payload = await verify(jar.get(COOKIE_NAME)?.value)
+  const jar = await cookies();
+  const payload = await verify(jar.get(COOKIE_NAME)?.value);
   if (payload) {
-    await prisma.session.deleteMany({ where: { id: payload.sid } })
+    await prisma.session.deleteMany({ where: { id: payload.sid } });
   }
   if (cookieDomain) {
     // Un cookie posé avec un domaine doit être supprimé avec ce même domaine.
-    jar.set(COOKIE_NAME, '', {
-      path: '/',
+    jar.set(COOKIE_NAME, "", {
+      path: "/",
       domain: cookieDomain,
       maxAge: 0,
       expires: new Date(0),
-    })
+    });
   } else {
-    jar.delete(COOKIE_NAME)
+    jar.delete(COOKIE_NAME);
   }
 }

@@ -8,7 +8,9 @@ import { clientIp, resetTokens, takeToken } from "@/lib/auth/rate-limit";
 import { verifyPasswordOrDummy } from "@/lib/password";
 
 /** Vérifie un en-tête `Authorization: Basic <email:mot de passe>`. */
-async function userFromBasic(header: string | null): Promise<CurrentUser | null> {
+async function userFromBasic(
+  header: string | null,
+): Promise<CurrentUser | null> {
   if (!header || !/^basic\s+/i.test(header)) return null;
   try {
     const decoded = Buffer.from(
@@ -35,7 +37,10 @@ async function userFromBasic(header: string | null): Promise<CurrentUser | null>
     const user = await prisma.user.findUnique({ where: { email } });
     // scrypt exécuté même si l'email est inconnu (hash factice) : pas d'oracle
     // temporel sur l'existence du compte, comme pour le formulaire de connexion.
-    const passwordOk = await verifyPasswordOrDummy(password, user?.passwordHash);
+    const passwordOk = await verifyPasswordOrDummy(
+      password,
+      user?.passwordHash,
+    );
     if (!user || !passwordOk) return null;
 
     resetTokens(userKey);
@@ -53,8 +58,7 @@ async function userFromBasic(header: string | null): Promise<CurrentUser | null>
 }
 
 export type ImportTarget =
-  | { ok: true; user: CurrentUser }
-  | { ok: false; response: NextResponse };
+  { ok: true; user: CurrentUser } | { ok: false; response: NextResponse };
 
 /**
  * Résout l'utilisateur cible d'un import en POST.
@@ -85,7 +89,10 @@ export async function resolveImportTarget(
       ok: false,
       response: NextResponse.json(
         { error: "Unauthorized" },
-        { status: 401, headers: { "WWW-Authenticate": 'Basic realm="Statisfy"' } },
+        {
+          status: 401,
+          headers: { "WWW-Authenticate": 'Basic realm="Statisfy"' },
+        },
       ),
     };
   }

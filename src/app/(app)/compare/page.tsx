@@ -68,7 +68,11 @@ function PeriodSelect({
         {title}
       </span>
       <span className="flex gap-2">
-        <select name={yearName} defaultValue={period.year} className={selectClass}>
+        <select
+          name={yearName}
+          defaultValue={period.year}
+          className={selectClass}
+        >
           {yearOptions.map((year) => (
             <option key={year} value={year}>
               {year}
@@ -160,7 +164,12 @@ export default async function ComparePage({
   const monthsShort = monthShortNames(locale);
 
   const yearOptions = [
-    ...new Set([...years, periodA.year, periodB.year, new Date().getUTCFullYear()]),
+    ...new Set([
+      ...years,
+      periodA.year,
+      periodB.year,
+      new Date().getUTCFullYear(),
+    ]),
   ]
     .filter((year) => year >= 2000)
     .sort((a, b) => b - a);
@@ -191,7 +200,10 @@ export default async function ComparePage({
       label: t("dash.artists"),
       a: formatNumber(overviewA.distinctArtists, locale),
       b: formatNumber(overviewB.distinctArtists, locale),
-      delta: percentChange(overviewA.distinctArtists, overviewB.distinctArtists),
+      delta: percentChange(
+        overviewA.distinctArtists,
+        overviewB.distinctArtists,
+      ),
     },
     {
       label: t("dash.tracks"),

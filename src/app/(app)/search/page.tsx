@@ -18,8 +18,7 @@ export default async function SearchPage({
     ? await searchLibrary(user.id, query, 20)
     : { artists: [], tracks: [] };
 
-  const hasResults =
-    results.artists.length > 0 || results.tracks.length > 0;
+  const hasResults = results.artists.length > 0 || results.tracks.length > 0;
 
   return (
     <div className="space-y-6">

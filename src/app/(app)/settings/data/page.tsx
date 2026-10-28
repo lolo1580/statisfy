@@ -3,7 +3,10 @@ import { appUrl } from "@/lib/env";
 import { requestOrigin } from "@/lib/sources/spotify-state";
 import { getWrappedShareToken } from "@/lib/wrapped-share";
 import { getStatsApiToken } from "@/lib/api/public-stats";
-import { getProfileShare, DEFAULT_PROFILE_SHARE_CONFIG } from "@/lib/profile-share";
+import {
+  getProfileShare,
+  DEFAULT_PROFILE_SHARE_CONFIG,
+} from "@/lib/profile-share";
 import {
   disableProfileShare,
   disableWrappedShare,
@@ -11,10 +14,7 @@ import {
   enableWrappedShare,
   updateProfileShareConfig,
 } from "@/lib/actions/sharing";
-import {
-  disableStatsApi,
-  enableStatsApi,
-} from "@/lib/actions/stats-api";
+import { disableStatsApi, enableStatsApi } from "@/lib/actions/stats-api";
 import { CopyField } from "@/components/admin-forms";
 import { ConfirmForm } from "@/components/confirm-form";
 import { DeleteAccountForm } from "@/components/delete-account-form";
@@ -124,86 +124,86 @@ export default async function SettingsDataPage({
             )}
           </Card>
 
-      <Card>
-        <SectionTitle
-          title={t("settings.profileShare")}
-          subtitle={t("settings.profileShareSubtitle")}
-        />
-        {profileShareToken ? (
-          <div className="space-y-3">
-            <CopyField
-              value={`${shareOrigin}/share/profile/${profileShareToken}`}
-              label={t("settings.shareLink")}
+          <Card>
+            <SectionTitle
+              title={t("settings.profileShare")}
+              subtitle={t("settings.profileShareSubtitle")}
             />
-            <QrCode
-              value={`${shareOrigin}/share/profile/${profileShareToken}`}
-              label={t("settings.qrCode")}
-            />
-            <p className="text-xs text-muted">
-              {t("settings.profileShareHint")}
-            </p>
-            <form action={updateProfileShareConfig} className="space-y-2">
-              <div className="flex flex-wrap gap-4 text-sm">
-                {(
-                  [
-                    ["topArtists", "settings.profileShareTopArtists"],
-                    ["topTracks", "settings.profileShareTopTracks"],
-                    ["recentPlays", "settings.profileShareRecent"],
-                    ["heatmap", "settings.profileShareHeatmap"],
-                  ] as const
-                ).map(([name, key]) => (
-                  <label key={name} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      name={name}
-                      defaultChecked={profileShareConfig[name]}
-                    />
-                    {t(key)}
-                  </label>
-                ))}
+            {profileShareToken ? (
+              <div className="space-y-3">
+                <CopyField
+                  value={`${shareOrigin}/share/profile/${profileShareToken}`}
+                  label={t("settings.shareLink")}
+                />
+                <QrCode
+                  value={`${shareOrigin}/share/profile/${profileShareToken}`}
+                  label={t("settings.qrCode")}
+                />
+                <p className="text-xs text-muted">
+                  {t("settings.profileShareHint")}
+                </p>
+                <form action={updateProfileShareConfig} className="space-y-2">
+                  <div className="flex flex-wrap gap-4 text-sm">
+                    {(
+                      [
+                        ["topArtists", "settings.profileShareTopArtists"],
+                        ["topTracks", "settings.profileShareTopTracks"],
+                        ["recentPlays", "settings.profileShareRecent"],
+                        ["heatmap", "settings.profileShareHeatmap"],
+                      ] as const
+                    ).map(([name, key]) => (
+                      <label key={name} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          name={name}
+                          defaultChecked={profileShareConfig[name]}
+                        />
+                        {t(key)}
+                      </label>
+                    ))}
+                  </div>
+                  <button
+                    type="submit"
+                    className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-accent/40 hover:text-accent"
+                  >
+                    {t("settings.profileShareSave")}
+                  </button>
+                </form>
+                <div className="flex flex-wrap gap-2">
+                  <form action={enableProfileShare}>
+                    <button
+                      type="submit"
+                      className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-accent/40 hover:text-accent"
+                    >
+                      {t("settings.shareRegenerate")}
+                    </button>
+                  </form>
+                  <ConfirmForm
+                    action={disableProfileShare}
+                    fields={{}}
+                    message={t("settings.confirmProfileUnshare")}
+                    className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-danger/40 hover:text-danger"
+                  >
+                    {t("settings.shareDisable")}
+                  </ConfirmForm>
+                </div>
               </div>
-              <button
-                type="submit"
-                className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-accent/40 hover:text-accent"
-              >
-                {t("settings.profileShareSave")}
-              </button>
-            </form>
-            <div className="flex flex-wrap gap-2">
-              <form action={enableProfileShare}>
-                <button
-                  type="submit"
-                  className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-accent/40 hover:text-accent"
-                >
-                  {t("settings.shareRegenerate")}
-                </button>
-              </form>
-              <ConfirmForm
-                action={disableProfileShare}
-                fields={{}}
-                message={t("settings.confirmProfileUnshare")}
-                className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-danger/40 hover:text-danger"
-              >
-                {t("settings.shareDisable")}
-              </ConfirmForm>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-sm text-muted">
-              {t("settings.profileShareHintOff")}
-            </p>
-            <form action={enableProfileShare}>
-              <button
-                type="submit"
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90"
-              >
-                {t("settings.shareEnable")}
-              </button>
-            </form>
-          </div>
-        )}
-      </Card>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-muted">
+                  {t("settings.profileShareHintOff")}
+                </p>
+                <form action={enableProfileShare}>
+                  <button
+                    type="submit"
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90"
+                  >
+                    {t("settings.shareEnable")}
+                  </button>
+                </form>
+              </div>
+            )}
+          </Card>
         </>
       ) : null}
 
@@ -213,64 +213,66 @@ export default async function SettingsDataPage({
             title={t("settings.api")}
             subtitle={t("settings.apiSubtitle")}
           />
-        {statsApiToken ? (
-          <div className="space-y-3">
-            <CopyField
-              value={`${shareOrigin}/api/public/stats?range=30&token=${statsApiToken}`}
-              label={t("settings.apiEndpoint")}
-            />
-            <CopyField
-              value={`![Statisfy](${shareOrigin}/api/public/stats/card.svg?token=${statsApiToken})`}
-              label={t("settings.apiCard")}
-            />
-            <p className="text-xs text-muted">{t("settings.apiHintActive")}</p>
-            <div className="flex flex-wrap gap-2">
-              <form action={enableStatsApi}>
-                <button
-                  type="submit"
+          {statsApiToken ? (
+            <div className="space-y-3">
+              <CopyField
+                value={`${shareOrigin}/api/public/stats?range=30&token=${statsApiToken}`}
+                label={t("settings.apiEndpoint")}
+              />
+              <CopyField
+                value={`![Statisfy](${shareOrigin}/api/public/stats/card.svg?token=${statsApiToken})`}
+                label={t("settings.apiCard")}
+              />
+              <p className="text-xs text-muted">
+                {t("settings.apiHintActive")}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <form action={enableStatsApi}>
+                  <button
+                    type="submit"
+                    className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-accent/40 hover:text-accent"
+                  >
+                    {t("settings.apiRegenerate")}
+                  </button>
+                </form>
+                <ConfirmForm
+                  action={disableStatsApi}
+                  fields={{}}
+                  message={t("settings.confirmApiDisable")}
+                  className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-danger/40 hover:text-danger"
+                >
+                  {t("settings.apiDisable")}
+                </ConfirmForm>
+                <a
+                  href="/api-docs"
                   className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-accent/40 hover:text-accent"
                 >
-                  {t("settings.apiRegenerate")}
-                </button>
-              </form>
-              <ConfirmForm
-                action={disableStatsApi}
-                fields={{}}
-                message={t("settings.confirmApiDisable")}
-                className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-danger/40 hover:text-danger"
-              >
-                {t("settings.apiDisable")}
-              </ConfirmForm>
-              <a
-                href="/api-docs"
-                className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-accent/40 hover:text-accent"
-              >
-                {t("settings.apiDocs")}
-              </a>
+                  {t("settings.apiDocs")}
+                </a>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-sm text-muted">{t("settings.apiHint")}</p>
-            <div className="flex flex-wrap gap-2">
-              <form action={enableStatsApi}>
-                <button
-                  type="submit"
-                  className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90"
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted">{t("settings.apiHint")}</p>
+              <div className="flex flex-wrap gap-2">
+                <form action={enableStatsApi}>
+                  <button
+                    type="submit"
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90"
+                  >
+                    {t("settings.apiEnable")}
+                  </button>
+                </form>
+                <a
+                  href="/api-docs"
+                  className="rounded-lg border border-border px-4 py-2 text-sm text-muted transition-colors hover:border-accent/40 hover:text-accent"
                 >
-                  {t("settings.apiEnable")}
-                </button>
-              </form>
-              <a
-                href="/api-docs"
-                className="rounded-lg border border-border px-4 py-2 text-sm text-muted transition-colors hover:border-accent/40 hover:text-accent"
-              >
-                {t("settings.apiDocs")}
-              </a>
+                  {t("settings.apiDocs")}
+                </a>
+              </div>
             </div>
-          </div>
-        )}
-      </Card>
+          )}
+        </Card>
       ) : null}
 
       {section === "danger" ? (

@@ -56,7 +56,8 @@ function firstImage(images?: YourSpotifyImage[]): string | undefined {
  * ignorées silencieusement.
  */
 function toDate(value: unknown): Date | null {
-  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if (value instanceof Date)
+    return Number.isNaN(value.getTime()) ? null : value;
   if (typeof value === "string" || typeof value === "number") {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? null : date;
@@ -136,7 +137,9 @@ export function mapYourSpotifyData(data: YourSpotifyData): {
 export type UploadedFile = { name: string; data: Uint8Array };
 
 /** Découpe un fichier `.bson` (suite de documents) en objets. */
-export function parseBsonDocuments(buffer: Uint8Array): Record<string, unknown>[] {
+export function parseBsonDocuments(
+  buffer: Uint8Array,
+): Record<string, unknown>[] {
   const documents: Record<string, unknown>[] = [];
   let offset = 0;
   while (offset + 4 <= buffer.length) {
@@ -193,14 +196,21 @@ function collectionOf(filename: string): CollectionName | null {
   if (base.endsWith(".metadata.json")) return null;
   const stem = base.replace(/\.(bson|json|jsonl)$/, "");
   const name = stem.replace(/[^a-z]/g, "");
-  if (name === "artists" || name === "albums" || name === "tracks" || name === "infos") {
+  if (
+    name === "artists" ||
+    name === "albums" ||
+    name === "tracks" ||
+    name === "infos"
+  ) {
     return name;
   }
   return null;
 }
 
 /** Devine la collection à partir des clés du premier document. */
-function collectionFromKeys(doc: Record<string, unknown>): CollectionName | null {
+function collectionFromKeys(
+  doc: Record<string, unknown>,
+): CollectionName | null {
   if ("played_at" in doc || "playedAt" in doc) return "infos";
   if ("genres" in doc) return "artists";
   if ("duration_ms" in doc || "durationMs" in doc) return "tracks";

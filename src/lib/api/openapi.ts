@@ -136,7 +136,8 @@ export function getOpenApiSpec(): Record<string, unknown> {
             {
               name: "range",
               in: "query",
-              description: "Période utilisée pour l'artiste du dessus. Défaut : `30`.",
+              description:
+                "Période utilisée pour l'artiste du dessus. Défaut : `30`.",
               required: false,
               schema: { type: "string", default: "30" },
             },
@@ -145,7 +146,11 @@ export function getOpenApiSpec(): Record<string, unknown> {
               in: "query",
               description: "Thème de la carte.",
               required: false,
-              schema: { type: "string", enum: ["dark", "light"], default: "dark" },
+              schema: {
+                type: "string",
+                enum: ["dark", "light"],
+                default: "dark",
+              },
             },
             {
               name: "locale",
@@ -248,7 +253,9 @@ export function getOpenApiSpec(): Record<string, unknown> {
             "réservée aux administrateurs.",
           operationId: "restoreBackup",
           security: [{ syncToken: [] }, { session: [] }],
-          requestBody: binaryBody("Dump `pg_dump` au format personnalisé (`.dump`)."),
+          requestBody: binaryBody(
+            "Dump `pg_dump` au format personnalisé (`.dump`).",
+          ),
           responses: {
             "200": {
               description: "Restauration terminée.",
@@ -346,7 +353,8 @@ export function getOpenApiSpec(): Record<string, unknown> {
             {
               name: "X-Filename",
               in: "header",
-              description: "Nom de fichier d'origine (facultatif, pour les journaux).",
+              description:
+                "Nom de fichier d'origine (facultatif, pour les journaux).",
               required: false,
               schema: { type: "string" },
             },
@@ -392,7 +400,10 @@ export function getOpenApiSpec(): Record<string, unknown> {
               name: "level",
               in: "query",
               description: "Niveau de gravité.",
-              schema: { type: "string", enum: ["debug", "info", "warn", "error"] },
+              schema: {
+                type: "string",
+                enum: ["debug", "info", "warn", "error"],
+              },
             },
             {
               name: "source",
@@ -424,7 +435,9 @@ export function getOpenApiSpec(): Record<string, unknown> {
               description: "Export des journaux.",
               content: {
                 "text/csv": { schema: { type: "string" } },
-                "application/json": { schema: { type: "array", items: { type: "object" } } },
+                "application/json": {
+                  schema: { type: "array", items: { type: "object" } },
+                },
               },
             },
             "401": unauthorizedResponse,
@@ -486,14 +499,17 @@ export function getOpenApiSpec(): Record<string, unknown> {
             {
               name: "format",
               in: "query",
-              description: "`story` pour le format vertical, sinon carte paysage.",
+              description:
+                "`story` pour le format vertical, sinon carte paysage.",
               schema: { type: "string", enum: ["story"] },
             },
           ],
           responses: {
             "200": {
               description: "Image PNG.",
-              content: { "image/png": { schema: { type: "string", format: "binary" } } },
+              content: {
+                "image/png": { schema: { type: "string", format: "binary" } },
+              },
             },
             "401": unauthorizedResponse,
             "429": tooManyRequestsResponse,
@@ -510,9 +526,22 @@ export function getOpenApiSpec(): Record<string, unknown> {
             "session n'est requise.",
           operationId: "getWrappedOpenGraphImage",
           parameters: [
-            { name: "token", in: "query", required: true, schema: { type: "string" } },
-            { name: "year", in: "query", schema: { type: "integer", example: 2026 } },
-            { name: "month", in: "query", schema: { type: "integer", minimum: 1, maximum: 12 } },
+            {
+              name: "token",
+              in: "query",
+              required: true,
+              schema: { type: "string" },
+            },
+            {
+              name: "year",
+              in: "query",
+              schema: { type: "integer", example: 2026 },
+            },
+            {
+              name: "month",
+              in: "query",
+              schema: { type: "integer", minimum: 1, maximum: 12 },
+            },
             {
               name: "locale",
               in: "query",
@@ -522,7 +551,9 @@ export function getOpenApiSpec(): Record<string, unknown> {
           responses: {
             "200": {
               description: "Image PNG 1200×630.",
-              content: { "image/png": { schema: { type: "string", format: "binary" } } },
+              content: {
+                "image/png": { schema: { type: "string", format: "binary" } },
+              },
             },
             "404": errorResponse,
             "429": tooManyRequestsResponse,
@@ -539,13 +570,20 @@ export function getOpenApiSpec(): Record<string, unknown> {
               name: "size",
               in: "query",
               description: "Taille en pixels (64–512, défaut 512).",
-              schema: { type: "integer", minimum: 64, maximum: 512, default: 512 },
+              schema: {
+                type: "integer",
+                minimum: 64,
+                maximum: 512,
+                default: 512,
+              },
             },
           ],
           responses: {
             "200": {
               description: "Icône PNG.",
-              content: { "image/png": { schema: { type: "string", format: "binary" } } },
+              content: {
+                "image/png": { schema: { type: "string", format: "binary" } },
+              },
             },
           },
         },
@@ -657,7 +695,8 @@ export function getOpenApiSpec(): Record<string, unknown> {
             },
             hours: {
               type: "number",
-              description: "Temps d'écoute sur la période, en heures (0,1 près).",
+              description:
+                "Temps d'écoute sur la période, en heures (0,1 près).",
               example: 138.9,
             },
             artists: { type: "integer", example: 210 },

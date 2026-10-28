@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "../db";
 import { getAdminUser, getCurrentUser } from "../auth/dal";
-import { runImport, runPlaysIngest, runSyncForConnection } from "../sync/engine";
+import {
+  runImport,
+  runPlaysIngest,
+  runSyncForConnection,
+} from "../sync/engine";
 import { enrichMissingDurations, enrichMissingImages } from "../sources/enrich";
 import {
   buildYourSpotifyData,
@@ -22,9 +26,9 @@ import type { MutationOutcome } from "../optimistic";
 
 export type SettingsState =
   | {
-      ok?: boolean
-      error?: string
-      message?: string
+      ok?: boolean;
+      error?: string;
+      message?: string;
     }
   | undefined;
 

@@ -26,9 +26,7 @@ export const RANGE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 const PREFERENCE_KEYS = new Set(["today", "week", "month", "year", "all"]);
 
 /** Vérifie qu'une valeur de cookie correspond à une période valide. */
-export function isRangePreference(
-  value: string | null | undefined,
-): boolean {
+export function isRangePreference(value: string | null | undefined): boolean {
   if (!value) return false;
   if (PREFERENCE_KEYS.has(value)) return true;
   const days = Number(value);
@@ -38,7 +36,10 @@ export function isRangePreference(
 /** Nombre de jours locaux entiers entre `from` (minuit local) et aujourd'hui, inclus. */
 function elapsedDays(from: Date, timeZone: string, now: Date): number {
   const today = startOfLocalDay(timeZone, now);
-  return Math.max(1, Math.round((today.getTime() - from.getTime()) / DAY_MS) + 1);
+  return Math.max(
+    1,
+    Math.round((today.getTime() - from.getTime()) / DAY_MS) + 1,
+  );
 }
 
 /** Période sélectionnée par défaut : aujourd'hui. */
@@ -68,7 +69,12 @@ export function parseRange(
       const from = startOfLocalYear(timeZone, now);
       return { days: elapsedDays(from, timeZone, now), key: "year", from };
     }
-  } else if (key === "today" || key === "week" || key === "month" || key === "year") {
+  } else if (
+    key === "today" ||
+    key === "week" ||
+    key === "month" ||
+    key === "year"
+  ) {
     // Sans fuseau : bornes approximatives (fenêtre glissante).
     const fallback: Record<string, number> = {
       today: 1,

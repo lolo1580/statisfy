@@ -11,8 +11,7 @@ import {
 } from "../webhook";
 
 export type WebhookState =
-  | { ok?: boolean; error?: string; message?: string }
-  | undefined;
+  { ok?: boolean; error?: string; message?: string } | undefined;
 
 /**
  * Enregistre (ou efface) le webhook de l'instance. Vide = webhook désactivé.
@@ -35,7 +34,10 @@ export async function saveWebhook(
 
   await saveWebhookConfig({ url, secret });
   revalidatePath("/admin/instance");
-  return { ok: true, message: url ? t("admin.webhookSaved") : t("admin.webhookCleared") };
+  return {
+    ok: true,
+    message: url ? t("admin.webhookSaved") : t("admin.webhookCleared"),
+  };
 }
 
 /** Envoie un événement de test au webhook déjà enregistré. */

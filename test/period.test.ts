@@ -42,10 +42,18 @@ describe("parseWrappedPeriod", () => {
 describe("formatPeriodLabel", () => {
   it("année et mois localisés", () => {
     expect(
-      formatPeriodLabel(parseWrappedPeriod("2025", undefined, now), "en", "Year {year}"),
+      formatPeriodLabel(
+        parseWrappedPeriod("2025", undefined, now),
+        "en",
+        "Year {year}",
+      ),
     ).toBe("Year 2025");
     expect(
-      formatPeriodLabel(parseWrappedPeriod("2026", "3", now), "en", "Year {year}"),
+      formatPeriodLabel(
+        parseWrappedPeriod("2026", "3", now),
+        "en",
+        "Year {year}",
+      ),
     ).toBe("March 2026");
   });
 });

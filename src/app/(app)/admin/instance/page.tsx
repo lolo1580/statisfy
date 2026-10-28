@@ -35,9 +35,7 @@ export default async function AdminInstancePage() {
   const rumStatus = await getRumStatus();
   const rumForcedOff = isRumForcedOffByEnv();
   const { token: rumToken, ...rumFormSettings } = rumSettings;
-  const rumTokenHint = rumToken
-    ? `••••${rumToken.slice(-4)}`
-    : null;
+  const rumTokenHint = rumToken ? `••••${rumToken.slice(-4)}` : null;
   const rumLastEvent = rumStatus.lastEventAt
     ? formatRelative(new Date(rumStatus.lastEventAt), locale)
     : null;
@@ -192,9 +190,7 @@ export default async function AdminInstancePage() {
             >
               {t("settings.exportDb")}
             </a>
-            <p className="mt-1 text-xs text-muted">
-              {t("admin.exportDbHint")}
-            </p>
+            <p className="mt-1 text-xs text-muted">{t("admin.exportDbHint")}</p>
           </div>
           <div className="border-t border-border pt-4">
             <h3 className="mb-3 text-sm font-medium">

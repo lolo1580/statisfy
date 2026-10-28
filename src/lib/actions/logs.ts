@@ -9,8 +9,7 @@ import { getI18n } from "@/i18n/server";
 
 /** État renvoyé par le bouton de test du sink de logs. */
 export type LogTestState =
-  | { ok?: boolean; message?: string; error?: string }
-  | undefined;
+  { ok?: boolean; message?: string; error?: string } | undefined;
 
 /** Vide entièrement le journal d'événements (réservé aux administrateurs). */
 export async function clearLogs(): Promise<void> {

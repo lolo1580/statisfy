@@ -65,10 +65,12 @@ describe("dayKey / hourOf", () => {
 
 describe("getTimezoneOffsetMs", () => {
   it("gère UTC, un décalage fixe et l'heure d'été", () => {
-    expect(getTimezoneOffsetMs("UTC", new Date("2026-07-15T12:00:00Z"))).toBe(0);
-    expect(getTimezoneOffsetMs("Asia/Tokyo", new Date("2026-07-15T12:00:00Z"))).toBe(
-      9 * HOUR,
+    expect(getTimezoneOffsetMs("UTC", new Date("2026-07-15T12:00:00Z"))).toBe(
+      0,
     );
+    expect(
+      getTimezoneOffsetMs("Asia/Tokyo", new Date("2026-07-15T12:00:00Z")),
+    ).toBe(9 * HOUR);
     // Zurich : UTC+2 en été, UTC+1 en hiver.
     expect(
       getTimezoneOffsetMs("Europe/Zurich", new Date("2026-07-15T12:00:00Z")),
@@ -100,10 +102,16 @@ describe("startOfLocal*", () => {
 
   it("respecte les changements d'heure", () => {
     expect(
-      startOfLocalDay("Europe/Zurich", new Date("2026-07-15T10:00:00Z")).toISOString(),
+      startOfLocalDay(
+        "Europe/Zurich",
+        new Date("2026-07-15T10:00:00Z"),
+      ).toISOString(),
     ).toBe("2026-07-14T22:00:00.000Z");
     expect(
-      startOfLocalDay("Europe/Zurich", new Date("2026-01-15T10:00:00Z")).toISOString(),
+      startOfLocalDay(
+        "Europe/Zurich",
+        new Date("2026-01-15T10:00:00Z"),
+      ).toISOString(),
     ).toBe("2026-01-14T23:00:00.000Z");
   });
 });

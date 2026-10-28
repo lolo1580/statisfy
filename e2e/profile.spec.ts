@@ -17,18 +17,14 @@ test("public profile exposes only the selected sections", async ({ page }) => {
   const publicPath = new URL(await linkInput.inputValue()).pathname;
 
   await page.goto(publicPath);
-  await expect(
-    page.getByRole("heading", { name: "E2E Admin" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "E2E Admin" })).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Top artists" }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Top tracks" }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Recent plays" }),
-  ).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Top tracks" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Recent plays" })).toHaveCount(
+    0,
+  );
 
   // Active « Recent plays » puis vérifie que la section apparaît.
   await page.goto("/settings/data?section=sharing");

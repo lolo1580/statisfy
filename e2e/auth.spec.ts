@@ -29,9 +29,7 @@ test("Swagger documentation is served locally", async ({ page, request }) => {
   expect(json.paths["/api/public/stats"]).toBeTruthy();
   expect(json.paths["/api/public/stats/card.svg"]).toBeTruthy();
 
-  const bundle = await request.get(
-    "/api/docs/swagger-ui/swagger-ui-bundle.js",
-  );
+  const bundle = await request.get("/api/docs/swagger-ui/swagger-ui-bundle.js");
   expect(bundle.status()).toBe(200);
   expect(bundle.headers()["content-type"]).toContain("javascript");
 });

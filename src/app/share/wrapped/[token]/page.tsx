@@ -49,11 +49,7 @@ export async function generateMetadata({
     typeof sp.month === "string" ? sp.month : undefined,
   );
   const { locale, t } = await getI18n();
-  const periodLabel = formatPeriodLabel(
-    period,
-    locale,
-    t("recap.yearLabel"),
-  );
+  const periodLabel = formatPeriodLabel(period, locale, t("recap.yearLabel"));
   const overview = await getOverview(userId, {
     days: null,
     from: period.from,
@@ -139,9 +135,7 @@ export default async function SharedWrappedPage({
           <p className="text-xs uppercase tracking-wider text-muted">
             {t("share.kicker")}
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {name}
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{name}</h1>
         </div>
         <form
           action={`/share/wrapped/${token}`}

@@ -44,8 +44,7 @@ function parseStatus(raw: string | null): RumStatus {
         typeof value.lastErrorStatus === "number"
           ? value.lastErrorStatus
           : null,
-      lastError:
-        typeof value.lastError === "string" ? value.lastError : null,
+      lastError: typeof value.lastError === "string" ? value.lastError : null,
     };
   } catch {
     return {};

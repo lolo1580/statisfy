@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  startTransition,
-  useCallback,
-  useOptimistic,
-  useState,
-} from "react";
+import { startTransition, useCallback, useOptimistic, useState } from "react";
 import { unstable_rethrow } from "next/navigation";
 import {
   describeError,
@@ -136,9 +131,10 @@ export function useOptimisticList<Item extends OptimisticRecord>(
     [run],
   );
 
-  const isPending = useCallback((key: string) => pendingKeys.has(key), [
-    pendingKeys,
-  ]);
+  const isPending = useCallback(
+    (key: string) => pendingKeys.has(key),
+    [pendingKeys],
+  );
 
   return { items, errors, dismissError, isPending, create, update, remove };
 }

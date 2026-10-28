@@ -15,7 +15,13 @@ import {
 import { parseRange } from "@/lib/range";
 import { RangeTabs } from "@/components/range-tabs";
 import { Heatmap } from "@/components/charts";
-import { Card, Cover, EmptyState, SectionTitle, StatCard } from "@/components/ui";
+import {
+  Card,
+  Cover,
+  EmptyState,
+  SectionTitle,
+  StatCard,
+} from "@/components/ui";
 import { formatDateTime, formatDuration, formatNumber } from "@/lib/format";
 import { getI18n } from "@/i18n/server";
 import { appName } from "@/lib/env";
@@ -64,7 +70,9 @@ export default async function SharedProfilePage({
     config.topTracks
       ? getTopTracks(owner.id, filters, 5)
       : Promise.resolve(noTracks),
-    config.recentPlays ? getRecentPlays(owner.id, filters, 10) : Promise.resolve([]),
+    config.recentPlays
+      ? getRecentPlays(owner.id, filters, 10)
+      : Promise.resolve([]),
     config.heatmap
       ? getDailyStats(owner.id, owner.timezone, { days: 371 })
       : Promise.resolve([]),
@@ -84,7 +92,9 @@ export default async function SharedProfilePage({
           <p className="text-xs uppercase tracking-wider text-muted">
             {t("profile.kicker")}
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">{owner.name}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {owner.name}
+          </h1>
           <p className="mt-1 text-sm text-muted">{t("profile.subtitle")}</p>
         </div>
         <RangeTabs basePath={basePath} current={parsed.key} />
@@ -223,7 +233,9 @@ export default async function SharedProfilePage({
             title={t("history.heatmap")}
             subtitle={t("history.heatmapSubtitle")}
           />
-          <Heatmap days={heatmap.map((day) => ({ day: day.day, plays: day.plays }))} />
+          <Heatmap
+            days={heatmap.map((day) => ({ day: day.day, plays: day.plays }))}
+          />
         </Card>
       ) : null}
 

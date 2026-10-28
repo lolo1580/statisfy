@@ -6,55 +6,55 @@
  * retrouver les entités et d'insérer les écoutes de façon idempotente.
  */
 
-export type SourceType = 'spotify' | 'import'
+export type SourceType = "spotify" | "import";
 
 export type RawPlay = {
-  provider: SourceType
+  provider: SourceType;
   /**
    * Origine réelle de l'écoute (sync live vs import de fichiers). Sert au
    * classement par « source » ; par défaut on retombe sur `provider`.
    */
-  origin?: SourceType
+  origin?: SourceType;
   /** Identifiants côté fournisseur (facultatif selon la source). */
-  externalTrackId?: string
-  externalArtistId?: string
-  externalAlbumId?: string
-  trackName: string
-  artistName: string
-  albumName?: string
-  durationMs?: number
-  imageUrl?: string
+  externalTrackId?: string;
+  externalArtistId?: string;
+  externalAlbumId?: string;
+  trackName: string;
+  artistName: string;
+  albumName?: string;
+  durationMs?: number;
+  imageUrl?: string;
   /** Image de profil de l'artiste (distincte de la pochette d'album). */
-  artistImageUrl?: string
-  genres?: string[]
-  isrc?: string
-  playedAt: Date
-  msPlayed?: number
-  context?: string
+  artistImageUrl?: string;
+  genres?: string[];
+  isrc?: string;
+  playedAt: Date;
+  msPlayed?: number;
+  context?: string;
   /** Métadonnées de l'export étendu Spotify (facultatives). */
-  platform?: string
-  country?: string
-  skipped?: boolean
-  shuffle?: boolean
-  offline?: boolean
-  incognito?: boolean
-  reasonStart?: string
-  reasonEnd?: string
-}
+  platform?: string;
+  country?: string;
+  skipped?: boolean;
+  shuffle?: boolean;
+  offline?: boolean;
+  incognito?: boolean;
+  reasonStart?: string;
+  reasonEnd?: string;
+};
 
 export type SyncContext = {
-  connectionId: string
+  connectionId: string;
   /** Configuration non sensible (options, région...). */
-  config: Record<string, unknown>
+  config: Record<string, unknown>;
   /** Identifiants déchiffrés (tokens OAuth, clé API...). */
-  credentials: Record<string, unknown>
+  credentials: Record<string, unknown>;
   /** Ne récupérer que les écoutes postérieures à cette date. */
-  since: Date | null
-}
+  since: Date | null;
+};
 
 export interface SourceAdapter {
-  type: SourceType
-  label: string
+  type: SourceType;
+  label: string;
   /** Récupère un lot d'écoutes récentes depuis la source. */
-  fetchPlays(ctx: SyncContext): Promise<RawPlay[]>
+  fetchPlays(ctx: SyncContext): Promise<RawPlay[]>;
 }

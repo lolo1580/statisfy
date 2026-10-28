@@ -113,7 +113,10 @@ export function ChangePasswordForm() {
           />
         </div>
         <div className="min-w-[180px] flex-1">
-          <label htmlFor="newPassword" className="mb-1 block text-xs text-muted">
+          <label
+            htmlFor="newPassword"
+            className="mb-1 block text-xs text-muted"
+          >
             {t("settings.newPassword")}
           </label>
           <input

@@ -13,7 +13,13 @@ describe("mapYourSpotifyData", () => {
           images: [{ url: "https://cdn/artist.jpg" }],
         },
       ],
-      albums: [{ id: "al1", name: "Album", images: [{ url: "https://cdn/album.jpg" }] }],
+      albums: [
+        {
+          id: "al1",
+          name: "Album",
+          images: [{ url: "https://cdn/album.jpg" }],
+        },
+      ],
       tracks: [{ id: "t1", name: "Titre", duration_ms: 200_000 }],
       infos: [
         {
@@ -61,7 +67,9 @@ describe("peekCollection", () => {
 
   it("devine la collection d'un document BSON sans nom", () => {
     expect(
-      peekCollection(new Uint8Array(serialize({ played_at: new Date(), id: "x" }))),
+      peekCollection(
+        new Uint8Array(serialize({ played_at: new Date(), id: "x" })),
+      ),
     ).toBe("infos");
   });
 
@@ -73,6 +81,8 @@ describe("peekCollection", () => {
   });
 
   it("renvoie null si la collection est indéterminable", () => {
-    expect(peekCollection(new Uint8Array(serialize({ foo: "bar" })))).toBeNull();
+    expect(
+      peekCollection(new Uint8Array(serialize({ foo: "bar" }))),
+    ).toBeNull();
   });
 });

@@ -7,9 +7,7 @@ import {
   isInvitationUsable,
 } from "./invitation-rules";
 
-export type Invitation = Awaited<
-  ReturnType<typeof prisma.invitation.create>
->;
+export type Invitation = Awaited<ReturnType<typeof prisma.invitation.create>>;
 
 /** Crée une invitation (adresse cible facultative, durée en jours). */
 export async function createInvitation(params: {

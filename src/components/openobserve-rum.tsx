@@ -53,7 +53,7 @@ function normalizeEvent(event: EventWithUrls): boolean {
   if (event.view?.referrer) {
     event.view.referrer = isSensitiveRumUrl(event.view.referrer)
       ? ""
-      : normalizeRumUrl(event.view.referrer) ?? "";
+      : (normalizeRumUrl(event.view.referrer) ?? "");
   }
   if (event.resource?.url) {
     if (isSensitiveRumUrl(event.resource.url)) return false;
@@ -61,8 +61,7 @@ function normalizeEvent(event: EventWithUrls): boolean {
   }
   if (event.error?.resource?.url) {
     if (isSensitiveRumUrl(event.error.resource.url)) return false;
-    event.error.resource.url =
-      normalizeRumUrl(event.error.resource.url) ?? "";
+    event.error.resource.url = normalizeRumUrl(event.error.resource.url) ?? "";
   }
   return true;
 }
@@ -70,7 +69,8 @@ function normalizeEvent(event: EventWithUrls): boolean {
 /** Les logs peuvent être supprimés sur les pages sensibles. */
 function shouldSendLog(event: EventWithUrls): boolean {
   if (event.view?.url && isSensitiveRumUrl(event.view.url)) return false;
-  if (event.resource?.url && isSensitiveRumUrl(event.resource.url)) return false;
+  if (event.resource?.url && isSensitiveRumUrl(event.resource.url))
+    return false;
   return normalizeEvent(event);
 }
 
@@ -114,9 +114,7 @@ function startRum(config: OpenObserveRumClientConfig): Promise<void> {
 
       if (config.logsEnabled) {
         try {
-          const { openobserveLogs } = await import(
-            "@openobserve/browser-logs"
-          );
+          const { openobserveLogs } = await import("@openobserve/browser-logs");
           openobserveLogs.init({
             clientToken: config.clientToken,
             site: config.site,

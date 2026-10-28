@@ -45,7 +45,11 @@ describe("spotify-access-rules", () => {
       SPOTIFY_ACCESS_REJECTED,
     ]) {
       expect(
-        isSpotifyAccessGranted({ isAdmin: false, status, hasConnection: false }),
+        isSpotifyAccessGranted({
+          isAdmin: false,
+          status,
+          hasConnection: false,
+        }),
       ).toBe(false);
     }
   });

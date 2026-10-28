@@ -66,11 +66,21 @@ export function CommandPalette({ isAdmin = false }: { isAdmin?: boolean }) {
 
   const items = useMemo<Item[]>(() => {
     const navigation: Item[] = [
-      { key: "dashboard", label: t("nav.overview"), href: "/dashboard", icon: "📊" },
+      {
+        key: "dashboard",
+        label: t("nav.overview"),
+        href: "/dashboard",
+        icon: "📊",
+      },
       { key: "compare", label: t("nav.compare"), href: "/compare", icon: "⚖️" },
       { key: "wrapped", label: t("nav.recap"), href: "/wrapped", icon: "✨" },
       { key: "history", label: t("nav.history"), href: "/history", icon: "🕘" },
-      { key: "settings", label: t("nav.settings"), href: "/settings", icon: "⚙️" },
+      {
+        key: "settings",
+        label: t("nav.settings"),
+        href: "/settings",
+        icon: "⚙️",
+      },
     ];
     if (isAdmin) {
       navigation.push({
@@ -185,7 +195,9 @@ export function CommandPalette({ isAdmin = false }: { isAdmin?: boolean }) {
                 aria-controls="command-list"
                 aria-autocomplete="list"
                 aria-activedescendant={
-                  items[active] ? `command-item-${items[active].key}` : undefined
+                  items[active]
+                    ? `command-item-${items[active].key}`
+                    : undefined
                 }
                 value={query}
                 onChange={(event) => {

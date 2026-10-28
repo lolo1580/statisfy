@@ -12,13 +12,16 @@
  * Le seuil est configurable (réglage admin) ; il est passé aux fonctions de
  * calcul plutôt que lu ici, pour rester testable et sans dépendance serveur.
  */
-export const MIN_LISTEN_RATIO = 0.75
+export const MIN_LISTEN_RATIO = 0.75;
 
 /** Ramène un seuil arbitraire dans une plage valide `]0, 1]`. */
 export function safeListenRatio(ratio: number | null | undefined): number {
-  return typeof ratio === 'number' && Number.isFinite(ratio) && ratio >= 0 && ratio <= 1
+  return typeof ratio === "number" &&
+    Number.isFinite(ratio) &&
+    ratio >= 0 &&
+    ratio <= 1
     ? ratio
-    : MIN_LISTEN_RATIO
+    : MIN_LISTEN_RATIO;
 }
 
 export function isPlayCounted(
@@ -26,6 +29,6 @@ export function isPlayCounted(
   durationMs: number | null | undefined,
   ratio: number = MIN_LISTEN_RATIO,
 ): boolean {
-  if (!durationMs || durationMs <= 0) return true
-  return msPlayed >= durationMs * safeListenRatio(ratio)
+  if (!durationMs || durationMs <= 0) return true;
+  return msPlayed >= durationMs * safeListenRatio(ratio);
 }

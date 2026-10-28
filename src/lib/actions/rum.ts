@@ -22,14 +22,15 @@ import type {
 } from "../rum-types";
 
 export type RumState =
-  | { ok?: boolean; error?: string; message?: string }
-  | undefined;
+  { ok?: boolean; error?: string; message?: string } | undefined;
 
 const PRIVACY_LEVELS = ["allow", "mask-user-input", "mask"] as const;
 const PERSISTENCE_MODES = ["cookie", "local-storage", "memory"] as const;
 
 function text(formData: FormData, name: string, max = 500): string {
-  return String(formData.get(name) ?? "").trim().slice(0, max);
+  return String(formData.get(name) ?? "")
+    .trim()
+    .slice(0, max);
 }
 
 /**
@@ -129,18 +130,14 @@ export async function testRumConnection(
   const existing = await getRumSettings();
   const url = text(formData, "url") || existing.url;
   const token = text(formData, "token") || existing.token;
-  const org = normalizeOrganization(
-    text(formData, "org", 64) || existing.org,
-  );
+  const org = normalizeOrganization(text(formData, "org", 64) || existing.org);
   if (!url) return { error: t("admin.rumUrlRequired") };
   if (!token) return { error: t("admin.rumTokenRequired") };
   const parsed = parseOpenObserveUrl(url);
   if (!parsed) return { error: t("admin.rumInvalidUrl") };
 
   const protocol = parsed.insecureHTTP ? "http" : "https";
-  const target = new URL(
-    `${protocol}://${parsed.site}/rum/v1/${org}/rum`,
-  );
+  const target = new URL(`${protocol}://${parsed.site}/rum/v1/${org}/rum`);
   target.searchParams.set("o2source", "browser");
   target.searchParams.set("o2-api-key", token);
   target.searchParams.set("o2-evp-origin", "browser");
@@ -177,8 +174,7 @@ export async function testRumConnection(
         status?: Array<{ failed?: number }>;
       };
       const failed =
-        payload.status?.reduce((sum, item) => sum + (item.failed ?? 0), 0) ??
-        0;
+        payload.status?.reduce((sum, item) => sum + (item.failed ?? 0), 0) ?? 0;
       if (failed > 0) return { error: t("admin.rumTestRejected") };
     } catch {
       // Corps non JSON : le statut HTTP suffit.

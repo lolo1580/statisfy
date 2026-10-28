@@ -46,11 +46,14 @@ export async function GET(request: NextRequest) {
   nodeStream.once("error", cleanup);
 
   const stamp = new Date().toISOString().slice(0, 10);
-  return new Response(Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>, {
-    headers: {
-      "Content-Type": "application/octet-stream",
-      "Content-Disposition": `attachment; filename="statisfy-${stamp}.dump"`,
-      "Cache-Control": "no-store",
+  return new Response(
+    Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>,
+    {
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "Content-Disposition": `attachment; filename="statisfy-${stamp}.dump"`,
+        "Cache-Control": "no-store",
+      },
     },
-  });
+  );
 }

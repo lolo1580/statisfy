@@ -10,8 +10,7 @@ import { logEvent, errorMessage } from "../log";
 import { getI18n } from "@/i18n/server";
 
 export type RestoreState =
-  | { ok?: boolean; error?: string; message?: string }
-  | undefined;
+  { ok?: boolean; error?: string; message?: string } | undefined;
 
 /**
  * Restaure une sauvegarde PostgreSQL (`.dump`) : l'état actuel est remplacé.

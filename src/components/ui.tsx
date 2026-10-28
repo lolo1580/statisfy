@@ -119,7 +119,12 @@ export function Cover({
       style={{ width: size, height: size }}
       aria-hidden
     >
-      <svg viewBox="0 0 24 24" width={size * 0.5} height={size * 0.5} fill="none">
+      <svg
+        viewBox="0 0 24 24"
+        width={size * 0.5}
+        height={size * 0.5}
+        fill="none"
+      >
         <path
           d="M9 18V6l10-2v12"
           stroke="currentColor"
@@ -127,8 +132,20 @@ export function Cover({
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        <circle cx="6.5" cy="18" r="2.5" stroke="currentColor" strokeWidth="1.6" />
-        <circle cx="16.5" cy="16" r="2.5" stroke="currentColor" strokeWidth="1.6" />
+        <circle
+          cx="6.5"
+          cy="18"
+          r="2.5"
+          stroke="currentColor"
+          strokeWidth="1.6"
+        />
+        <circle
+          cx="16.5"
+          cy="16"
+          r="2.5"
+          stroke="currentColor"
+          strokeWidth="1.6"
+        />
       </svg>
     </div>
   );

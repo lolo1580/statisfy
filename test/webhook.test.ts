@@ -63,13 +63,14 @@ describe("buildWebhookRequest", () => {
     );
     expect(JSON.parse(body)).toEqual(PAYLOAD);
     expect(headers["Content-Type"]).toBe("application/json");
-    expect(headers["X-Statisfy-Signature"]).toBe(
-      signWebhook("secret", body),
-    );
+    expect(headers["X-Statisfy-Signature"]).toBe(signWebhook("secret", body));
   });
 
   it("n'ajoute pas de signature sans secret", () => {
-    const { headers } = buildWebhookRequest("https://example.com/hook", PAYLOAD);
+    const { headers } = buildWebhookRequest(
+      "https://example.com/hook",
+      PAYLOAD,
+    );
     expect(headers["X-Statisfy-Signature"]).toBeUndefined();
   });
 
@@ -78,7 +79,9 @@ describe("buildWebhookRequest", () => {
       "https://discord.com/api/webhooks/123/abc",
       { ...PAYLOAD, message: "x".repeat(5000) },
     );
-    expect((JSON.parse(body) as { content: string }).content).toHaveLength(2000);
+    expect((JSON.parse(body) as { content: string }).content).toHaveLength(
+      2000,
+    );
   });
 });
 

@@ -139,7 +139,9 @@ export function TopTracksPanel({
                   <p className="truncate text-sm font-medium">{track.name}</p>
                   <p className="truncate text-xs text-muted">
                     {track.artistName}
-                    {showAlbum && track.albumName ? ` — ${track.albumName}` : ""}
+                    {showAlbum && track.albumName
+                      ? ` — ${track.albumName}`
+                      : ""}
                   </p>
                 </div>
                 <span className="text-xs text-muted">

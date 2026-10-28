@@ -115,7 +115,9 @@ export function buildWebhookRequest(
     body = payload.message;
     headers["Content-Type"] = "text/plain; charset=utf-8";
     headers.Title = payload.title;
-    headers.Tags = payload.event.startsWith("sync") ? "arrows_counterclockwise" : "inbox_tray";
+    headers.Tags = payload.event.startsWith("sync")
+      ? "arrows_counterclockwise"
+      : "inbox_tray";
   } else {
     body = JSON.stringify(payload);
     headers["Content-Type"] = "application/json";

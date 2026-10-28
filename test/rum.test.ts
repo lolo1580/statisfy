@@ -304,15 +304,15 @@ describe("RUM status", () => {
 
 describe("normalizeRumUrl", () => {
   it("retire query/hash et normalise les routes dynamiques", () => {
-    expect(normalizeRumUrl("https://stats.example.com/dashboard?range=30#x")).toBe(
-      "https://stats.example.com/dashboard",
+    expect(
+      normalizeRumUrl("https://stats.example.com/dashboard?range=30#x"),
+    ).toBe("https://stats.example.com/dashboard");
+    expect(normalizeRumUrl("https://stats.example.com/artist/abc123?x=1")).toBe(
+      "https://stats.example.com/artist/[id]",
     );
-    expect(
-      normalizeRumUrl("https://stats.example.com/artist/abc123?x=1"),
-    ).toBe("https://stats.example.com/artist/[id]");
-    expect(
-      normalizeRumUrl("https://stats.example.com/track/abc123"),
-    ).toBe("https://stats.example.com/track/[id]");
+    expect(normalizeRumUrl("https://stats.example.com/track/abc123")).toBe(
+      "https://stats.example.com/track/[id]",
+    );
     expect(
       normalizeRumUrl("https://stats.example.com/share/wrapped/secret"),
     ).toBe("https://stats.example.com/share/wrapped/[token]");

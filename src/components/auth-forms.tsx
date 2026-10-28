@@ -48,7 +48,9 @@ export function LoginForm() {
           placeholder="••••••••"
         />
       </div>
-      {state?.error ? <p className="text-sm text-danger">{state.error}</p> : null}
+      {state?.error ? (
+        <p className="text-sm text-danger">{state.error}</p>
+      ) : null}
       <button
         type="submit"
         disabled={pending}
@@ -122,7 +124,9 @@ export function RegisterForm({
         />
         <FieldError messages={state?.fieldErrors?.password} />
       </div>
-      {state?.error ? <p className="text-sm text-danger">{state.error}</p> : null}
+      {state?.error ? (
+        <p className="text-sm text-danger">{state.error}</p>
+      ) : null}
       <button
         type="submit"
         disabled={pending}

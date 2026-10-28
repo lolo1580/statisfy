@@ -1,31 +1,31 @@
-import 'server-only'
+import "server-only";
 
-import { NextResponse, type NextRequest } from 'next/server'
-import { cookies } from 'next/headers'
-import { prisma } from '../db'
-import { encryptJson } from '../crypto'
-import { appUrl, cookieDomain } from '../env'
-import { logEvent, errorMessage } from '../log'
-import { exchangeSpotifyCode } from './spotify'
-import { spotifyFetch } from './spotify-http'
+import { NextResponse, type NextRequest } from "next/server";
+import { cookies } from "next/headers";
+import { prisma } from "../db";
+import { encryptJson } from "../crypto";
+import { appUrl, cookieDomain } from "../env";
+import { logEvent, errorMessage } from "../log";
+import { exchangeSpotifyCode } from "./spotify";
+import { spotifyFetch } from "./spotify-http";
 import {
   normalizeOrigin,
   requestOrigin,
   verifyOAuthState,
-} from './spotify-state'
+} from "./spotify-state";
 
-const STATE_COOKIE = 'spotify_oauth_state'
+const STATE_COOKIE = "spotify_oauth_state";
 
 function clearStateCookie(jar: Awaited<ReturnType<typeof cookies>>) {
   if (cookieDomain) {
-    jar.set(STATE_COOKIE, '', {
-      path: '/',
+    jar.set(STATE_COOKIE, "", {
+      path: "/",
       domain: cookieDomain,
       maxAge: 0,
       expires: new Date(0),
-    })
+    });
   } else {
-    jar.delete(STATE_COOKIE)
+    jar.delete(STATE_COOKIE);
   }
 }
 
@@ -37,110 +37,111 @@ function clearStateCookie(jar: Awaited<ReturnType<typeof cookies>>) {
  * callback indépendant de l'hôte et du cookie de session.
  */
 export async function handleSpotifyCallback(request: NextRequest) {
-  const url = new URL(request.url)
-  const code = url.searchParams.get('code')
-  const rawState = url.searchParams.get('state')
-  const oauthError = url.searchParams.get('error')
+  const url = new URL(request.url);
+  const code = url.searchParams.get("code");
+  const rawState = url.searchParams.get("state");
+  const oauthError = url.searchParams.get("error");
 
-  const jar = await cookies()
-  const cookieState = jar.get(STATE_COOKIE)?.value
-  clearStateCookie(jar)
+  const jar = await cookies();
+  const cookieState = jar.get(STATE_COOKIE)?.value;
+  clearStateCookie(jar);
 
-  const state = await verifyOAuthState(rawState)
+  const state = await verifyOAuthState(rawState);
   // Origines de confiance : l'URL publique configurée et l'origine de la requête
   // courante. On n'accepte l'URL de retour (signée) que si elle y figure, ce qui
   // ferme la redirection ouverte via des en-têtes de proxy usurpés.
-  const appOrigin = normalizeOrigin(appUrl)
-  const reqOrigin = normalizeOrigin(await requestOrigin())
+  const appOrigin = normalizeOrigin(appUrl);
+  const reqOrigin = normalizeOrigin(await requestOrigin());
   const allowed = new Set(
     [appOrigin, reqOrigin].filter((value): value is string => Boolean(value)),
-  )
-  const fallback = appOrigin ?? reqOrigin ?? new URL(request.url).origin
-  const requested = normalizeOrigin(state?.ret)
-  const base = requested && allowed.has(requested) ? requested : fallback
-  const back = (query: string) => NextResponse.redirect(`${base}/settings/sources${query}`)
+  );
+  const fallback = appOrigin ?? reqOrigin ?? new URL(request.url).origin;
+  const requested = normalizeOrigin(state?.ret);
+  const base = requested && allowed.has(requested) ? requested : fallback;
+  const back = (query: string) =>
+    NextResponse.redirect(`${base}/settings/sources${query}`);
 
   if (oauthError) {
     await logEvent({
-      level: 'warn',
-      source: 'source',
-      message: 'Autorisation Spotify refusée',
+      level: "warn",
+      source: "source",
+      message: "Autorisation Spotify refusée",
       userId: state?.uid ?? null,
-    })
-    return back('?error=spotify_denied')
+    });
+    return back("?error=spotify_denied");
   }
   if (!state || !code) {
     await logEvent({
-      level: 'warn',
-      source: 'source',
-      message: 'Retour OAuth Spotify invalide',
-    })
-    return back('?error=spotify_state')
+      level: "warn",
+      source: "source",
+      message: "Retour OAuth Spotify invalide",
+    });
+    return back("?error=spotify_state");
   }
 
   // Liaison au navigateur quand le cookie est disponible (même hôte).
   if (cookieState && cookieState !== rawState) {
     await logEvent({
-      level: 'warn',
-      source: 'source',
-      message: 'Retour OAuth Spotify invalide',
+      level: "warn",
+      source: "source",
+      message: "Retour OAuth Spotify invalide",
       userId: state.uid,
-    })
-    return back('?error=spotify_state')
+    });
+    return back("?error=spotify_state");
   }
 
   try {
-    const credentials = await exchangeSpotifyCode(code)
+    const credentials = await exchangeSpotifyCode(code);
 
-    const profileRes = await spotifyFetch('https://api.spotify.com/v1/me', {
+    const profileRes = await spotifyFetch("https://api.spotify.com/v1/me", {
       headers: { Authorization: `Bearer ${credentials.accessToken}` },
-      cache: 'no-store',
-    })
+      cache: "no-store",
+    });
     const profile = profileRes.ok
       ? ((await profileRes.json()) as { id?: string; display_name?: string })
-      : {}
+      : {};
 
-    const displayName = `Spotify · ${profile.display_name || profile.id || 'compte'}`
+    const displayName = `Spotify · ${profile.display_name || profile.id || "compte"}`;
 
     await prisma.sourceConnection.upsert({
       where: {
         userId_type_displayName: {
           userId: state.uid,
-          type: 'spotify',
+          type: "spotify",
           displayName,
         },
       },
       create: {
         userId: state.uid,
-        type: 'spotify',
+        type: "spotify",
         displayName,
         credentials: encryptJson(credentials),
         config: JSON.stringify({}),
       },
       update: {
         credentials: encryptJson(credentials),
-        status: 'active',
+        status: "active",
         lastError: null,
       },
-    })
+    });
 
     await logEvent({
-      level: 'info',
-      source: 'source',
-      message: 'Compte Spotify connecté',
+      level: "info",
+      source: "source",
+      message: "Compte Spotify connecté",
       userId: state.uid,
       meta: { connection: displayName },
-    })
+    });
 
-    return back('?ok=spotify')
+    return back("?ok=spotify");
   } catch (error) {
     await logEvent({
-      level: 'error',
-      source: 'source',
+      level: "error",
+      source: "source",
       message: "Échec de l'échange de jeton Spotify",
       userId: state?.uid ?? null,
       meta: { error: errorMessage(error) },
-    })
-    return back('?error=spotify_exchange')
+    });
+    return back("?error=spotify_exchange");
   }
 }

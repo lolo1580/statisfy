@@ -2,12 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/dal";
-import {
-  appName,
-  appVersion,
-  syncMinIntervalMs,
-  syncToken,
-} from "@/lib/env";
+import { appName, appVersion, syncMinIntervalMs, syncToken } from "@/lib/env";
 import { Card, SectionTitle, StatCard } from "@/components/ui";
 import { getI18n } from "@/i18n/server";
 import { formatNumber } from "@/lib/format";
@@ -17,7 +12,8 @@ export const dynamic = "force-dynamic";
 
 function humanBytes(bytes: number, t: Translator): string {
   if (bytes < 1024) return `${bytes} ${t("bytes.b")}`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} ${t("bytes.kb")}`;
+  if (bytes < 1024 * 1024)
+    return `${(bytes / 1024).toFixed(1)} ${t("bytes.kb")}`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} ${t("bytes.mb")}`;
 }
 
@@ -58,7 +54,8 @@ export default async function AdminOverviewPage() {
 
   let backupCount = 0;
   let backupLatest: string | null = null;
-  const backupDir = process.env.BACKUP_DIR || path.join(process.cwd(), "backups");
+  const backupDir =
+    process.env.BACKUP_DIR || path.join(process.cwd(), "backups");
   try {
     const files = (
       await fs.promises.readdir(/*turbopackIgnore: true*/ backupDir)

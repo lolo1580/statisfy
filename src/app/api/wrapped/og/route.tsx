@@ -100,128 +100,126 @@ export async function GET(request: NextRequest) {
   const ownerName = truncate(owner.name, 28);
 
   return new ImageResponse(
-    (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        padding: 64,
+        background:
+          "linear-gradient(135deg, #0a0d12 0%, #0f2a20 55%, #1a1330 100%)",
+        color: "#eef2f7",
+        fontFamily: "sans-serif",
+      }}
+    >
       <div
         style={{
-          width: "100%",
-          height: "100%",
           display: "flex",
-          flexDirection: "column",
           justifyContent: "space-between",
-          padding: 64,
-          background:
-            "linear-gradient(135deg, #0a0d12 0%, #0f2a20 55%, #1a1330 100%)",
-          color: "#eef2f7",
-          fontFamily: "sans-serif",
+          alignItems: "center",
+          fontSize: 24,
+          color: "#93a1b5",
         }}
       >
-        <div
+        <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span
+            style={{
+              display: "flex",
+              width: 20,
+              height: 20,
+              borderRadius: 999,
+              background: "#1db954",
+            }}
+          />
+          {appName}
+        </span>
+        <span style={{ display: "flex" }}>{periodLabel}</span>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", marginTop: 24 }}>
+        <span style={{ display: "flex", fontSize: 64, fontWeight: 800 }}>
+          {ownerName}
+        </span>
+        <span
           style={{
             display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            marginTop: 6,
             fontSize: 24,
             color: "#93a1b5",
           }}
         >
-          <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span
-              style={{
-                display: "flex",
-                width: 20,
-                height: 20,
-                borderRadius: 999,
-                background: "#1db954",
-              }}
-            />
-            {appName}
-          </span>
-          <span style={{ display: "flex" }}>{periodLabel}</span>
-        </div>
+          {t("share.kicker")}
+        </span>
+      </div>
 
-        <div style={{ display: "flex", flexDirection: "column", marginTop: 24 }}>
-          <span style={{ display: "flex", fontSize: 64, fontWeight: 800 }}>
-            {ownerName}
+      <div style={{ display: "flex", gap: 64 }}>
+        <Stat
+          value={formatDuration(overview.totalMs, locale)}
+          label={t("dash.listeningTime")}
+        />
+        <Stat
+          value={formatNumber(overview.totalPlays, locale)}
+          label={t("dash.metricPlays")}
+        />
+        <Stat
+          value={formatNumber(overview.distinctArtists, locale)}
+          label={t("dash.artists")}
+        />
+        <Stat
+          value={formatNumber(overview.distinctTracks, locale)}
+          label={t("dash.tracks")}
+        />
+      </div>
+
+      <div style={{ display: "flex", gap: 48 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            minWidth: 0,
+          }}
+        >
+          <span style={{ display: "flex", fontSize: 16, color: "#93a1b5" }}>
+            {t("dash.topArtists").toUpperCase()}
           </span>
           <span
             style={{
               display: "flex",
-              marginTop: 6,
-              fontSize: 24,
-              color: "#93a1b5",
+              marginTop: 4,
+              fontSize: 30,
+              fontWeight: 700,
             }}
           >
-            {t("share.kicker")}
+            {topArtist}
           </span>
         </div>
-
-        <div style={{ display: "flex", gap: 64 }}>
-          <Stat
-            value={formatDuration(overview.totalMs, locale)}
-            label={t("dash.listeningTime")}
-          />
-          <Stat
-            value={formatNumber(overview.totalPlays, locale)}
-            label={t("dash.metricPlays")}
-          />
-          <Stat
-            value={formatNumber(overview.distinctArtists, locale)}
-            label={t("dash.artists")}
-          />
-          <Stat
-            value={formatNumber(overview.distinctTracks, locale)}
-            label={t("dash.tracks")}
-          />
-        </div>
-
-        <div style={{ display: "flex", gap: 48 }}>
-          <div
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            minWidth: 0,
+          }}
+        >
+          <span style={{ display: "flex", fontSize: 16, color: "#93a1b5" }}>
+            {t("dash.topTracks").toUpperCase()}
+          </span>
+          <span
             style={{
               display: "flex",
-              flexDirection: "column",
-              flex: 1,
-              minWidth: 0,
+              marginTop: 4,
+              fontSize: 26,
+              fontWeight: 600,
             }}
           >
-            <span style={{ display: "flex", fontSize: 16, color: "#93a1b5" }}>
-              {t("dash.topArtists").toUpperCase()}
-            </span>
-            <span
-              style={{
-                display: "flex",
-                marginTop: 4,
-                fontSize: 30,
-                fontWeight: 700,
-              }}
-            >
-              {topArtist}
-            </span>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              flex: 1,
-              minWidth: 0,
-            }}
-          >
-            <span style={{ display: "flex", fontSize: 16, color: "#93a1b5" }}>
-              {t("dash.topTracks").toUpperCase()}
-            </span>
-            <span
-              style={{
-                display: "flex",
-                marginTop: 4,
-                fontSize: 26,
-                fontWeight: 600,
-              }}
-            >
-              {topTrack}
-            </span>
-          </div>
+            {topTrack}
+          </span>
         </div>
       </div>
-    ),
+    </div>,
     {
       width: 1200,
       height: 630,

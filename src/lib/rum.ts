@@ -96,8 +96,7 @@ function envSettings(): RumSettings {
     trackUserInteractions:
       process.env.OPENOBSERVE_RUM_TRACK_INTERACTIONS === "true",
     logsEnabled: process.env.OPENOBSERVE_RUM_LOGS !== "false",
-    forwardErrorsToLogs:
-      process.env.OPENOBSERVE_RUM_FORWARD_ERRORS !== "false",
+    forwardErrorsToLogs: process.env.OPENOBSERVE_RUM_FORWARD_ERRORS !== "false",
     sessionReplaySampleRate: parseSampleRate(
       process.env.OPENOBSERVE_RUM_REPLAY_SAMPLE_RATE,
       0,
@@ -107,10 +106,7 @@ function envSettings(): RumSettings {
 }
 
 /** Fusion défensive d'un JSON stocké avec les valeurs d'environnement. */
-function mergeSettings(
-  base: RumSettings,
-  stored: unknown,
-): RumSettings {
+function mergeSettings(base: RumSettings, stored: unknown): RumSettings {
   if (!stored || typeof stored !== "object") return base;
   const value = stored as Record<string, unknown>;
   const str = (key: keyof RumSettings, fallback: string): string =>
@@ -147,18 +143,12 @@ function mergeSettings(
       base.trackUserInteractions,
     ),
     logsEnabled: bool("logsEnabled", base.logsEnabled),
-    forwardErrorsToLogs: bool(
-      "forwardErrorsToLogs",
-      base.forwardErrorsToLogs,
-    ),
+    forwardErrorsToLogs: bool("forwardErrorsToLogs", base.forwardErrorsToLogs),
     sessionReplaySampleRate:
       typeof value.sessionReplaySampleRate === "number"
         ? clampSampleRate(value.sessionReplaySampleRate)
         : base.sessionReplaySampleRate,
-    startSessionReplay: bool(
-      "startSessionReplay",
-      base.startSessionReplay,
-    ),
+    startSessionReplay: bool("startSessionReplay", base.startSessionReplay),
   };
 }
 
@@ -229,9 +219,7 @@ async function loadRumConfig(): Promise<OpenObserveRumServerConfig | null> {
     trackUserInteractions: settings.trackUserInteractions,
     logsEnabled: settings.logsEnabled,
     forwardErrorsToLogs: settings.forwardErrorsToLogs,
-    sessionReplaySampleRate: clampSampleRate(
-      settings.sessionReplaySampleRate,
-    ),
+    sessionReplaySampleRate: clampSampleRate(settings.sessionReplaySampleRate),
     startSessionReplay: settings.startSessionReplay,
     insecureHTTP: parsedUrl.insecureHTTP,
     baseUrl: `${protocol}://${parsedUrl.site}`,

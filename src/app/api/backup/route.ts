@@ -23,7 +23,10 @@ async function handle(request: NextRequest) {
     return NextResponse.json({ ok: true, ...result });
   } catch {
     // On ne renvoie pas le message brut (chemins internes, etc.).
-    return NextResponse.json({ ok: false, error: "Backup failed" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: "Backup failed" },
+      { status: 500 },
+    );
   }
 }
 

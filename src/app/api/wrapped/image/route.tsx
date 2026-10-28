@@ -54,7 +54,12 @@ type CardProps = {
   artists: TopArtist[];
   tracks: TopTrack[];
   covers: (string | null)[];
-  labels: { listeningTime: string; plays: string; artists: string; tracks: string };
+  labels: {
+    listeningTime: string;
+    plays: string;
+    artists: string;
+    tracks: string;
+  };
   playCount: (count: number) => string;
 };
 
@@ -73,7 +78,11 @@ function Stat({
         {value}
       </span>
       <span
-        style={{ fontSize: Math.round(size * 0.46), color: "#93a1b5", display: "flex" }}
+        style={{
+          fontSize: Math.round(size * 0.46),
+          color: "#93a1b5",
+          display: "flex",
+        }}
       >
         {label}
       </span>
@@ -268,8 +277,18 @@ function Hero({
 
 /** Carte carrée 1080×1080 (par défaut). */
 function SquareCard(props: CardProps) {
-  const { user, periodLabel, overview, stats, artists, tracks, covers, labels, locale, playCount } =
-    props;
+  const {
+    user,
+    periodLabel,
+    overview,
+    stats,
+    artists,
+    tracks,
+    covers,
+    labels,
+    locale,
+    playCount,
+  } = props;
   return (
     <div
       style={{
@@ -314,8 +333,18 @@ function SquareCard(props: CardProps) {
 
 /** Carte verticale 1080×1920 (format « story »). */
 function StoryCard(props: CardProps) {
-  const { user, periodLabel, overview, stats, artists, tracks, covers, labels, locale, playCount } =
-    props;
+  const {
+    user,
+    periodLabel,
+    overview,
+    stats,
+    artists,
+    tracks,
+    covers,
+    labels,
+    locale,
+    playCount,
+  } = props;
   return (
     <div
       style={{
@@ -325,7 +354,8 @@ function StoryCard(props: CardProps) {
         width: "100%",
         height: "100%",
         padding: 80,
-        background: "linear-gradient(160deg, #0a0d12 0%, #0f2a20 60%, #160f2a 100%)",
+        background:
+          "linear-gradient(160deg, #0a0d12 0%, #0f2a20 60%, #160f2a 100%)",
         color: "#eef2f7",
         fontFamily: "sans-serif",
       }}

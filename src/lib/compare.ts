@@ -9,7 +9,9 @@ export type TimelineExtras = {
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Nombre de jours couverts par une période. */
-export function daysInPeriod(period: Pick<WrappedPeriod, "from" | "to">): number {
+export function daysInPeriod(
+  period: Pick<WrappedPeriod, "from" | "to">,
+): number {
   return Math.max(
     1,
     Math.round((period.to.getTime() - period.from.getTime()) / DAY_MS),

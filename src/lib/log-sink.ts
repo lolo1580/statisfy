@@ -136,11 +136,17 @@ const GELF_TCP_DELIMITER = "\0";
 
 export function isSinkLevel(value: unknown): value is SinkLevel {
   return (
-    typeof value === "string" && (SINK_LEVELS as readonly string[]).includes(value)
+    typeof value === "string" &&
+    (SINK_LEVELS as readonly string[]).includes(value)
   );
 }
 
-function intOr(value: unknown, fallback: number, min: number, max: number): number {
+function intOr(
+  value: unknown,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
   if (value === undefined || value === null || String(value).trim() === "") {
     return fallback;
   }
@@ -160,7 +166,9 @@ function boolOr(value: unknown, fallback: boolean): boolean {
 }
 
 /** Analyse une variable d'environnement JSON `{ "clé": "valeur" }` (valeurs texte). */
-export function parseStringMap(value: unknown): Record<string, string> | undefined {
+export function parseStringMap(
+  value: unknown,
+): Record<string, string> | undefined {
   if (typeof value !== "string" || value.trim() === "") return undefined;
   try {
     const parsed = JSON.parse(value) as unknown;
@@ -168,7 +176,9 @@ export function parseStringMap(value: unknown): Record<string, string> | undefin
       return undefined;
     }
     const out: Record<string, string> = {};
-    for (const [key, entry] of Object.entries(parsed as Record<string, unknown>)) {
+    for (const [key, entry] of Object.entries(
+      parsed as Record<string, unknown>,
+    )) {
       if (typeof entry === "string") out[key] = entry;
     }
     return Object.keys(out).length > 0 ? out : undefined;
@@ -184,7 +194,8 @@ export function parseSinkConfig(
   env: Record<string, string | undefined>,
 ): SinkConfig | null {
   let kind = (env.LOG_SINK ?? "").trim().toLowerCase();
-  if (!kind || kind === "none" || kind === "off" || kind === "false") return null;
+  if (!kind || kind === "none" || kind === "off" || kind === "false")
+    return null;
 
   // Alias explicites avec TLS forcé.
   let forceTls = false;
@@ -279,7 +290,15 @@ export function parseSinkConfig(
   const port = intOr(env.LOG_SINK_PORT, defaultPort, 1, 65535);
 
   if (!isTcp) {
-    return { kind: kind as SinkKind, minLevel, hostname, host, port, facility, timeoutMs };
+    return {
+      kind: kind as SinkKind,
+      minLevel,
+      hostname,
+      host,
+      port,
+      facility,
+      timeoutMs,
+    };
   }
 
   const useTls = forceTls || boolOr(env.LOG_SINK_TLS, false);
@@ -365,7 +384,10 @@ export function gelfUdpDatagram(payload: Record<string, unknown>): string {
 
   let message = String(lean.full_message ?? "");
   const probe = { ...lean, full_message: "" };
-  const budget = Math.max(0, GELF_UDP_MAX - Buffer.byteLength(JSON.stringify(probe), "utf8") - 2);
+  const budget = Math.max(
+    0,
+    GELF_UDP_MAX - Buffer.byteLength(JSON.stringify(probe), "utf8") - 2,
+  );
   while (message.length > 0 && Buffer.byteLength(message, "utf8") > budget) {
     message = message.slice(0, Math.floor(message.length * 0.8));
   }
@@ -504,7 +526,8 @@ function otlpAttributes(
       attributes.push({
         key: `log.meta.${key}`,
         value: {
-          stringValue: typeof value === "string" ? value : JSON.stringify(value),
+          stringValue:
+            typeof value === "string" ? value : JSON.stringify(value),
         },
       });
     }
@@ -627,7 +650,10 @@ function sendUdp(
       clearTimeout(timer);
       resolve(result);
     };
-    const timer = setTimeout(() => finish({ ok: false, error: "timeout" }), timeoutMs);
+    const timer = setTimeout(
+      () => finish({ ok: false, error: "timeout" }),
+      timeoutMs,
+    );
     socket.send(buffer, port, host, (error) => {
       finish(error ? { ok: false, error: error.message } : { ok: true });
     });
@@ -745,7 +771,10 @@ function writeTcp(
       clearTimeout(timer);
       resolve(result);
     };
-    const timer = setTimeout(() => finish({ ok: false, error: "timeout" }), timeoutMs);
+    const timer = setTimeout(
+      () => finish({ ok: false, error: "timeout" }),
+      timeoutMs,
+    );
     socket.write(data, (error) => {
       finish(error ? { ok: false, error: error.message } : { ok: true });
     });
@@ -881,7 +910,11 @@ async function deliver(
     case "elasticsearch":
       return sendHttp(
         elasticsearchUrl(config.url as string),
-        elasticsearchBody(event, config.index ?? "statisfy-logs", config.hostname),
+        elasticsearchBody(
+          event,
+          config.index ?? "statisfy-logs",
+          config.hostname,
+        ),
         config.timeoutMs,
         { contentType: "application/x-ndjson", headers: config.headers },
       );

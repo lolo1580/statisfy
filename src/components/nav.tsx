@@ -97,74 +97,74 @@ export function Nav({
       {/* Bouton « hamburger » et menu (mobile) */}
       <div ref={mobileRef} className="relative md:contents">
         <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        aria-expanded={open}
-        aria-controls="mobile-nav"
-        aria-label={t("nav.menu")}
-        className="rounded-lg border border-border p-2 text-muted transition-colors hover:border-accent/40 hover:text-foreground md:hidden"
-      >
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          aria-hidden
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          aria-expanded={open}
+          aria-controls="mobile-nav"
+          aria-label={t("nav.menu")}
+          className="rounded-lg border border-border p-2 text-muted transition-colors hover:border-accent/40 hover:text-foreground md:hidden"
         >
-          {open ? (
-            <path d="M6 6l12 12M18 6L6 18" />
-          ) : (
-            <path d="M4 7h16M4 12h16M4 17h16" />
-          )}
-        </svg>
-      </button>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            aria-hidden
+          >
+            {open ? (
+              <path d="M6 6l12 12M18 6L6 18" />
+            ) : (
+              <path d="M4 7h16M4 12h16M4 17h16" />
+            )}
+          </svg>
+        </button>
 
-      {/* Menu déroulant (mobile) */}
-      {open ? (
-        <nav
-          id="mobile-nav"
-          className="absolute right-0 top-full z-40 mt-2 w-64 rounded-xl border border-border bg-surface p-2 shadow-xl md:hidden"
-        >
-          <div className="flex flex-col gap-0.5">
-            {links.map((link) => {
-              const active = isActivePath(pathname, link.href);
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setOpen(false)}
-                  aria-current={active ? "page" : undefined}
-                  className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                    active
-                      ? "bg-accent-soft text-accent"
-                      : "text-muted hover:bg-surface-2 hover:text-foreground"
-                  }`}
-                >
-                  {t(link.key)}
-                  {badge(link.href)}
-                </Link>
-              );
-            })}
-          </div>
-          <div className="mt-2 border-t border-border pt-2">
-            <div className="flex items-center justify-between gap-2 px-1 py-1">
-              <ThemeSwitcher current={theme} />
-              <LocaleSwitcher current={locale} />
+        {/* Menu déroulant (mobile) */}
+        {open ? (
+          <nav
+            id="mobile-nav"
+            className="absolute right-0 top-full z-40 mt-2 w-64 rounded-xl border border-border bg-surface p-2 shadow-xl md:hidden"
+          >
+            <div className="flex flex-col gap-0.5">
+              {links.map((link) => {
+                const active = isActivePath(pathname, link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    aria-current={active ? "page" : undefined}
+                    className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                      active
+                        ? "bg-accent-soft text-accent"
+                        : "text-muted hover:bg-surface-2 hover:text-foreground"
+                    }`}
+                  >
+                    {t(link.key)}
+                    {badge(link.href)}
+                  </Link>
+                );
+              })}
             </div>
-            <form action={logout} className="mt-1">
-              <button
-                type="submit"
-                className="w-full rounded-lg border border-border px-3 py-2 text-left text-sm text-muted transition-colors hover:border-danger/40 hover:text-danger"
-              >
-                {t("nav.logout")}
-              </button>
-            </form>
-          </div>
-        </nav>
-      ) : null}
+            <div className="mt-2 border-t border-border pt-2">
+              <div className="flex items-center justify-between gap-2 px-1 py-1">
+                <ThemeSwitcher current={theme} />
+                <LocaleSwitcher current={locale} />
+              </div>
+              <form action={logout} className="mt-1">
+                <button
+                  type="submit"
+                  className="w-full rounded-lg border border-border px-3 py-2 text-left text-sm text-muted transition-colors hover:border-danger/40 hover:text-danger"
+                >
+                  {t("nav.logout")}
+                </button>
+              </form>
+            </div>
+          </nav>
+        ) : null}
       </div>
     </>
   );

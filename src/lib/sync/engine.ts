@@ -1,23 +1,23 @@
-import 'server-only'
+import "server-only";
 
-import { prisma } from '../db'
-import { decryptJson, encryptJson } from '../crypto'
-import { getAdapter } from '../sources/registry'
-import { parseSpotifyHistoryFiles } from '../sources/importer'
-import type { RawPlay } from '../sources/types'
-import { logEvent } from '../log'
-import { sendWebhook } from '../webhook'
-import { ingestPlays, type IngestResult, type IngestProgress } from './ingest'
+import { prisma } from "../db";
+import { decryptJson, encryptJson } from "../crypto";
+import { getAdapter } from "../sources/registry";
+import { parseSpotifyHistoryFiles } from "../sources/importer";
+import type { RawPlay } from "../sources/types";
+import { logEvent } from "../log";
+import { sendWebhook } from "../webhook";
+import { ingestPlays, type IngestResult, type IngestProgress } from "./ingest";
 
 /** Options d'import : suivi d'avancement côté client (job + progression). */
 export type RunImportOptions = {
   /** Identifiant de job fourni par le client (UUID) pour interroger l'avancement. */
-  jobId?: string
-  onProgress?: (progress: IngestProgress) => void | Promise<void>
-}
+  jobId?: string;
+  onProgress?: (progress: IngestProgress) => void | Promise<void>;
+};
 
 /** Connexions en cours de synchronisation (verrou par connexion). */
-const inFlight = new Set<string>()
+const inFlight = new Set<string>();
 
 /**
  * Synchronise une connexion source Spotify.
@@ -29,110 +29,110 @@ export async function runSyncForConnection(
   connectionId: string,
 ): Promise<IngestResult> {
   if (inFlight.has(connectionId)) {
-    throw new Error('Synchronisation déjà en cours pour cette connexion.')
+    throw new Error("Synchronisation déjà en cours pour cette connexion.");
   }
-  inFlight.add(connectionId)
+  inFlight.add(connectionId);
   try {
-    return await runSync(connectionId)
+    return await runSync(connectionId);
   } finally {
-    inFlight.delete(connectionId)
+    inFlight.delete(connectionId);
   }
 }
 
 async function runSync(connectionId: string): Promise<IngestResult> {
   const connection = await prisma.sourceConnection.findUnique({
     where: { id: connectionId },
-  })
-  if (!connection) throw new Error('Connexion introuvable.')
+  });
+  if (!connection) throw new Error("Connexion introuvable.");
 
-  const adapter = getAdapter(connection.type)
-  if (!adapter) throw new Error(`Source « ${connection.type} » non supportée.`)
+  const adapter = getAdapter(connection.type);
+  if (!adapter) throw new Error(`Source « ${connection.type} » non supportée.`);
 
   const job = await prisma.job.create({
     data: {
       userId: connection.userId,
       connectionId: connection.id,
-      type: 'sync',
-      status: 'running',
+      type: "sync",
+      status: "running",
       startedAt: new Date(),
     },
-  })
+  });
 
-  let credentials: Record<string, unknown> = {}
-  let credentialsBefore: string | null = null
+  let credentials: Record<string, unknown> = {};
+  let credentialsBefore: string | null = null;
   try {
     try {
       credentials = connection.credentials
         ? decryptJson<Record<string, unknown>>(connection.credentials)
-        : {}
+        : {};
     } catch {
       // AES-GCM échoue si la clé de chiffrement a changé (ou si la base
       // provient d'une autre instance) : message explicite pour l'UI.
       throw new Error(
         "Identifiants illisibles : CREDENTIALS_KEY a changé ou la base provient d'une autre instance. Supprimez puis reconnectez la source.",
-      )
+      );
     }
     const config = connection.config
       ? (JSON.parse(connection.config) as Record<string, unknown>)
-      : {}
+      : {};
 
-    credentialsBefore = JSON.stringify(credentials)
+    credentialsBefore = JSON.stringify(credentials);
     // Reprise basée sur la **dernière écoute ingérée** (+ léger recouvrement) et
     // non sur l'heure de synchro : évite de « sauter » des écoutes arrivées avec
     // du retard. `lastSyncedAt` reste le marqueur de throttle du cron.
-    const watermark = connection.lastPlayAt ?? connection.lastSyncedAt
+    const watermark = connection.lastPlayAt ?? connection.lastSyncedAt;
     const since = watermark
       ? new Date(watermark.getTime() - 60 * 60 * 1000)
-      : null
+      : null;
 
     const plays = await adapter.fetchPlays({
       connectionId: connection.id,
       config,
       credentials,
       since,
-    })
+    });
 
-    const result = await ingestPlays(connection.userId, plays)
+    const result = await ingestPlays(connection.userId, plays);
 
     const newestPlayedAt = plays.reduce<Date | null>(
       (max, play) => (!max || play.playedAt > max ? play.playedAt : max),
       null,
-    )
+    );
 
     const updates: Record<string, unknown> = {
       lastSyncedAt: new Date(),
       lastError: null,
-      status: 'active',
-    }
-    if (newestPlayedAt) updates.lastPlayAt = newestPlayedAt
+      status: "active",
+    };
+    if (newestPlayedAt) updates.lastPlayAt = newestPlayedAt;
     if (JSON.stringify(credentials) !== credentialsBefore) {
-      updates.credentials = encryptJson(credentials)
+      updates.credentials = encryptJson(credentials);
     }
     await prisma.sourceConnection.update({
       where: { id: connection.id },
       data: updates,
-    })
+    });
 
     if (result.inserted > 0) {
       await prisma.job.update({
         where: { id: job.id },
         data: {
-          status: 'done',
+          status: "done",
           total: plays.length,
           processed: plays.length,
           inserted: result.inserted,
           finishedAt: new Date(),
         },
-      })
+      });
     } else {
       // Aucune nouvelle écoute : on ne garde pas de job (cron fréquent).
-      await prisma.job.delete({ where: { id: job.id } }).catch(() => undefined)
+      await prisma.job.delete({ where: { id: job.id } }).catch(() => undefined);
     }
     // Un webhook par synchronisation contenant des nouveautés (pas à chaque
     // passage du cron sans changement).
     if (result.inserted > 0) {
-      await sendWebhook('sync.completed', {
-        title: 'Statisfy — synchronization',
+      await sendWebhook("sync.completed", {
+        title: "Statisfy — synchronization",
         message: `🎧 ${result.inserted} new play(s) synced from ${connection.displayName}.`,
         userId: connection.userId,
         data: {
@@ -141,11 +141,11 @@ async function runSync(connectionId: string): Promise<IngestResult> {
           inserted: result.inserted,
           total: plays.length,
         },
-      })
+      });
     }
-    return result
+    return result;
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Erreur inconnue'
+    const message = error instanceof Error ? error.message : "Erreur inconnue";
     // Un jeton OAuth a pu être rafraîchi avant l'échec : on le persiste quand
     // même, sinon le refresh token (tourné par Spotify) serait perdu et les
     // synchronisations suivantes échoueraient.
@@ -158,29 +158,29 @@ async function runSync(connectionId: string): Promise<IngestResult> {
           where: { id: connection.id },
           data: { credentials: encryptJson(credentials) },
         })
-        .catch(() => undefined)
+        .catch(() => undefined);
     }
     await prisma.job.update({
       where: { id: job.id },
-      data: { status: 'error', error: message, finishedAt: new Date() },
-    })
+      data: { status: "error", error: message, finishedAt: new Date() },
+    });
     await prisma.sourceConnection.update({
       where: { id: connection.id },
-      data: { status: 'error', lastError: message },
-    })
+      data: { status: "error", lastError: message },
+    });
     await logEvent({
-      level: 'error',
-      source: 'sync',
-      message: 'Échec de synchronisation',
+      level: "error",
+      source: "sync",
+      message: "Échec de synchronisation",
       userId: connection.userId,
       meta: {
         connectionId: connection.id,
         connection: connection.displayName,
         error: message,
       },
-    })
-    await sendWebhook('sync.failed', {
-      title: 'Statisfy — synchronization failed',
+    });
+    await sendWebhook("sync.failed", {
+      title: "Statisfy — synchronization failed",
       message: `⚠️ Sync failed for ${connection.displayName}: ${message}`,
       userId: connection.userId,
       data: {
@@ -188,8 +188,8 @@ async function runSync(connectionId: string): Promise<IngestResult> {
         source: connection.type,
         error: message,
       },
-    })
-    throw error
+    });
+    throw error;
   }
 }
 
@@ -199,20 +199,25 @@ export async function runImport(
   files: Array<{ name: string; data: Uint8Array }>,
   options: RunImportOptions = {},
 ): Promise<IngestResult & { files: number }> {
-  const base = { userId, type: 'import', status: 'running', startedAt: new Date() }
+  const base = {
+    userId,
+    type: "import",
+    status: "running",
+    startedAt: new Date(),
+  };
   // L'id fourni par le client peut déjà exister (double soumission) : on retombe
   // alors sur un id aléatoire ; l'import reste valide, seul le suivi est perdu.
   const job = await prisma.job
     .create({ data: options.jobId ? { ...base, id: options.jobId } : base })
-    .catch(() => prisma.job.create({ data: base }))
+    .catch(() => prisma.job.create({ data: base }));
 
   try {
-    const { plays, files: parsedFiles } = parseSpotifyHistoryFiles(files)
+    const { plays, files: parsedFiles } = parseSpotifyHistoryFiles(files);
     // Le total est connu après l'analyse : la barre passe d'indéterminée à
     // « n / total ».
     await prisma.job
       .update({ where: { id: job.id }, data: { total: plays.length } })
-      .catch(() => undefined)
+      .catch(() => undefined);
 
     const result = await ingestPlays(userId, plays, async (progress) => {
       await prisma.job
@@ -224,22 +229,22 @@ export async function runImport(
             inserted: progress.inserted,
           },
         })
-        .catch(() => undefined)
-      await options.onProgress?.(progress)
-    })
+        .catch(() => undefined);
+      await options.onProgress?.(progress);
+    });
 
     await prisma.job.update({
       where: { id: job.id },
       data: {
-        status: 'done',
+        status: "done",
         total: plays.length,
         processed: plays.length,
         inserted: result.inserted,
         finishedAt: new Date(),
       },
-    })
-    await sendWebhook('import.completed', {
-      title: 'Statisfy — import',
+    });
+    await sendWebhook("import.completed", {
+      title: "Statisfy — import",
       message: `📥 ${result.inserted} play(s) imported from ${parsedFiles} file(s).`,
       userId,
       data: {
@@ -247,28 +252,28 @@ export async function runImport(
         total: plays.length,
         files: parsedFiles,
       },
-    })
-    return { ...result, files: parsedFiles }
+    });
+    return { ...result, files: parsedFiles };
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Erreur inconnue'
+    const message = error instanceof Error ? error.message : "Erreur inconnue";
     await prisma.job.update({
       where: { id: job.id },
-      data: { status: 'error', error: message, finishedAt: new Date() },
-    })
+      data: { status: "error", error: message, finishedAt: new Date() },
+    });
     await logEvent({
-      level: 'error',
-      source: 'import',
+      level: "error",
+      source: "import",
       message: "Échec de l'import",
       userId,
       meta: { error: message },
-    })
-    await sendWebhook('import.failed', {
-      title: 'Statisfy — import failed',
+    });
+    await sendWebhook("import.failed", {
+      title: "Statisfy — import failed",
       message: `⚠️ Import failed: ${message}`,
       userId,
       data: { error: message },
-    })
-    throw error
+    });
+    throw error;
   }
 }
 
@@ -277,29 +282,29 @@ export async function syncAllDue(
   minIntervalMs = 20 * 60 * 1000,
 ): Promise<Array<{ id: string; ok: boolean; error?: string }>> {
   const connections = await prisma.sourceConnection.findMany({
-    where: { status: { in: ['active', 'error'] } },
-  })
+    where: { status: { in: ["active", "error"] } },
+  });
 
-  const results: Array<{ id: string; ok: boolean; error?: string }> = []
+  const results: Array<{ id: string; ok: boolean; error?: string }> = [];
   for (const connection of connections) {
-    if (!getAdapter(connection.type)) continue
+    if (!getAdapter(connection.type)) continue;
     const due =
       !connection.lastSyncedAt ||
-      Date.now() - connection.lastSyncedAt.getTime() > minIntervalMs
-    if (!due) continue
+      Date.now() - connection.lastSyncedAt.getTime() > minIntervalMs;
+    if (!due) continue;
 
     try {
-      await runSyncForConnection(connection.id)
-      results.push({ id: connection.id, ok: true })
+      await runSyncForConnection(connection.id);
+      results.push({ id: connection.id, ok: true });
     } catch (error) {
       results.push({
         id: connection.id,
         ok: false,
-        error: error instanceof Error ? error.message : 'Erreur inconnue',
-      })
+        error: error instanceof Error ? error.message : "Erreur inconnue",
+      });
     }
   }
-  return results
+  return results;
 }
 
 /** Ingère un lot d'écoutes déjà normalisées (imports personnalisés). */
@@ -308,14 +313,19 @@ export async function runPlaysIngest(
   plays: RawPlay[],
   options: RunImportOptions = {},
 ): Promise<IngestResult> {
-  const base = { userId, type: 'import', status: 'running', startedAt: new Date() }
+  const base = {
+    userId,
+    type: "import",
+    status: "running",
+    startedAt: new Date(),
+  };
   const job = await prisma.job
     .create({ data: options.jobId ? { ...base, id: options.jobId } : base })
-    .catch(() => prisma.job.create({ data: base }))
+    .catch(() => prisma.job.create({ data: base }));
   try {
     await prisma.job
       .update({ where: { id: job.id }, data: { total: plays.length } })
-      .catch(() => undefined)
+      .catch(() => undefined);
     const result = await ingestPlays(userId, plays, async (progress) => {
       await prisma.job
         .update({
@@ -326,45 +336,45 @@ export async function runPlaysIngest(
             inserted: progress.inserted,
           },
         })
-        .catch(() => undefined)
-      await options.onProgress?.(progress)
-    })
+        .catch(() => undefined);
+      await options.onProgress?.(progress);
+    });
     await prisma.job.update({
       where: { id: job.id },
       data: {
-        status: 'done',
+        status: "done",
         total: plays.length,
         processed: plays.length,
         inserted: result.inserted,
         finishedAt: new Date(),
       },
-    })
-    await sendWebhook('import.completed', {
-      title: 'Statisfy — import',
+    });
+    await sendWebhook("import.completed", {
+      title: "Statisfy — import",
       message: `📥 ${result.inserted} play(s) imported.`,
       userId,
       data: { inserted: result.inserted, total: plays.length },
-    })
-    return result
+    });
+    return result;
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Erreur inconnue'
+    const message = error instanceof Error ? error.message : "Erreur inconnue";
     await prisma.job.update({
       where: { id: job.id },
-      data: { status: 'error', error: message, finishedAt: new Date() },
-    })
+      data: { status: "error", error: message, finishedAt: new Date() },
+    });
     await logEvent({
-      level: 'error',
-      source: 'import',
+      level: "error",
+      source: "import",
       message: "Échec de l'import",
       userId,
       meta: { error: message },
-    })
-    await sendWebhook('import.failed', {
-      title: 'Statisfy — import failed',
+    });
+    await sendWebhook("import.failed", {
+      title: "Statisfy — import failed",
       message: `⚠️ Import failed: ${message}`,
       userId,
       data: { error: message },
-    })
-    throw error
+    });
+    throw error;
   }
 }

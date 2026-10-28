@@ -12,9 +12,7 @@ import { THEME_COOKIE, defaultTheme, isTheme } from "@/lib/theme";
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage({
-  searchParams,
-}: PageProps<"/login">) {
+export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   if (await readSession()) redirect("/dashboard");
   const params = await searchParams;
   const accountDeleted = params.deleted === "1";
@@ -30,7 +28,9 @@ export default async function LoginPage({
         <LocaleSwitcher current={locale} />
       </div>
       <div className="mb-8 text-center">
-        <div className="mb-2 text-3xl" aria-hidden>🎧</div>
+        <div className="mb-2 text-3xl" aria-hidden>
+          🎧
+        </div>
         <h1 className="text-2xl font-semibold tracking-tight">{appName}</h1>
         <p className="mt-1 text-sm text-muted">{t("auth.tagline")}</p>
       </div>
