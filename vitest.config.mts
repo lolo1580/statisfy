@@ -28,6 +28,15 @@ export default defineConfig({
       // infrastructure (connexion DB, client généré) sont exclus.
       include: ["src/lib/**/*.ts", "src/i18n/**/*.ts"],
       exclude: ["src/lib/db.ts", "src/generated/**"],
+      // Planchers volontairement alignés sur la couverture actuelle : ils
+      // n'imposent pas de rattraper le retard d'un coup, mais empêchent toute
+      // régression silencieuse. À relever au fur et à mesure des ajouts.
+      thresholds: {
+        lines: 30,
+        statements: 30,
+        functions: 35,
+        branches: 30,
+      },
     },
   },
 });

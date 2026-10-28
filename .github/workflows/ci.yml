@@ -72,6 +72,9 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Format check
+        run: pnpm format:check
+
       - name: Test
         run: pnpm test:coverage
 
@@ -280,5 +283,3 @@ jobs:
       - name: Cleanup
         if: always()
         run: docker rm -f statisfy-upgrade || true
-
-

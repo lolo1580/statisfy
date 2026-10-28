@@ -1,0 +1,27 @@
+node_modules/
+.next/
+out/
+build/
+coverage/
+test-results/
+playwright-report/
+backups/
+logs/
+
+# Fichiers générés
+src/generated/
+next-env.d.ts
+tsconfig.tsbuildinfo
+pnpm-lock.yaml
+
+# Documentation : le texte est mis en forme à la main (lignes longues,
+# tableaux et badges) — Prettier le remettrait en page intégralement.
+*.md
+docs/
+
+# SQL : formaté par les migrations Prisma.
+prisma/migrations/
+
+# Environnement
+.env*
+!.env.example

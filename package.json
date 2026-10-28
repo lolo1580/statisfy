@@ -3,11 +3,16 @@
   "version": "1.1.1",
   "private": true,
   "license": "GPL-3.0-only",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -57,7 +62,9 @@
     "@vitest/coverage-v8": "^5.0.5",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
+    "eslint-config-prettier": "^10.1.8",
     "mongodb": "^7.7.0",
+    "prettier": "^3.9.10",
     "server-only": "^0.0.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
