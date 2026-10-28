@@ -1,7 +1,7 @@
 import "server-only";
 
 import { clearCache } from "../cache";
-import { refreshAllUserDailyStats } from "../stats/daily-store";
+import { refreshAllUserStats } from "../stats/daily-store";
 import { prisma } from "../db";
 
 export type RecountResult = { reset: number; evaluated: number };
@@ -27,7 +27,7 @@ export async function recountPlays(ratio: number): Promise<RecountResult> {
   `;
   // Toutes les écoutes sont concernées : on reconstruit les agrégats
   // quotidiens puis on vide le cache de stats.
-  await refreshAllUserDailyStats();
+  await refreshAllUserStats();
   clearCache();
 
   return { reset: reset.count, evaluated };

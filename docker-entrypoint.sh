@@ -85,12 +85,12 @@ echo "→ Vérification des agrégats quotidiens…"
 # vide. On la remplit une fois en SQL (l'image standalone n'embarque pas tsx).
 # En cas d'échec, l'application retombe sur les écoutes brutes.
 if [ -n "${DATABASE_URL:-}" ] && command -v psql >/dev/null 2>&1; then
-  if ! daily_rows=$(psql "$DATABASE_URL" -tAc 'select count(*) from "UserDailyStat"' 2>/dev/null); then
+  if ! daily_rows=$(psql "$DATABASE_URL" -tAc 'select (select count(*) from "UserDailyStat") = 0 or (select count(*) from "UserArtistDailyStat") = 0 or (select count(*) from "UserTrackDailyStat") = 0' 2>/dev/null); then
     daily_rows="skip"
   else
     daily_rows=$(printf '%s' "$daily_rows" | tr -d '[:space:]')
   fi
-  if [ "$daily_rows" = "0" ]; then
+  if [ "$daily_rows" = "t" ]; then
     echo "  Reconstruction initiale des agrégats (base existante)…"
     if ! psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f /app/prisma-cli/prisma/backfill-daily-stats.sql; then
       echo "⚠ Backfill des agrégats impossible (repli sur les écoutes brutes)."
@@ -98,7 +98,7 @@ if [ -n "${DATABASE_URL:-}" ] && command -v psql >/dev/null 2>&1; then
   elif [ "$daily_rows" = "skip" ]; then
     echo "  Table indisponible : étape ignorée."
   else
-    echo "  Agrégats déjà présents ($daily_rows lignes)."
+    echo "  Agrégats déjà présents."
   fi
 fi
 

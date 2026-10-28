@@ -15,12 +15,18 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   images Open Graph). Les chargements concurrents sont dédupliqués et le cache
   est invalidé par utilisateur après chaque synchronisation ou import (et
   globalement après un recalcul du seuil d'écoute).
-- **Agrégats quotidiens matérialisés** : nouvelle table `UserDailyStat`
-  (jour local, écoutes, temps) reconstruite après chaque sync/import et par
-  `pnpm db:backfill-daily-stats`. La heatmap et les records lisent cette table
-  au lieu de reparcourir les écoutes, avec repli automatique sur les données
-  brutes si elle n'est pas encore remplie. L'entrypoint Docker effectue le
-  backfill initial quand la table est vide.
+- **Agrégats quotidiens matérialisés** : nouvelles tables `UserDailyStat`,
+  `UserArtistDailyStat` et `UserTrackDailyStat` (jour local, écoutes, temps).
+  Elles sont reconstruites de façon **incrémentale** après chaque sync/import
+  (seuls les jours touchés), complètement après un changement de fuseau ou un
+  recalcul du seuil, et par `pnpm db:backfill-daily-stats`. La heatmap, les
+  records et les graphiques des fiches artiste/titre lisent ces tables au lieu
+  de reparcourir les écoutes, avec repli automatique sur les données brutes si
+  elles ne sont pas encore remplies. L'entrypoint Docker effectue le backfill
+  initial quand une table est vide.
+- **Cache Redis optionnel** : `REDIS_URL` active un cache L2 partagé entre
+  répliques (valeurs sérialisées avec `v8`, Dates et BigInt conservés). En cas
+  d'indisponibilité, repli silencieux sur le cache mémoire.
 
 ## [1.2.0] — 2026-10-28
 

@@ -15,6 +15,8 @@ const { prismaMock } = vi.hoisted(() => {
       track: { findMany: vi.fn() },
       album: { findMany: vi.fn() },
       userDailyStat: { findMany: vi.fn() },
+      userArtistDailyStat: { findMany: vi.fn() },
+      userTrackDailyStat: { findMany: vi.fn() },
       $queryRaw: vi.fn(),
     },
   };
@@ -46,6 +48,8 @@ beforeEach(() => {
   // Par défaut, pas d'agrégats matérialisés : les tests existants exercent le
   // repli sur les écoutes brutes.
   prismaMock.userDailyStat.findMany.mockResolvedValue([]);
+  prismaMock.userArtistDailyStat.findMany.mockResolvedValue([]);
+  prismaMock.userTrackDailyStat.findMany.mockResolvedValue([]);
 });
 
 afterEach(() => {
@@ -128,7 +132,30 @@ describe("agrégats quotidiens matérialisés", () => {
       { day: "2026-10-17", plays: 0, msPlayed: 0 },
     ]);
     expect(prismaMock.userDailyStat.findMany).not.toHaveBeenCalled();
+    expect(prismaMock.userArtistDailyStat.findMany).toHaveBeenCalledWith({
+      where: { userId: "u1", artistId: "a1" },
+      orderBy: { day: "asc" },
+    });
     expect(prismaMock.$queryRaw).toHaveBeenCalled();
+  });
+
+  it("getDailyStats utilise les agrégats de l'artiste quand ils existent", async () => {
+    prismaMock.userArtistDailyStat.findMany.mockResolvedValue([
+      { day: "2026-10-16", plays: 1, msPlayed: BigInt(500) },
+    ]);
+
+    const days = await getDailyStats("u1", "UTC", {
+      days: null,
+      artistId: "a1",
+      from: new Date("2026-10-16T00:00:00Z"),
+      to: new Date("2026-10-17T00:00:00Z"),
+    });
+
+    expect(days).toEqual([
+      { day: "2026-10-16", plays: 1, msPlayed: 500 },
+      { day: "2026-10-17", plays: 0, msPlayed: 0 },
+    ]);
+    expect(prismaMock.$queryRaw).not.toHaveBeenCalled();
   });
 
   it("getRecords utilise la table sans relire les écoutes", async () => {

@@ -8,11 +8,11 @@
  */
 import "dotenv/config";
 import { prisma } from "../src/lib/db";
-import { refreshAllUserDailyStats } from "../src/lib/stats/daily-store";
+import { refreshAllUserStats } from "../src/lib/stats/daily-store";
 
 async function main() {
   const started = Date.now();
-  const count = await refreshAllUserDailyStats();
+  const count = await refreshAllUserStats();
   console.log(
     `Agrégats quotidiens reconstruits pour ${count} compte(s) en ${
       Date.now() - started

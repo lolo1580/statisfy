@@ -4,12 +4,30 @@ import {
   cacheGetOrSet,
   cacheStats,
   clearCache,
+  decodeCacheValue,
+  encodeCacheValue,
   invalidateCache,
 } from "@/lib/cache";
 
 beforeEach(() => {
+  delete process.env.REDIS_URL;
   clearCache();
   vi.useRealTimers();
+});
+
+describe("sérialisation L2", () => {
+  it("conserve les Dates, BigInt et structures imbriquées", () => {
+    const value = {
+      at: new Date("2026-10-28T12:00:00.000Z"),
+      ms: BigInt(1_234),
+      days: [{ day: "2026-10-28", plays: 2 }],
+    };
+    expect(decodeCacheValue(encodeCacheValue(value))).toEqual(value);
+  });
+
+  it("ignore une valeur corrompue", () => {
+    expect(decodeCacheValue("pas-du-base64-v8")).toBeUndefined();
+  });
 });
 
 describe("cacheGetOrSet", () => {

@@ -3,7 +3,11 @@ import "server-only";
 import { Prisma } from "../../generated/prisma/client";
 import { prisma } from "../db";
 import { dayKey, hourOf } from "../format";
-import { getStoredDailyStats } from "./daily-store";
+import {
+  getStoredArtistDailyStats,
+  getStoredDailyStats,
+  getStoredTrackDailyStats,
+} from "./daily-store";
 import {
   BUCKET_SECONDS,
   DAY_MS,
@@ -111,13 +115,17 @@ export async function getDailyStats(
   range: StatsRange,
 ): Promise<DailyStat[]> {
   // Chemin rapide : agrégats quotidiens matérialisés (une ligne par jour).
-  // La table n'a pas de dimension artiste/titre/album : on ne l'utilise que
-  // pour les séries globales de l'utilisateur.
-  if (!range.artistId && !range.trackId && !range.albumId) {
-    const stored = await getStoredDailyStats(userId);
-    if (stored.length > 0) {
-      return buildDailySeries(stored, timeZone, range);
-    }
+  // Les tables artiste/titre couvrent les fiches détail ; l'album n'a pas de
+  // page dédiée et retombe sur les écoutes brutes.
+  const stored = range.artistId
+    ? await getStoredArtistDailyStats(userId, range.artistId)
+    : range.trackId
+      ? await getStoredTrackDailyStats(userId, range.trackId)
+      : range.albumId
+        ? []
+        : await getStoredDailyStats(userId);
+  if (stored.length > 0) {
+    return buildDailySeries(stored, timeZone, range);
   }
 
   // Repli pour les bases migrées mais pas encore backfillées.

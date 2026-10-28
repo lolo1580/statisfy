@@ -4,7 +4,7 @@ import { prisma } from "../db";
 import { isPlayCounted } from "../play-counting";
 import { getMinListenRatio } from "../settings";
 import { invalidateUserStats } from "../stats/cached";
-import { refreshUserDailyStats } from "../stats/daily-store";
+import { refreshUserStatsForRange } from "../stats/daily-store";
 import type { RawPlay } from "../sources/types";
 import { buildDedupKey } from "./dedup";
 
@@ -458,6 +458,9 @@ export async function ingestPlays(
     });
   }
 
+  let minPlayedAt: Date | null = null;
+  let maxPlayedAt: Date | null = null;
+
   for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
     const chunk = rows.slice(i, i + CHUNK_SIZE);
     const keys = chunk.map((r) => r.dedupKey);
@@ -468,6 +471,16 @@ export async function ingestPlays(
     const existingKeys = new Set(existing.map((e) => e.dedupKey));
     const fresh = chunk.filter((r) => !existingKeys.has(r.dedupKey));
     if (fresh.length === 0) continue;
+
+    // Plage d'écoutes réellement nouvelles : sert à ne recalculer que les
+    // jours locaux concernés dans les agrégats matérialisés.
+    for (const row of fresh) {
+      if (!minPlayedAt || row.playedAt < minPlayedAt)
+        minPlayedAt = row.playedAt;
+      if (!maxPlayedAt || row.playedAt > maxPlayedAt)
+        maxPlayedAt = row.playedAt;
+    }
+
     try {
       const result = await prisma.play.createMany({ data: fresh });
       inserted += result.count;
@@ -494,11 +507,16 @@ export async function ingestPlays(
     });
   }
 
-  // Les agrégats quotidiens matérialisés ne changent que si des écoutes ont
-  // été insérées ; le cache, lui, est invalidé dans tous les cas (les genres
-  // d'artistes peuvent avoir été rafraîchis pendant la résolution).
-  if (inserted > 0) {
-    await refreshUserDailyStats(userId);
+  // Agrégats matérialisés : recalcule uniquement les jours couverts par les
+  // nouvelles écoutes (une sync courante ne touche généralement qu'un jour).
+  // Le cache est invalidé dans tous les cas : les genres d'artistes peuvent
+  // avoir été rafraîchis pendant la résolution.
+  if (minPlayedAt && maxPlayedAt) {
+    await refreshUserStatsForRange(
+      userId,
+      minPlayedAt,
+      new Date(maxPlayedAt.getTime() + 1),
+    );
   }
   invalidateUserStats(userId);
 
