@@ -29,6 +29,13 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   (aujourd'hui, semaine, mois, année, tout l'historique), avec repli sur les
   écoutes brutes pour les fenêtres glissantes et les bornes non locales.
   Résultats vérifiés identiques aux requêtes brutes sur la base de l'instance.
+- **Verrou de synchronisation distribué** : table `SyncLock` avec acquisition
+  atomique, expiration et heartbeat (`SYNC_LOCK_TTL_MS`). Deux instances ne
+  peuvent plus synchroniser la même connexion en parallèle ; le verrou est
+  repris automatiquement après un crash.
+- **Reprise des jobs bloqués** : les jobs `running` de plus de deux heures sont
+  marqués en erreur au démarrage d'une synchronisation ou d'un import, au lieu
+  de rester bloqués après un redémarrage.
 - **Cache Redis optionnel** : `REDIS_URL` active un cache L2 partagé entre
   répliques (valeurs sérialisées avec `v8`, Dates et BigInt conservés). En cas
   d'indisponibilité, repli silencieux sur le cache mémoire.

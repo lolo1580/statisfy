@@ -7,6 +7,8 @@ import { parseSpotifyHistoryFiles } from "../sources/importer";
 import type { RawPlay } from "../sources/types";
 import { logEvent } from "../log";
 import { sendWebhook } from "../webhook";
+import { LockBusyError, withLock } from "../lock";
+import { recoverStaleJobs } from "../jobs";
 import { ingestPlays, type IngestResult, type IngestProgress } from "./ingest";
 
 /** Options d'import : suivi d'avancement côté client (job + progression). */
@@ -33,7 +35,15 @@ export async function runSyncForConnection(
   }
   inFlight.add(connectionId);
   try {
-    return await runSync(connectionId);
+    // Verrou distribué : protège aussi contre une autre instance.
+    return await withLock(`sync:${connectionId}`, () => runSync(connectionId));
+  } catch (error) {
+    if (error instanceof LockBusyError) {
+      throw new Error(
+        "Synchronisation déjà en cours pour cette connexion (autre instance).",
+      );
+    }
+    throw error;
   } finally {
     inFlight.delete(connectionId);
   }
@@ -199,6 +209,8 @@ export async function runImport(
   files: Array<{ name: string; data: Uint8Array }>,
   options: RunImportOptions = {},
 ): Promise<IngestResult & { files: number }> {
+  await recoverStaleJobs({ userId });
+
   const base = {
     userId,
     type: "import",
@@ -281,6 +293,8 @@ export async function runImport(
 export async function syncAllDue(
   minIntervalMs = 20 * 60 * 1000,
 ): Promise<Array<{ id: string; ok: boolean; error?: string }>> {
+  await recoverStaleJobs();
+
   const connections = await prisma.sourceConnection.findMany({
     where: { status: { in: ["active", "error"] } },
   });
@@ -313,6 +327,8 @@ export async function runPlaysIngest(
   plays: RawPlay[],
   options: RunImportOptions = {},
 ): Promise<IngestResult> {
+  await recoverStaleJobs({ userId });
+
   const base = {
     userId,
     type: "import",

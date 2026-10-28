@@ -288,6 +288,17 @@ model Job {
   @@index([userId, status])
 }
 
+/// Verrou distribué (synchronisation multi-instance), avec expiration et
+/// renouvellement par heartbeat. Une ligne par ressource verrouillée.
+model SyncLock {
+  key       String   @id
+  owner     String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
 // Journal d'événements de l'instance (auth, administration, sync/import…).
 // Conservé même si le compte associé est supprimé (userId passe à null).
 model LogEntry {
