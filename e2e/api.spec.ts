@@ -38,6 +38,25 @@ test("stats API: enable, query, card and revoke", async ({ page, request }) => {
     401,
   );
 
+  // Erreurs localisées + code stable pour les clients.
+  const unauthorized = await request.get("/api/public/stats?token=invalid", {
+    headers: { "accept-language": "fr" },
+  });
+  expect(unauthorized.status()).toBe(401);
+  expect(await unauthorized.json()).toMatchObject({
+    code: "unauthorized",
+    error: "Non autorisé.",
+  });
+
+  const invalidRange = await request.get(
+    `/api/public/stats?range=9999&token=${token}`,
+    { headers: { "accept-language": "fr" } },
+  );
+  expect(invalidRange.status()).toBe(400);
+  expect(await invalidRange.json()).toMatchObject({
+    code: "invalid_range",
+  });
+
   page.on("dialog", (dialog) => dialog.accept());
   await card.getByRole("button", { name: "Disable API" }).click();
   await expect(card.getByRole("button", { name: "Enable API" })).toBeVisible();

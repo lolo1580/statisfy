@@ -128,6 +128,20 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   `pnpm format:check`, vérification en CI), seuils de couverture Vitest,
   test de parité des dictionnaires en/fr, `SECURITY.md` et `CONTRIBUTING.md`,
   version Node minimale déclarée (`engines`), image `curlimages/curl` épinglée.
+- **Découpage des gros modules** : `src/lib/stats.ts`, `src/lib/log-sink.ts`,
+  `src/lib/api/openapi.ts` et `src/components/charts.tsx` deviennent des
+  barrels ; l'implémentation est répartie par domaine (`stats/*`, `log-sink/*`,
+  `api/openapi/*`, `charts/*`). Les imports existants restent inchangés.
+- **Sécurité (CSP)** : `img-src` n'autorise plus tout HTTPS mais uniquement les
+  CDN Spotify (`*.scdn.co`, `*.spotifycdn.com`) ; ajout de `media-src`,
+  `manifest-src`, `frame-src 'none'` et `upgrade-insecure-requests`.
+- **API publique** : les erreurs sont localisées selon `Accept-Language`
+  (français/anglais) et exposent un `code` stable (`unauthorized`,
+  `rate_limited`, `invalid_range`). Une période invalide renvoie désormais
+  `400` au lieu d'être silencieusement remplacée par 30 jours.
+- **Tests** : couverture OpenAPI (routes publiques et résolution des `$ref`),
+  messages d'erreur localisés, et vérifications e2e des en-têtes CSP et des
+  erreurs d'API.
 - **Durcissement RUM** : SDK chargé uniquement dans l'espace authentifié,
   URLs normalisées (query/hash/IDs/jetons), URLs `/settings` et `/admin`
   rédigées et leurs logs ignorés, replay mis en pause sur ces pages, relais
