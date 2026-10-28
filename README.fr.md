@@ -339,6 +339,7 @@ docker compose up -d db     # ou pointez DATABASE_URL vers votre PostgreSQL
 pnpm db:migrate             # crée le schéma
 pnpm migrate:sqlite         # copie utilisateurs, connexions, écoutes… (idempotent)
 pnpm db:backfill-counted    # recalcule le seuil des 3/4 sur les écoutes copiées
+pnpm db:backfill-daily-stats # (re)construit les agrégats quotidiens
 ```
 
 Options : `--sqlite <chemin>` pour un autre fichier, `--dry-run` pour

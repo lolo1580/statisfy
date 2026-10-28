@@ -20,6 +20,8 @@ import {
   setSetting,
 } from "../settings";
 import { recountPlays } from "../sync/recount";
+import { invalidateUserStats } from "../stats/cached";
+import { refreshUserDailyStats } from "../stats/daily-store";
 import { logEvent, errorMessage } from "../log";
 import { getI18n } from "@/i18n/server";
 import type { MutationOutcome } from "../optimistic";
@@ -231,6 +233,9 @@ export async function updateTimezone(formData: FormData): Promise<void> {
     return;
   }
   await prisma.user.update({ where: { id: user.id }, data: { timezone } });
+  // Les jours locaux changent : on reconstruit les agrégats quotidiens.
+  await refreshUserDailyStats(user.id);
+  invalidateUserStats(user.id);
   revalidatePath("/settings");
   revalidatePath("/dashboard");
 }

@@ -61,6 +61,7 @@ model User {
   sessions    Session[]
   connections SourceConnection[]
   plays       Play[]
+  dailyStats  UserDailyStat[]
   jobs        Job[]
   logs        LogEntry[]
 
@@ -197,6 +198,21 @@ model Play {
   @@index([userId, artistId])
   @@index([userId, albumId])
   @@index([playedAt])
+}
+
+/// Agrégat quotidien par utilisateur, exprimé dans **son fuseau local**.
+/// Alimenté après chaque sync/import (et par `pnpm db:backfill-daily-stats`) :
+/// il évite de relire toutes les écoutes pour la heatmap et les records.
+model UserDailyStat {
+  userId   String
+  /// Jour local `YYYY-MM-DD`.
+  day      String
+  plays    Int    @default(0)
+  msPlayed BigInt @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, day])
 }
 
 // Table de correspondance identifiants fournisseurs -> entités internes.

@@ -4,6 +4,7 @@ import { prisma } from "../db";
 import { isPlayCounted } from "../play-counting";
 import { getMinListenRatio } from "../settings";
 import { invalidateUserStats } from "../stats/cached";
+import { refreshUserDailyStats } from "../stats/daily-store";
 import type { RawPlay } from "../sources/types";
 import { buildDedupKey } from "./dedup";
 
@@ -493,9 +494,12 @@ export async function ingestPlays(
     });
   }
 
-  // Les agrégations en cache (dashboard, historique, récap…) viennent de
-  // changer : on les invalide pour que la prochaine visite voie les nouvelles
-  // écoutes sans attendre l'expiration du TTL.
+  // Les agrégats quotidiens matérialisés ne changent que si des écoutes ont
+  // été insérées ; le cache, lui, est invalidé dans tous les cas (les genres
+  // d'artistes peuvent avoir été rafraîchis pendant la résolution).
+  if (inserted > 0) {
+    await refreshUserDailyStats(userId);
+  }
   invalidateUserStats(userId);
 
   return { total: rows.length, inserted, skipped: rows.length - inserted };

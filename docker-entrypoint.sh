@@ -80,6 +80,28 @@ if ! (cd /app/prisma-cli && ./node_modules/.bin/prisma db execute --file prisma/
   echo "⚠ Index trigram indisponibles (extension pg_trgm refusée ?)."
 fi
 
+echo "→ Vérification des agrégats quotidiens…"
+# Première exécution après mise à jour : la table existe (migration) mais est
+# vide. On la remplit une fois en SQL (l'image standalone n'embarque pas tsx).
+# En cas d'échec, l'application retombe sur les écoutes brutes.
+if [ -n "${DATABASE_URL:-}" ] && command -v psql >/dev/null 2>&1; then
+  if ! daily_rows=$(psql "$DATABASE_URL" -tAc 'select count(*) from "UserDailyStat"' 2>/dev/null); then
+    daily_rows="skip"
+  else
+    daily_rows=$(printf '%s' "$daily_rows" | tr -d '[:space:]')
+  fi
+  if [ "$daily_rows" = "0" ]; then
+    echo "  Reconstruction initiale des agrégats (base existante)…"
+    if ! psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f /app/prisma-cli/prisma/backfill-daily-stats.sql; then
+      echo "⚠ Backfill des agrégats impossible (repli sur les écoutes brutes)."
+    fi
+  elif [ "$daily_rows" = "skip" ]; then
+    echo "  Table indisponible : étape ignorée."
+  else
+    echo "  Agrégats déjà présents ($daily_rows lignes)."
+  fi
+fi
+
 echo "→ Démarrage de Statisfy sur le port ${PORT:-3000}…"
 # `next start` est remplacé par le serveur `standalone` (`node server.js`).
 # On force l'écoute sur toutes les interfaces : `HOSTNAME` est défini par Docker

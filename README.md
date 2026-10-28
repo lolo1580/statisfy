@@ -323,6 +323,8 @@ existing database to PostgreSQL:
 docker compose up -d db     # or point DATABASE_URL at your own PostgreSQL
 pnpm db:migrate             # create the schema
 pnpm migrate:sqlite         # copy users, connections, plays… (idempotent)
+pnpm db:backfill-counted    # re-apply the 3/4 listening threshold
+pnpm db:backfill-daily-stats # (re)build the daily aggregates
 ```
 
 Options: `--sqlite <path>` for another file, `--dry-run` to preview. IDs are

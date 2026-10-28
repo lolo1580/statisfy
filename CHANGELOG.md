@@ -15,6 +15,12 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   images Open Graph). Les chargements concurrents sont dédupliqués et le cache
   est invalidé par utilisateur après chaque synchronisation ou import (et
   globalement après un recalcul du seuil d'écoute).
+- **Agrégats quotidiens matérialisés** : nouvelle table `UserDailyStat`
+  (jour local, écoutes, temps) reconstruite après chaque sync/import et par
+  `pnpm db:backfill-daily-stats`. La heatmap et les records lisent cette table
+  au lieu de reparcourir les écoutes, avec repli automatique sur les données
+  brutes si elle n'est pas encore remplie. L'entrypoint Docker effectue le
+  backfill initial quand la table est vide.
 
 ## [1.2.0] — 2026-10-28
 

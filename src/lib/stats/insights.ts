@@ -4,6 +4,7 @@ import { Prisma } from "../../generated/prisma/client";
 import { prisma } from "../db";
 import { dayKey, getTimezoneOffsetMs } from "../format";
 import { computeRecords, type ListeningRecords } from "../records";
+import { getStoredDailyStats } from "./daily-store";
 import { getTimeBuckets, type DailyStat } from "./timeline";
 import { DAY_MS, bucketDate, parseGenres, type StatsRange } from "./shared";
 import type { TopArtist } from "./rankings";
@@ -144,7 +145,11 @@ export async function getRecords(
   userId: string,
   timeZone: string,
 ): Promise<ListeningRecords> {
-  const daily = await getActiveDays(userId, timeZone);
+  // Chemin rapide : agrégats quotidiens matérialisés. Repli sur les écoutes
+  // brutes tant que la base n'a pas été backfillée.
+  const stored = await getStoredDailyStats(userId);
+  const daily =
+    stored.length > 0 ? stored : await getActiveDays(userId, timeZone);
   return computeRecords(daily, dayKey(new Date(), timeZone));
 }
 
