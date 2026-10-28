@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/dal";
-import { getArtistDetail, type StatsRange } from "@/lib/stats";
+import type { StatsRange } from "@/lib/stats";
+import { getArtistDetail } from "@/lib/stats/cached";
 import { RangeTabs } from "@/components/range-tabs";
 import { parseRange } from "@/lib/range";
 import { resolveRangeParam } from "@/lib/range-preference";

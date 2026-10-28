@@ -1,5 +1,6 @@
 import "server-only";
 
+import { clearCache } from "../cache";
 import { prisma } from "../db";
 
 export type RecountResult = { reset: number; evaluated: number };
@@ -23,5 +24,8 @@ export async function recountPlays(ratio: number): Promise<RecountResult> {
       AND "Track"."durationMs" IS NOT NULL
       AND "Track"."durationMs" > 0
   `;
+  // Toutes les écoutes sont concernées : le cache de stats entier est obsolète.
+  clearCache();
+
   return { reset: reset.count, evaluated };
 }

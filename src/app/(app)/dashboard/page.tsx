@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/dal";
+import { hasAnyPlays, type StatsRange } from "@/lib/stats";
 import {
   getOverview,
   getRecords,
@@ -8,9 +9,7 @@ import {
   getTopArtistsBoth,
   getTopGenresBoth,
   getTopTracksBoth,
-  hasAnyPlays,
-  type StatsRange,
-} from "@/lib/stats";
+} from "@/lib/stats/cached";
 import { RangeTabs } from "@/components/range-tabs";
 import { parseRange } from "@/lib/range";
 import { resolveRangeParam } from "@/lib/range-preference";

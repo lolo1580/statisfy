@@ -2,15 +2,8 @@ import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import { getOptionalUser } from "@/lib/auth/dal";
 import { fetchPublicUrl } from "@/lib/net";
-import {
-  getOverview,
-  getTopArtists,
-  getTopTracks,
-  type Overview,
-  type StatsRange,
-  type TopArtist,
-  type TopTrack,
-} from "@/lib/stats";
+import type { Overview, StatsRange, TopArtist, TopTrack } from "@/lib/stats";
+import { getOverview, getTopArtists, getTopTracks } from "@/lib/stats/cached";
 import { formatPeriodLabel, parseWrappedPeriod } from "@/lib/period";
 import { formatDuration, formatNumber } from "@/lib/format";
 import { getI18n } from "@/i18n/server";

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import type { StatsRange } from "@/lib/stats";
 import {
   getDiscoveredArtists,
   getOverview,
@@ -8,8 +9,7 @@ import {
   getTopGenres,
   getTopTracks,
   getWrappedExtras,
-  type StatsRange,
-} from "@/lib/stats";
+} from "@/lib/stats/cached";
 import {
   formatPeriodLabel,
   monthShortNames,

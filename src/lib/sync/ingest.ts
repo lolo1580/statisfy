@@ -3,6 +3,7 @@ import "server-only";
 import { prisma } from "../db";
 import { isPlayCounted } from "../play-counting";
 import { getMinListenRatio } from "../settings";
+import { invalidateUserStats } from "../stats/cached";
 import type { RawPlay } from "../sources/types";
 import { buildDedupKey } from "./dedup";
 
@@ -491,6 +492,11 @@ export async function ingestPlays(
       inserted,
     });
   }
+
+  // Les agrégations en cache (dashboard, historique, récap…) viennent de
+  // changer : on les invalide pour que la prochaine visite voie les nouvelles
+  // écoutes sans attendre l'expiration du TTL.
+  invalidateUserStats(userId);
 
   return { total: rows.length, inserted, skipped: rows.length - inserted };
 }

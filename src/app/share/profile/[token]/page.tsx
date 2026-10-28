@@ -2,16 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getSharedProfile } from "@/lib/profile-share";
+import type { StatsRange, TopArtist, TopTrack } from "@/lib/stats";
 import {
   getDailyStats,
   getOverview,
   getRecentPlays,
   getTopArtists,
   getTopTracks,
-  type StatsRange,
-  type TopArtist,
-  type TopTrack,
-} from "@/lib/stats";
+} from "@/lib/stats/cached";
 import { parseRange } from "@/lib/range";
 import { RangeTabs } from "@/components/range-tabs";
 import { Heatmap } from "@/components/charts";

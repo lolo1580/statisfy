@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/dal";
+import type { StatsRange } from "@/lib/stats";
 import {
   getOverview,
   getPlayingYears,
@@ -7,8 +8,7 @@ import {
   getTopGenres,
   getTopTracks,
   getWrappedExtras,
-  type StatsRange,
-} from "@/lib/stats";
+} from "@/lib/stats/cached";
 import { comparisonSeries, percentChange } from "@/lib/compare";
 import {
   formatPeriodLabel,

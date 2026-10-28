@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/lib/auth/dal";
-import { getPlayingYears } from "@/lib/stats";
+import { getPlayingYears } from "@/lib/stats/cached";
 import {
   formatPeriodLabel,
   monthNames,

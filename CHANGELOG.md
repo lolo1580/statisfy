@@ -7,6 +7,15 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Modifié
+
+- **Performance** : cache mémoire TTL (60 s par défaut, réglable avec
+  `STATS_CACHE_TTL_MS`) sur les agrégations des pages en lecture seule
+  (tableau de bord, historique, comparateur, récapitulatif, fiches, partages,
+  images Open Graph). Les chargements concurrents sont dédupliqués et le cache
+  est invalidé par utilisateur après chaque synchronisation ou import (et
+  globalement après un recalcul du seuil d'écoute).
+
 ## [1.2.0] — 2026-10-28
 
 ### Ajouté
