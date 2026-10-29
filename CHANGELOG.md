@@ -40,6 +40,13 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
   répliques (valeurs sérialisées avec `v8`, Dates et BigInt conservés). En cas
   d'indisponibilité, repli silencieux sur le cache mémoire.
 
+### Corrigé
+
+- **Migrations au démarrage** : quand `prisma migrate deploy` échoue et que le
+  `db push` de réconciliation a déjà créé les objets d'une migration en échec,
+  l'entrypoint marque désormais cette migration comme appliquée au lieu de la
+  rejouer en boucle (erreurs P3018/P3009 et redémarrages incessants).
+
 ## [1.2.0] — 2026-10-28
 
 ### Ajouté
