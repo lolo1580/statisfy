@@ -7,6 +7,22 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+## [1.2.1] — 2026-10-29
+
+### Corrigé
+
+- **Mise à niveau depuis une base `db push`** : la migration
+  `20261028000000_play_counted_index` est désormais idempotente
+  (`CREATE INDEX IF NOT EXISTS`). Une base créée sans historique Prisma, dont
+  le schéma contient déjà l'index, ne bloque plus `migrate deploy` avec
+  l'erreur `42P07` / `P3018`.
+- **Migrations au démarrage** : quand `prisma migrate deploy` échoue et que le
+  `db push` de réconciliation a créé les objets d'une migration en échec,
+  l'entrypoint marque désormais cette migration comme appliquée au lieu de la
+  rejouer en boucle (erreurs P3009/P3018 et redémarrages incessants).
+- **Test e2e CSP** : l'assertion « pas de joker HTTPS » ne confond plus
+  `https:` seul avec les domaines `https://*.scdn.co`.
+
 ## [1.2.0] — 2026-10-28
 
 ### Ajouté

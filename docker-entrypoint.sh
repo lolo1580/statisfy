@@ -43,11 +43,20 @@ echo "→ Application des migrations de base de données…"
     # Base partielle (ex. `db push` d'une version intermédiaire) : on réconcilie
     # le schéma, on marque les migrations comme appliquées puis on rejoue.
     echo "⚠ Migration en échec : réconciliation avec db push."
+    # Mémorise les migrations en échec avant de réconcilier : `db push` crée
+    # leurs objets (index, tables), donc les rejouer échouerait avec « already
+    # exists » et la boucle de redémarrage ne s'arrêterait jamais.
+    failed_migrations=$(psql "$DATABASE_URL" -tAc "select migration_name from _prisma_migrations where finished_at is null and rolled_back_at is null" 2>/dev/null || true)
     ./node_modules/.bin/prisma db push
     # Efface les tentatives en échec (sinon `resolve` refuse de les marquer).
     psql "$DATABASE_URL" -q -c "delete from _prisma_migrations where finished_at is null and rolled_back_at is null" 2>/dev/null || true
     ./node_modules/.bin/prisma migrate resolve --applied 20250101000000_init >/dev/null 2>&1 || true
     ./node_modules/.bin/prisma migrate resolve --applied 20261025000000_play_metadata_and_shares >/dev/null 2>&1 || true
+    # Le `db push` vient d'aligner le schéma sur l'état attendu : les migrations
+    # qui avaient échoué sont donc, de fait, appliquées.
+    for name in $failed_migrations; do
+      ./node_modules/.bin/prisma migrate resolve --applied "$name" >/dev/null 2>&1 || true
+    done
     ./node_modules/.bin/prisma migrate deploy
   fi
 

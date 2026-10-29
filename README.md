@@ -201,7 +201,7 @@ docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-Pin another version with `STATISFY_IMAGE` (e.g. `ghcr.io/lolo1580/statisfy:1.2.0`)
+Pin another version with `STATISFY_IMAGE` (e.g. `ghcr.io/lolo1580/statisfy:1.2.1`)
 and set `STATISFY_BIND` if your proxy runs on another network.
 
 ## ⚙️ Configuration
